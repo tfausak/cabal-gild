@@ -2,7 +2,7 @@
   "services": {
     "devcontainer": {
       "command": "sleep infinity",
-      "image": "public.ecr.aws/acilearning/haskell:9.6.4",
+      "image": "public.ecr.aws/acilearning/haskell:9.8.1",
       "init": true,
       "volumes": [
         "..:/workspace"
