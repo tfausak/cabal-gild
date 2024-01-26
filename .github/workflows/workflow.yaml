@@ -76,9 +76,6 @@
           }
         },
         {
-          "run": "echo ::add-matcher::.github/hspec-problem-matcher.json"
-        },
-        {
           "run": "cabal run -- golden"
         },
         {
