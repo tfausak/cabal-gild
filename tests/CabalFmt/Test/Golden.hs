@@ -1,4 +1,4 @@
-module Main (main) where
+module CabalFmt.Test.Golden (tests) where
 
 import CabalFmt (cabalFmt)
 import CabalFmt.Monad (runCabalFmt)
@@ -11,12 +11,8 @@ import System.FilePath ((-<.>), (</>))
 import System.IO (hClose, hFlush)
 import System.IO.Temp (withSystemTempFile)
 import System.Process (readProcessWithExitCode)
-import Test.Tasty (TestTree, defaultMain, testGroup)
+import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.Golden.Advanced (goldenTest)
-
-main :: IO ()
-main =
-  defaultMain tests
 
 tests :: TestTree
 tests =

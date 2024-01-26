@@ -76,10 +76,7 @@
           }
         },
         {
-          "run": "cabal run -- golden"
-        },
-        {
-          "run": "cabal run -- version-interval-tests"
+          "run": "cabal run -- cabal-fmt-test-suite"
         }
       ],
       "strategy": {

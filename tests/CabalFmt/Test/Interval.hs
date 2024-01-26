@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
 
-module Main (main) where
+module CabalFmt.Test.Interval where
 
 import Control.Monad (replicateM)
 import Distribution.Parsec (eitherParsec)
@@ -31,14 +31,10 @@ import Distribution.Version (transformCaretUpper)
 import Math.NumberTheory.Logarithms (intLog2)
 import Test.QuickCheck (Arbitrary (..), (===))
 import qualified Test.QuickCheck as QC
-import Test.Tasty (TestTree, defaultMain, testGroup)
+import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase, (@?=))
 import Test.Tasty.QuickCheck (testProperty)
 import VersionInterval
-
-main :: IO ()
-main =
-  defaultMain tests
 
 tests :: TestTree
 tests =
