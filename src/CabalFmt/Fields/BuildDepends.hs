@@ -88,7 +88,7 @@ prettyExe opts deps = case deps of
         deps' = sortOn (map toLower . fst)
               $ map (exeDepExeName &&& exeDepVerRange)
               -- C.fromDepMap . C.toDepMap -- this combines duplicate packages
-              $ deps
+              deps
 
 exeDepExeName :: C.ExeDependency -> String
 exeDepExeName (C.ExeDependency name exe _) =

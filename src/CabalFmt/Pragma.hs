@@ -73,14 +73,12 @@ parsePragma bs = case dropPrefix bs of
     indent :: C.ParsecParser Pragma
     indent = do
         C.spaces
-        n <- C.integral
-        return $ GlobalPragma $ PragmaOptIndent n
+        GlobalPragma . PragmaOptIndent <$> C.integral
 
     fragment :: C.ParsecParser Pragma
     fragment = do
         C.spaces
-        fn <- C.parsecToken
-        return $ FieldPragma $ PragmaFragment fn
+        FieldPragma . PragmaFragment <$> C.parsecToken
 
     globFiles :: C.ParsecParser Pragma
     globFiles = do

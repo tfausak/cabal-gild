@@ -90,7 +90,7 @@ data VersionInterval = VI !LB !MB !UB
 --
 -- All lower bound intervals are inclusive, i.e. @>=v@. @>x.y.z@ is converted into @>=x.y.z.0@.
 --
-data LB = LB !Version
+newtype LB = LB Version
   deriving (Eq, Ord, Show)
 
 -- | Upper bound.
@@ -399,7 +399,7 @@ intervalToVersionRange1 (LB v) upper' = case upper' of
         | otherwise    = intersectVersionRanges lowerBound vr
 
     makeUpperBound :: Version -> VersionRange
-    makeUpperBound u = earlierVersion u
+    makeUpperBound = earlierVersion
 
 intervalToVersionRange2 :: LB -> MB -> Maybe (NonEmpty VersionRange)
 intervalToVersionRange2 (LB l) NoMB = Just (singleton lowerBound)
@@ -415,7 +415,7 @@ intervalToVersionRange2 (LB l) (MB m)
     , b >= 1
     , m' > l
     = Just $
-            (ubToVR (UB m') (lbToVR (LB l)))
+            ubToVR (UB m') (lbToVR (LB l))
             :| [ majorBoundVersion (mkVersion [a, b-1]) ]
 
     | otherwise

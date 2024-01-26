@@ -1,7 +1,6 @@
 -- |
 -- License: GPL-3.0-or-later
 -- Copyright: Oleg Grenrus
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes        #-}
 module CabalFmt.Refactoring.Type (
     FieldRefactoring,

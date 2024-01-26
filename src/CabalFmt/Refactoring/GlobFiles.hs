@@ -43,7 +43,7 @@ refactoringGlobFiles (C.Field name@(C.Name (_, _, pragmas) _n) fls) = do
 
     match' :: MonadCabalFmt r m => Glob -> m [FilePath]
     match' g@(Glob dir _) = do
-        files <- map (\fp -> dir Native.</> fp) <$> getFiles dir
+        files <- map (dir Native.</>) <$> getFiles dir
         return $ map toPosix $ filter (match g) files
 
     toPosix :: FilePath -> FilePath

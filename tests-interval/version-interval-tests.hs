@@ -36,8 +36,8 @@ main = defaultMain $ testGroup "version-interval"
             let ab = intersectInterval a b
             in maybe (QC.property True) (\ab' -> QC.counterexample ("intersection: " ++ show ab') $ validVersionInterval ab') ab
 
-        , testProperty "intersect complete" intersect_complete
-        , testProperty "intersect complete lax" intersect_complete_lax
+        , testProperty "intersect complete" intersectComplete
+        , testProperty "intersect complete lax" intersectCompleteLax
         ]
 
     , testGroup "stage1"
@@ -124,12 +124,12 @@ main = defaultMain $ testGroup "version-interval"
 
         , cannotNormaliseExample "^>=0 && >=0.1" IntervalsEmpty
 
-        , testProperty "involutive"   normalise_involutive
+        , testProperty "involutive"   normaliseInvolutive
 
-        , testProperty "complete"     normalise_complete
-        , testProperty "complete_lax" normalise_complete_lax
+        , testProperty "complete"     normaliseComplete
+        , testProperty "complete_lax" normaliseCompleteLax
 
-        , testProperty "involutive ex1" $ normalise_involutive $
+        , testProperty "involutive ex1" $ normaliseInvolutive $
             intersectVersionRanges (majorBoundVersion (mkVersion [3])) (laterVersion (mkVersion [3]))
         ]
     ]
@@ -151,8 +151,8 @@ cannotNormaliseExample input problem = testCase ("cannot " ++ input) $ do
 -- Intersect
 -------------------------------------------------------------------------------
 
-intersect_complete :: VersionInterval -> VersionInterval -> Version -> QC.Property
-intersect_complete a b v =
+intersectComplete :: VersionInterval -> VersionInterval -> Version -> QC.Property
+intersectComplete a b v =
     QC.counterexample ("intersection: " ++ show (ab, inA, inB)) $ (inA && inB) === inAB
   where
     ab   = intersectInterval a b
@@ -160,8 +160,8 @@ intersect_complete a b v =
     inB  = withinInterval v b
     inAB = maybe False (withinInterval v) ab
 
-intersect_complete_lax :: VersionInterval -> VersionInterval -> Version -> QC.Property
-intersect_complete_lax a b v =
+intersectCompleteLax :: VersionInterval -> VersionInterval -> Version -> QC.Property
+intersectCompleteLax a b v =
     QC.counterexample ("intersection: " ++ show (ab, inA, inB)) $ (inA && inB) === inAB
   where
     ab   = intersectInterval a b
@@ -242,18 +242,18 @@ stage3_complete_lax is' v = QC.counterexample ("stage3: " ++ show is) $ any (wit
 -- Normalise
 -------------------------------------------------------------------------------
 
-normalise_involutive :: VersionRange -> QC.Property
-normalise_involutive vr = vr1 === vr2 where
+normaliseInvolutive :: VersionRange -> QC.Property
+normaliseInvolutive vr = vr1 === vr2 where
     vr1 = VersionInterval.normaliseVersionRange vr
     vr2 = VersionInterval.normaliseVersionRange =<< vr1
 
-normalise_complete :: VersionRange -> Version -> QC.Property
-normalise_complete vr v = case VersionInterval.normaliseVersionRange vr of
+normaliseComplete :: VersionRange -> Version -> QC.Property
+normaliseComplete vr v = case VersionInterval.normaliseVersionRange vr of
     Left _    -> QC.property True
     Right vr' -> QC.counterexample ("normalised: " ++ show vr') $ withinRange v vr === withinRange v vr'
 
-normalise_complete_lax :: VersionRange -> Version -> QC.Property
-normalise_complete_lax vr v = case VersionInterval.normaliseVersionRange vr of
+normaliseCompleteLax :: VersionRange -> Version -> QC.Property
+normaliseCompleteLax vr v = case VersionInterval.normaliseVersionRange vr of
     Left _    -> QC.property True
     Right vr' -> QC.counterexample ("normalised: " ++ show vr') $ withinRangeLax v vr === withinRangeLax v vr'
 

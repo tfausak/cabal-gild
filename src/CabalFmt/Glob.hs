@@ -31,7 +31,7 @@ data GlobChar
 match :: Glob -> FilePath -> Bool
 match (Glob g1 gs0) fp = go0 (Native.splitDirectories fp) where
     go0 []     = False
-    go0 (p:ps) = if p == g1 then go ps gs0 else False
+    go0 (p:ps) = p == g1 && go ps gs0
 
     go :: [FilePath] -> [GlobPiece] -> Bool
     go []     []                  = True
@@ -45,7 +45,7 @@ match (Glob g1 gs0) fp = go0 (Native.splitDirectories fp) where
     matches (_:_)  []                = False
     matches []     (_:_)             = False
     matches (x:xs) (GlobStar : cs)   = matches (x:xs) cs || matches xs (GlobStar : cs)
-    matches (x:xs) (GlobChar c : cs) = if x == c then matches xs cs else False
+    matches (x:xs) (GlobChar c : cs) = x == c && matches xs cs
 
 parseGlob :: String -> Either String Glob
 parseGlob input = case Posix.splitDirectories input of

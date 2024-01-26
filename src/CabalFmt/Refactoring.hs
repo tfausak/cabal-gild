@@ -15,7 +15,7 @@ import CabalFmt.Refactoring.ExpandExposedModules
 import CabalFmt.Refactoring.Fragments
 import CabalFmt.Refactoring.GlobFiles
 import CabalFmt.Refactoring.Type
-import CabalFmt.Fields.SourceFiles 
+import CabalFmt.Fields.SourceFiles
 
 -------------------------------------------------------------------------------
 -- Refactorings
@@ -38,8 +38,8 @@ refactor = rewriteFields rewrite
             [ refactoringFragments
             ] f
 
-    rewrite f@(C.Section _ _ _)
-        | otherwise = combine
+    rewrite f@C.Section{}
+        = combine
             [ refactoringFragments
             ] f
 

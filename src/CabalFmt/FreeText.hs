@@ -31,7 +31,7 @@ fieldlinesToFreeText v
     = fieldlinesToFreeText3
 
     | otherwise
-    = \_ -> fieldlinesToFreeText2
+    = const fieldlinesToFreeText2
 
 fieldlinesToFreeText2 :: [C.FieldLine C.Position] -> String
 fieldlinesToFreeText2 [C.FieldLine _ "."] = "."

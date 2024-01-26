@@ -63,7 +63,7 @@ refactoringFragments field = do
                         unless (null rest) $
                             displayWarning $ "Fragment " ++ p ++ " contains multiple fields or sections, using only the first."
 
-                        if (void name == void name' && map void arg == map void arg')
+                        if void name == void name' && map void arg == map void arg'
                         then do
                             pure (Just (C.Section name arg (noCommentsPragmas fs')))
                         else do

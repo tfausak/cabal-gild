@@ -11,6 +11,7 @@ module CabalFmt (cabalFmt) where
 
 import Control.Monad        (join)
 import Control.Monad.Reader (asks, local)
+import Data.Functor         (($>))
 
 import qualified Data.ByteString                              as BS
 import qualified Distribution.CabalSpecVersion                as C
@@ -52,9 +53,9 @@ cabalFmt :: MonadCabalFmt r m => FilePath -> BS.ByteString -> m String
 cabalFmt filepath contents = do
     -- determine cabal-version
     cabalFile <- asks (optCabalFile . view options)
-    csv <- case cabalFile of
-        False -> return C.cabalSpecLatest
-        True  -> do
+    csv <- if cabalFile
+        then return C.cabalSpecLatest
+        else do
             gpd <- parseGpd filepath contents
             return $ C.specVersion
               $ C.packageDescription gpd
@@ -63,10 +64,10 @@ cabalFmt filepath contents = do
     let (inputFieldsC, endComments) = attachComments contents inputFields'
 
     -- parse pragmas
-    let parse (pos, c) = case parsePragmas c of (ws, ps) -> traverse_ displayWarning ws *> return (pos, c, ps)
+    let parse (pos, c) = case parsePragmas c of (ws, ps) -> traverse_ displayWarning ws $> (pos, c, ps)
     inputFieldsP' <- traverse (traverse parse) inputFieldsC
     endCommentsPragmas <- case parsePragmas endComments of
-        (ws, ps) -> traverse_ displayWarning ws *> return ps
+        (ws, ps) -> traverse_ displayWarning ws $> ps
 
     -- apply refactorings
     let inputFieldsP :: [C.Field CommentsPragmas]
