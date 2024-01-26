@@ -22,8 +22,10 @@ tested-with:
    || ==9.4.5
    || ==9.6.1
 
-extra-source-files:
+extra-doc-files:
   Changelog.md
+
+extra-source-files:
   fixtures/*.cabal
   fixtures/*.format
 
