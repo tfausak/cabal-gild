@@ -60,23 +60,23 @@
           "run": "cabal build"
         },
         {
-          "run": "cp $( cabal list-bin cabal-fmt ) artifact"
+          "run": "cp $( cabal list-bin cabal-gild ) artifact"
         },
         {
           "uses": "svenstaro/upx-action@v2",
           "with": {
-            "files": "artifact/cabal-fmt${{ matrix.extension }}"
+            "files": "artifact/cabal-gild${{ matrix.extension }}"
           }
         },
         {
           "uses": "actions/upload-artifact@v4",
           "with": {
-            "name": "cabal-fmt-${{ matrix.platform }}-${{ github.sha }}",
+            "name": "cabal-gild-${{ matrix.platform }}-${{ github.sha }}",
             "path": "artifact"
           }
         },
         {
-          "run": "cabal run -- cabal-fmt-test-suite"
+          "run": "cabal run -- cabal-gild-test-suite"
         }
       ],
       "strategy": {

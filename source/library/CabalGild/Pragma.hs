@@ -1,10 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module CabalFmt.Pragma where
+module CabalGild.Pragma where
 
-import CabalFmt.Comments
-import CabalFmt.Glob
-import CabalFmt.Prelude
+import CabalGild.Comments
+import CabalGild.Glob
+import CabalGild.Prelude
 import qualified Data.ByteString as BS
 import qualified Distribution.Compat.CharParsing as C
 import qualified Distribution.ModuleName as C
@@ -39,7 +39,7 @@ data GlobalPragma
 
 -- | Parse pragma from 'ByteString'.
 --
--- An error ('Left') is reported only if input 'ByteString' starts with @-- cabal-fmt:@.
+-- An error ('Left') is reported only if input 'ByteString' starts with @-- cabal-gild:@.
 parsePragma :: ByteString -> Either String (Maybe Pragma)
 parsePragma bs = case dropPrefix bs of
   Nothing -> Right Nothing
@@ -47,7 +47,7 @@ parsePragma bs = case dropPrefix bs of
   where
     dropPrefix bs0 = do
       bs1 <- BS.stripPrefix "--" bs0
-      bs2 <- BS.stripPrefix "cabal-fmt:" (stripWhitespace bs1)
+      bs2 <- BS.stripPrefix "cabal-gild:" (stripWhitespace bs1)
       return (stripWhitespace bs2)
 
     parser :: C.ParsecParser Pragma

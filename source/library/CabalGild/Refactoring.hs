@@ -4,25 +4,25 @@
 -- |
 -- License: GPL-3.0-or-later
 -- Copyright: Oleg Grenrus
-module CabalFmt.Refactoring
+module CabalGild.Refactoring
   ( CommentsPragmas,
     refactor,
   )
 where
 
-import CabalFmt.Fields.SourceFiles
-import CabalFmt.Monad
-import CabalFmt.Refactoring.ExpandExposedModules
-import CabalFmt.Refactoring.Fragments
-import CabalFmt.Refactoring.GlobFiles
-import CabalFmt.Refactoring.Type
+import CabalGild.Fields.SourceFiles
+import CabalGild.Monad
+import CabalGild.Refactoring.ExpandExposedModules
+import CabalGild.Refactoring.Fragments
+import CabalGild.Refactoring.GlobFiles
+import CabalGild.Refactoring.Type
 import qualified Distribution.Fields as C
 
 -------------------------------------------------------------------------------
 -- Refactorings
 -------------------------------------------------------------------------------
 
-refactor :: forall m r. (MonadCabalFmt r m) => [C.Field CommentsPragmas] -> m [C.Field CommentsPragmas]
+refactor :: forall m r. (MonadCabalGild r m) => [C.Field CommentsPragmas] -> m [C.Field CommentsPragmas]
 refactor = rewriteFields rewrite
   where
     rewrite :: C.Field CommentsPragmas -> m (Maybe (C.Field CommentsPragmas))

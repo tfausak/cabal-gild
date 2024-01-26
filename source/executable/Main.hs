@@ -3,17 +3,17 @@
 -- Copyright: Oleg Grenrus
 module Main (main) where
 
-import CabalFmt (cabalFmt)
-import CabalFmt.Error (renderError)
-import CabalFmt.Monad (runCabalFmtIO)
-import CabalFmt.Options
-import CabalFmt.Prelude
+import CabalGild (cabalGild)
+import CabalGild.Error (renderError)
+import CabalGild.Monad (runCabalGildIO)
+import CabalGild.Options
+import CabalGild.Prelude
 import Control.Applicative (many, (<**>))
 import qualified Data.ByteString as BS
 import Data.Traversable (for)
 import Data.Version (showVersion)
 import qualified Options.Applicative as O
-import PackageInfo_cabal_fmt (version)
+import PackageInfo_cabal_gild (version)
 import System.Exit (exitFailure)
 import System.FilePath (takeDirectory)
 import System.IO (hPutStrLn, stderr)
@@ -40,7 +40,7 @@ main = do
         mconcat
           [ O.fullDesc,
             O.progDesc "Reformat .cabal files",
-            O.header "cabal-fmt - .cabal file reformatter"
+            O.header "cabal-gild - .cabal file reformatter"
           ]
 
     versionP =
@@ -53,7 +53,7 @@ main' opts mfilepath input = do
   let filepath = fromMaybe "<stdin>" mfilepath
 
   -- process
-  res <- runCabalFmtIO (takeDirectory <$> mfilepath) opts (cabalFmt filepath input)
+  res <- runCabalGildIO (takeDirectory <$> mfilepath) opts (cabalGild filepath input)
 
   case res of
     Right output -> do

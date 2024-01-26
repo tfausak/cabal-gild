@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
 
-module CabalFmt.Test.Interval where
+module CabalGild.Test.Interval where
 
 import Control.Monad (replicateM)
 import Distribution.Parsec (eitherParsec)

@@ -4,17 +4,17 @@
 -- |
 -- License: GPL-3.0-or-later
 -- Copyright: Oleg Grenrus
-module CabalFmt.Refactoring.Fragments
+module CabalGild.Refactoring.Fragments
   ( refactoringFragments,
   )
 where
 
-import CabalFmt.Comments
-import CabalFmt.Monad
-import CabalFmt.Parser
-import CabalFmt.Pragma
-import CabalFmt.Prelude
-import CabalFmt.Refactoring.Type
+import CabalGild.Comments
+import CabalGild.Monad
+import CabalGild.Parser
+import CabalGild.Pragma
+import CabalGild.Prelude
+import CabalGild.Refactoring.Type
 import qualified Distribution.Fields as C
 import qualified Distribution.Fields.Field as C
 import qualified Distribution.Fields.Pretty as C
@@ -80,7 +80,7 @@ refactoringFragments field = do
     showSection (C.Name _ n) [] = show n
     showSection (C.Name _ n) args = show (fromUTF8BS n ++ " " ++ render (hsep (C.prettySectionArgs n args)))
 
-    parse :: (MonadCabalFmt r m) => [FieldPragma] -> m (Maybe FilePath)
+    parse :: (MonadCabalGild r m) => [FieldPragma] -> m (Maybe FilePath)
     parse = fmap asum . traverse go
       where
         go (PragmaFragment f) = return (Just f)

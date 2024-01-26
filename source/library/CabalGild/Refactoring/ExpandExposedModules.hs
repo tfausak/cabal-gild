@@ -5,15 +5,15 @@
 -- |
 -- License: GPL-3.0-or-later
 -- Copyright: Oleg Grenrus
-module CabalFmt.Refactoring.ExpandExposedModules
+module CabalGild.Refactoring.ExpandExposedModules
   ( refactoringExpandExposedModules,
   )
 where
 
-import CabalFmt.Monad
-import CabalFmt.Pragma
-import CabalFmt.Prelude
-import CabalFmt.Refactoring.Type
+import CabalGild.Monad
+import CabalGild.Pragma
+import CabalGild.Prelude
+import CabalGild.Refactoring.Type
 import qualified Distribution.Fields as C
 import qualified Distribution.ModuleName as C
 
@@ -39,7 +39,7 @@ refactoringExpandExposedModules (C.Field name@(C.Name (_, _, pragmas) _n) fls) =
     [] -> Nothing
     _ -> Just (C.Field name (newModules ++ fls))
   where
-    parse :: (MonadCabalFmt r m) => [FieldPragma] -> m [(FilePath, [C.ModuleName])]
+    parse :: (MonadCabalGild r m) => [FieldPragma] -> m [(FilePath, [C.ModuleName])]
     parse = fmap mconcat . traverse go
       where
         go (PragmaExpandModules fp mns) = return [(fp, mns)]

@@ -1,5 +1,5 @@
 packages: .
 tests: true
 
-package cabal-fmt
+package cabal-gild
   ghc-options: -Wall

@@ -1,12 +1,12 @@
-import qualified CabalFmt.Test.Golden
-import qualified CabalFmt.Test.Interval
+import qualified CabalGild.Test.Golden
+import qualified CabalGild.Test.Interval
 import qualified Test.Tasty
 
 main :: IO ()
 main =
   Test.Tasty.defaultMain $
     Test.Tasty.testGroup
-      "cabal-fmt"
-      [ CabalFmt.Test.Golden.tests,
-        CabalFmt.Test.Interval.tests
+      "cabal-gild"
+      [ CabalGild.Test.Golden.tests,
+        CabalGild.Test.Interval.tests
       ]

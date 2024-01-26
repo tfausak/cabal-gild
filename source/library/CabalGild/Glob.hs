@@ -1,6 +1,6 @@
-module CabalFmt.Glob where
+module CabalGild.Glob where
 
-import CabalFmt.Prelude
+import CabalGild.Prelude
 import Data.List (isInfixOf)
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified System.FilePath as Native (splitDirectories)

@@ -7,22 +7,22 @@
 --
 -- This is a demo application of how you can make Cabal-like
 -- file formatter.
-module CabalFmt (cabalFmt) where
+module CabalGild (cabalGild) where
 
-import CabalFmt.Comments
-import CabalFmt.Fields
-import CabalFmt.Fields.BuildDepends
-import CabalFmt.Fields.Extensions
-import CabalFmt.Fields.Modules
-import CabalFmt.Fields.SourceFiles
-import CabalFmt.Fields.TestedWith
-import CabalFmt.FreeText
-import CabalFmt.Monad
-import CabalFmt.Options
-import CabalFmt.Parser
-import CabalFmt.Pragma
-import CabalFmt.Prelude
-import CabalFmt.Refactoring
+import CabalGild.Comments
+import CabalGild.Fields
+import CabalGild.Fields.BuildDepends
+import CabalGild.Fields.Extensions
+import CabalGild.Fields.Modules
+import CabalGild.Fields.SourceFiles
+import CabalGild.Fields.TestedWith
+import CabalGild.FreeText
+import CabalGild.Monad
+import CabalGild.Options
+import CabalGild.Parser
+import CabalGild.Pragma
+import CabalGild.Prelude
+import CabalGild.Refactoring
 import Control.Monad (join)
 import Control.Monad.Reader (asks, local)
 import qualified Data.ByteString as BS
@@ -47,8 +47,8 @@ import qualified Text.PrettyPrint as PP
 -- Main
 -------------------------------------------------------------------------------
 
-cabalFmt :: (MonadCabalFmt r m) => FilePath -> BS.ByteString -> m String
-cabalFmt filepath contents = do
+cabalGild :: (MonadCabalGild r m) => FilePath -> BS.ByteString -> m String
+cabalGild filepath contents = do
   -- determine cabal-version
   cabalFile <- asks (optCabalFile . view options)
   csv <-
@@ -124,11 +124,11 @@ genericFromParsecFields f g = goMany
 -- Field prettyfying
 -------------------------------------------------------------------------------
 
-prettyFieldLines :: (MonadCabalFmt r m) => C.FieldName -> C.Position -> [C.FieldLine CommentsPragmas] -> m PP.Doc
+prettyFieldLines :: (MonadCabalGild r m) => C.FieldName -> C.Position -> [C.FieldLine CommentsPragmas] -> m PP.Doc
 prettyFieldLines fn pos fls =
   fromMaybe (C.prettyFieldLines fn fls) <$> knownField fn pos fls
 
-knownField :: (MonadCabalFmt r m) => C.FieldName -> C.Position -> [C.FieldLine CommentsPragmas] -> m (Maybe PP.Doc)
+knownField :: (MonadCabalGild r m) => C.FieldName -> C.Position -> [C.FieldLine CommentsPragmas] -> m (Maybe PP.Doc)
 knownField fn pos fls = do
   opts <- asks (view options)
   let v = optSpecVersion opts
@@ -158,12 +158,12 @@ fieldDescrs opts =
 -- Sections
 -------------------------------------------------------------------------------
 
-prettySectionArgs :: (MonadCabalFmt r m) => C.FieldName -> [C.SectionArg ann] -> m [PP.Doc]
+prettySectionArgs :: (MonadCabalGild r m) => C.FieldName -> [C.SectionArg ann] -> m [PP.Doc]
 prettySectionArgs x args =
   prettySectionArgs' x args `catchError` \_ ->
     return (C.prettySectionArgs x args)
 
-prettySectionArgs' :: (MonadCabalFmt r m) => a -> [C.SectionArg ann] -> m [PP.Doc]
+prettySectionArgs' :: (MonadCabalGild r m) => a -> [C.SectionArg ann] -> m [PP.Doc]
 prettySectionArgs' _ args = do
   c <- runParseResult "<args>" "" $ C.parseConditionConfVar (map (C.zeroPos <$) args)
   return [ppCondition c]

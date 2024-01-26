@@ -7,9 +7,9 @@
 -- |
 -- License: GPL-3.0-or-later
 -- Copyright: Oleg Grenrus
-module CabalFmt.Comments where
+module CabalGild.Comments where
 
-import CabalFmt.Prelude
+import CabalGild.Prelude
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Char8 as BS8
 import qualified Data.Map.Strict as Map

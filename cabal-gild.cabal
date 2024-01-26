@@ -1,5 +1,5 @@
 cabal-version:      2.2
-name:               cabal-fmt
+name:               cabal-gild
 version:            0.1.10
 synopsis:           Format .cabal files
 category:           Development
@@ -52,29 +52,29 @@ library
   if impl(ghc <8.10)
     build-depends: base-orphans ^>=0.9.1
 
-  -- cabal-fmt: expand src
+  -- cabal-gild: expand src
   exposed-modules:
-    CabalFmt
-    CabalFmt.Comments
-    CabalFmt.Error
-    CabalFmt.Fields
-    CabalFmt.Fields.BuildDepends
-    CabalFmt.Fields.Extensions
-    CabalFmt.Fields.Modules
-    CabalFmt.Fields.SourceFiles
-    CabalFmt.Fields.TestedWith
-    CabalFmt.FreeText
-    CabalFmt.Glob
-    CabalFmt.Monad
-    CabalFmt.Options
-    CabalFmt.Parser
-    CabalFmt.Pragma
-    CabalFmt.Prelude
-    CabalFmt.Refactoring
-    CabalFmt.Refactoring.ExpandExposedModules
-    CabalFmt.Refactoring.Fragments
-    CabalFmt.Refactoring.GlobFiles
-    CabalFmt.Refactoring.Type
+    CabalGild
+    CabalGild.Comments
+    CabalGild.Error
+    CabalGild.Fields
+    CabalGild.Fields.BuildDepends
+    CabalGild.Fields.Extensions
+    CabalGild.Fields.Modules
+    CabalGild.Fields.SourceFiles
+    CabalGild.Fields.TestedWith
+    CabalGild.FreeText
+    CabalGild.Glob
+    CabalGild.Monad
+    CabalGild.Options
+    CabalGild.Parser
+    CabalGild.Pragma
+    CabalGild.Prelude
+    CabalGild.Refactoring
+    CabalGild.Refactoring.ExpandExposedModules
+    CabalGild.Refactoring.Fragments
+    CabalGild.Refactoring.GlobFiles
+    CabalGild.Refactoring.Type
     VersionInterval
 
   other-extensions:
@@ -87,38 +87,38 @@ library
     RankNTypes
     ScopedTypeVariables
 
-executable cabal-fmt
+executable cabal-gild
   default-language: Haskell2010
   hs-source-dirs:   source/executable
   main-is:          Main.hs
-  other-modules:    PackageInfo_cabal_fmt
-  autogen-modules:  PackageInfo_cabal_fmt
+  other-modules:    PackageInfo_cabal_gild
+  autogen-modules:  PackageInfo_cabal_gild
 
   -- dependencies in library
   build-depends:
     , base
     , bytestring
-    , cabal-fmt
+    , cabal-gild
     , directory
     , filepath
 
   -- extra dependencies
   build-depends:    optparse-applicative >=0.14.3.0 && <0.19
 
-test-suite cabal-fmt-test-suite
+test-suite cabal-gild-test-suite
   type:             exitcode-stdio-1.0
   default-language: Haskell2010
   hs-source-dirs:   source/test-suite
   main-is:          Main.hs
   other-modules:
-    CabalFmt.Test.Golden
-    CabalFmt.Test.Interval
+    CabalGild.Test.Golden
+    CabalGild.Test.Interval
 
   -- dependencies in library
   build-depends:
     , base
     , bytestring
-    , cabal-fmt
+    , cabal-gild
     , Cabal-syntax
     , containers
 
@@ -135,6 +135,6 @@ test-suite cabal-fmt-test-suite
     , tasty-hunit
     , tasty-quickcheck
     , temporary
-    , cabal-fmt
+    , cabal-gild
 
 -- end file comment

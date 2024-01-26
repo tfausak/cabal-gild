@@ -4,16 +4,16 @@
 -- |
 -- License: GPL-3.0-or-later
 -- Copyright: Oleg Grenrus
-module CabalFmt.Fields.BuildDepends
+module CabalGild.Fields.BuildDepends
   ( buildDependsF,
     setupDependsF,
     buildToolDependsF,
   )
 where
 
-import CabalFmt.Fields
-import CabalFmt.Options
-import CabalFmt.Prelude
+import CabalGild.Fields
+import CabalGild.Options
+import CabalGild.Prelude
 import Data.List (dropWhileEnd)
 import qualified Distribution.CabalSpecVersion as C
 import qualified Distribution.FieldGrammar as C

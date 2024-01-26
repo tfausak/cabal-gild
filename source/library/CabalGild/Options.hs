@@ -1,7 +1,7 @@
 -- |
 -- License: GPL-3.0-or-later
 -- Copyright: Oleg Grenrus
-module CabalFmt.Options
+module CabalGild.Options
   ( Mode (..),
     Options (..),
     defaultOptions,

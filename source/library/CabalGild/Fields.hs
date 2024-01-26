@@ -9,7 +9,7 @@
 -- |
 -- License: GPL-3.0-or-later
 -- Copyright: Oleg Grenrus
-module CabalFmt.Fields
+module CabalGild.Fields
   ( FieldDescrs,
     fieldDescrLookup,
     coerceFieldDescrs,
@@ -17,7 +17,7 @@ module CabalFmt.Fields
   )
 where
 
-import CabalFmt.Prelude
+import CabalGild.Prelude
 import qualified Data.Map.Strict as Map
 import qualified Distribution.FieldGrammar as C
 import qualified Distribution.Fields.Field as C

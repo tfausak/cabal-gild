@@ -3,7 +3,7 @@
 -- |
 -- License: GPL-3.0-or-later
 -- Copyright: Oleg Grenrus
-module CabalFmt.Refactoring.Type
+module CabalGild.Refactoring.Type
   ( FieldRefactoring,
     CommentsPragmas,
     emptyCommentsPragmas,
@@ -11,9 +11,9 @@ module CabalFmt.Refactoring.Type
   )
 where
 
-import CabalFmt.Comments
-import CabalFmt.Monad
-import CabalFmt.Pragma
+import CabalGild.Comments
+import CabalGild.Monad
+import CabalGild.Pragma
 import qualified Distribution.Fields as C
 import qualified Distribution.Parsec as C
 
@@ -28,7 +28,7 @@ emptyCommentsPragmas = (C.zeroPos, mempty, mempty)
 
 type FieldRefactoring =
   forall r m.
-  (MonadCabalFmt r m) =>
+  (MonadCabalGild r m) =>
   (C.Field CommentsPragmas -> m (Maybe (C.Field CommentsPragmas)))
 
 -------------------------------------------------------------------------------
@@ -37,7 +37,7 @@ type FieldRefactoring =
 
 -- | A top-to-bottom rewrite of sections and fields
 rewriteFields ::
-  (MonadCabalFmt r m) =>
+  (MonadCabalGild r m) =>
   (C.Field CommentsPragmas -> m (Maybe (C.Field CommentsPragmas))) ->
   [C.Field CommentsPragmas] ->
   m [C.Field CommentsPragmas]

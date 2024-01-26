@@ -4,16 +4,16 @@
 -- |
 -- License: GPL-3.0-or-later
 -- Copyright: Oleg Grenrus
-module CabalFmt.Refactoring.GlobFiles
+module CabalGild.Refactoring.GlobFiles
   ( refactoringGlobFiles,
   )
 where
 
-import CabalFmt.Glob
-import CabalFmt.Monad
-import CabalFmt.Pragma
-import CabalFmt.Prelude
-import CabalFmt.Refactoring.Type
+import CabalGild.Glob
+import CabalGild.Monad
+import CabalGild.Pragma
+import CabalGild.Prelude
+import CabalGild.Refactoring.Type
 import qualified Distribution.Fields as C
 import qualified System.FilePath as Native
 import qualified System.FilePath.Posix as Posix
@@ -35,7 +35,7 @@ refactoringGlobFiles (C.Field name@(C.Name (_, _, pragmas) _n) fls) = do
     [] -> Nothing
     _ -> Just (C.Field name (newFiles ++ fls))
   where
-    parse :: (MonadCabalFmt r m) => [FieldPragma] -> m [Glob]
+    parse :: (MonadCabalGild r m) => [FieldPragma] -> m [Glob]
     parse = fmap mconcat . traverse go
       where
         go (PragmaGlobFiles g) = return [g]
@@ -43,7 +43,7 @@ refactoringGlobFiles (C.Field name@(C.Name (_, _, pragmas) _n) fls) = do
           displayWarning $ "Skipped pragma " ++ show p
           return []
 
-    match' :: (MonadCabalFmt r m) => Glob -> m [FilePath]
+    match' :: (MonadCabalGild r m) => Glob -> m [FilePath]
     match' g@(Glob dir _) = do
       files <- map (dir Native.</>) <$> getFiles dir
       return $ map toPosix $ filter (match g) files

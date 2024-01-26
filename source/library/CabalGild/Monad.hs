@@ -7,24 +7,24 @@
 -- |
 -- License: GPL-3.0-or-later
 -- Copyright: Oleg Grenrus
-module CabalFmt.Monad
+module CabalGild.Monad
   ( -- * Monad class
-    MonadCabalFmt (..),
+    MonadCabalGild (..),
     getFiles,
     Contents (..),
 
     -- * Pure implementation
-    CabalFmt,
-    runCabalFmt,
+    CabalGild,
+    runCabalGild,
 
     -- * IO implementation
-    CabalFmtIO,
-    runCabalFmtIO,
+    CabalGildIO,
+    runCabalGildIO,
   )
 where
 
-import CabalFmt.Error
-import CabalFmt.Options
+import CabalGild.Error
+import CabalGild.Options
 import Control.Exception
   ( IOException,
     catch,
@@ -51,12 +51,12 @@ import System.IO (hPutStrLn, stderr)
 -- Class
 -------------------------------------------------------------------------------
 
--- | @cabal-fmt@ interface.
+-- | @cabal-gild@ interface.
 --
 -- * reader of 'Options'
 -- * errors of 'Error'
 -- * can list directories
-class (HasOptions r, MonadReader r m, MonadError Error m) => MonadCabalFmt r m | m -> r where
+class (HasOptions r, MonadReader r m, MonadError Error m) => MonadCabalGild r m | m -> r where
   listDirectory :: FilePath -> m [FilePath]
   doesDirectoryExist :: FilePath -> m Bool
 
@@ -73,19 +73,19 @@ data Contents
 -- Pure
 -------------------------------------------------------------------------------
 
--- | Pure 'MonadCabalFmt'.
+-- | Pure 'MonadCabalGild'.
 --
 -- 'listDirectory' always return empty list.
-newtype CabalFmt a = CabalFmt {unCabalFmt :: ReaderT (Options, Map.Map FilePath BS.ByteString) (WriterT [String] (Either Error)) a}
+newtype CabalGild a = CabalGild {unCabalGild :: ReaderT (Options, Map.Map FilePath BS.ByteString) (WriterT [String] (Either Error)) a}
   deriving newtype (Functor, Applicative, Monad, MonadError Error)
 
-instance MonadReader Options CabalFmt where
-  ask = CabalFmt $ asks fst
+instance MonadReader Options CabalGild where
+  ask = CabalGild $ asks fst
 
-  local f (CabalFmt m) = CabalFmt $ local (first f) m
+  local f (CabalGild m) = CabalGild $ local (first f) m
 
-instance MonadCabalFmt Options CabalFmt where
-  listDirectory dir = CabalFmt $ do
+instance MonadCabalGild Options CabalGild where
+  listDirectory dir = CabalGild $ do
     files <- asks snd
     return $ mapMaybe f (Map.keys files)
     where
@@ -94,11 +94,11 @@ instance MonadCabalFmt Options CabalFmt where
         rest <- stripPrefix (dir ++ [pathSeparator]) fp
         return $ takeWhile (/= pathSeparator) rest
 
-  doesDirectoryExist dir = CabalFmt $ do
+  doesDirectoryExist dir = CabalGild $ do
     files <- asks snd
     return (any (isPrefixOf (dir ++ [pathSeparator])) (Map.keys files))
 
-  readFileBS p = CabalFmt $ do
+  readFileBS p = CabalGild $ do
     files <- asks snd
     return (maybe (IOError "doesn't exist") Contents $ Map.lookup p files)
 
@@ -106,14 +106,14 @@ instance MonadCabalFmt Options CabalFmt where
     werror <- asks optError
     if werror
       then throwError $ WarningError w
-      else CabalFmt $ tell [w]
+      else CabalGild $ tell [w]
 
-runCabalFmt ::
+runCabalGild ::
   Map.Map FilePath BS.ByteString ->
   Options ->
-  CabalFmt a ->
+  CabalGild a ->
   Either Error (a, [String])
-runCabalFmt files opts m = runWriterT (runReaderT (unCabalFmt m) (opts, files))
+runCabalGild files opts m = runWriterT (runReaderT (unCabalGild m) (opts, files))
 
 -------------------------------------------------------------------------------
 -- IO
@@ -128,17 +128,17 @@ data Options' = Options'
 instance HasOptions Options' where
   options f (Options' mfp o) = Options' mfp <$> f o
 
-newtype CabalFmtIO a = CabalFmtIO {unCabalFmtIO :: ReaderT Options' IO a}
+newtype CabalGildIO a = CabalGildIO {unCabalGildIO :: ReaderT Options' IO a}
   deriving newtype (Functor, Applicative, Monad, MonadIO, MonadReader Options')
 
-instance MonadError Error CabalFmtIO where
+instance MonadError Error CabalGildIO where
   throwError = liftIO . throwIO
-  catchError m h = CabalFmtIO $ ReaderT $ \r ->
-    catch (unCabalFmtIO' r m) (unCabalFmtIO' r . h)
+  catchError m h = CabalGildIO $ ReaderT $ \r ->
+    catch (unCabalGildIO' r m) (unCabalGildIO' r . h)
     where
-      unCabalFmtIO' r m' = runReaderT (unCabalFmtIO m') r
+      unCabalGildIO' r m' = runReaderT (unCabalGildIO m') r
 
-instance MonadCabalFmt Options' CabalFmtIO where
+instance MonadCabalGild Options' CabalGildIO where
   listDirectory p = do
     rd <- asks optRootDir
     case rd of
@@ -166,14 +166,14 @@ catchIOError m = catch (fmap Contents m) handler
     handler :: IOException -> IO Contents
     handler exc = return (IOError (displayException exc))
 
-runCabalFmtIO :: Maybe FilePath -> Options -> CabalFmtIO a -> IO (Either Error a)
-runCabalFmtIO mfp opts m = try $ runReaderT (unCabalFmtIO m) (Options' mfp opts)
+runCabalGildIO :: Maybe FilePath -> Options -> CabalGildIO a -> IO (Either Error a)
+runCabalGildIO mfp opts m = try $ runReaderT (unCabalGildIO m) (Options' mfp opts)
 
 -------------------------------------------------------------------------------
 -- Files
 -------------------------------------------------------------------------------
 
-getFiles :: (MonadCabalFmt r m) => FilePath -> m [FilePath]
+getFiles :: (MonadCabalGild r m) => FilePath -> m [FilePath]
 getFiles = getDirectoryContentsRecursive' check
   where
     check "dist-newstyle" = False
@@ -189,7 +189,7 @@ getFiles = getDirectoryContentsRecursive' check
 -- /Note:/ From @Cabal@'s "Distribution.Simple.Utils"
 getDirectoryContentsRecursive' ::
   forall m r.
-  (MonadCabalFmt r m) =>
+  (MonadCabalGild r m) =>
   -- | Check, whether to recurse
   (FilePath -> Bool) ->
   -- | top dir

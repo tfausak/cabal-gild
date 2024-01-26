@@ -4,14 +4,14 @@
 -- |
 -- License: GPL-3.0-or-later
 -- Copyright: Oleg Grenrus
-module CabalFmt.Fields.TestedWith
+module CabalGild.Fields.TestedWith
   ( testedWithF,
   )
 where
 
-import CabalFmt.Fields
-import CabalFmt.Options
-import CabalFmt.Prelude
+import CabalGild.Fields
+import CabalGild.Options
+import CabalGild.Prelude
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
 import qualified Distribution.CabalSpecVersion as C

@@ -3,7 +3,7 @@
 -- |
 -- License: GPL-3.0-or-later
 -- Copyright: Oleg Grenrus
-module CabalFmt.Fields.SourceFiles
+module CabalGild.Fields.SourceFiles
   ( sourceFilesF,
     fileFields,
   )
@@ -12,8 +12,8 @@ where
 -- Make sure we explicitly use Posix's splitDirectories
 -- when parsing glob syntax since only `/` is valid, and not '\\'
 
-import CabalFmt.Fields
-import CabalFmt.Prelude
+import CabalGild.Fields
+import CabalGild.Prelude
 import qualified Distribution.FieldGrammar as C
 import qualified Distribution.Fields as C
 import qualified Distribution.Parsec as C

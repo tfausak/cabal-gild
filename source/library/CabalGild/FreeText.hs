@@ -1,12 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module CabalFmt.FreeText
+module CabalGild.FreeText
   ( fieldlinesToFreeText,
     showFreeText,
   )
 where
 
-import CabalFmt.Prelude
+import CabalGild.Prelude
 import Data.List (foldl')
 import qualified Distribution.CabalSpecVersion as C
 import qualified Distribution.Fields.Field as C

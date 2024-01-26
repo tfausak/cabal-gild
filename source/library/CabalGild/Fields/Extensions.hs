@@ -3,14 +3,14 @@
 -- |
 -- License: GPL-3.0-or-later
 -- Copyright: Oleg Grenrus
-module CabalFmt.Fields.Extensions
+module CabalGild.Fields.Extensions
   ( otherExtensionsF,
     defaultExtensionsF,
   )
 where
 
-import CabalFmt.Fields
-import CabalFmt.Prelude
+import CabalGild.Fields
+import CabalGild.Prelude
 import qualified Distribution.FieldGrammar as C
 import qualified Distribution.Parsec as C
 import qualified Distribution.Pretty as C

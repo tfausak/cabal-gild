@@ -1,9 +1,9 @@
-module CabalFmt.Test.Golden (tests) where
+module CabalGild.Test.Golden (tests) where
 
-import CabalFmt (cabalFmt)
-import CabalFmt.Monad (runCabalFmt)
-import CabalFmt.Options (defaultOptions)
-import CabalFmt.Prelude
+import CabalGild (cabalGild)
+import CabalGild.Monad (runCabalGild)
+import CabalGild.Options (defaultOptions)
+import CabalGild.Prelude
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Char8 as BS8
 import qualified Data.Map as Map
@@ -44,11 +44,11 @@ goldenTest' n = goldenTest n readGolden makeTest cmp writeGolden
 
     makeTest = do
       contents <- BS.readFile inputPath
-      case runCabalFmt files defaultOptions $ cabalFmt inputPath contents of
+      case runCabalGild files defaultOptions $ cabalGild inputPath contents of
         Left err -> fail ("First pass: " ++ show err)
         Right (output', ws) -> do
           -- idempotent
-          case runCabalFmt files defaultOptions $ cabalFmt inputPath (toUTF8BS output') of
+          case runCabalGild files defaultOptions $ cabalGild inputPath (toUTF8BS output') of
             Left err -> fail ("Second pass: " ++ show err)
             Right (output'', _) -> do
               unless (output' == output'') $ do
@@ -63,8 +63,8 @@ goldenTest' n = goldenTest n readGolden makeTest cmp writeGolden
     cmp a b
       | a == b = return Nothing
       | otherwise =
-          withSystemTempFile "cabal-fmt-test.txt" $ \fpA hdlA ->
-            withSystemTempFile "cabal-fmt-test.txt" $ \fpB hdlB -> do
+          withSystemTempFile "cabal-gild-test.txt" $ \fpA hdlA ->
+            withSystemTempFile "cabal-gild-test.txt" $ \fpB hdlB -> do
               BS.hPutStr hdlA a
               BS.hPutStr hdlB b
               hFlush hdlA

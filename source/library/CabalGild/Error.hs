@@ -1,7 +1,7 @@
 -- |
 -- License: GPL-3.0-or-later
 -- Copyright: Oleg Grenrus
-module CabalFmt.Error (Error (..), renderError) where
+module CabalGild.Error (Error (..), renderError) where
 
 import Control.Exception (Exception)
 import qualified Data.ByteString as BS

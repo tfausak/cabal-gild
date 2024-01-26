@@ -5,7 +5,7 @@
 -- Copyright: Oleg Grenrus
 --
 -- Fat-prelude.
-module CabalFmt.Prelude
+module CabalGild.Prelude
   ( -- * Control.Arrow
     (&&&),
 
