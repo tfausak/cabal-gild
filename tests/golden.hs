@@ -16,23 +16,26 @@ import Test.Tasty.Golden.Advanced (goldenTest)
 
 main :: IO ()
 main =
-  defaultMain $
-    testGroup
-      "tests"
-      [ goldenTest' "cabal-fmt",
-        goldenTest' "Cabal",
-        goldenTest' "Cabal-notab",
-        goldenTest' "simple-example",
-        goldenTest' "tree-diff",
-        goldenTest' "fragment-missing",
-        goldenTest' "fragment-empty",
-        goldenTest' "fragment-wrong-field",
-        goldenTest' "fragment-wrong-type",
-        goldenTest' "fragment-multiple",
-        goldenTest' "fragment-section",
-        goldenTest' "issue69",
-        goldenTest' "issue29"
-      ]
+  defaultMain tests
+
+tests :: TestTree
+tests =
+  testGroup
+    "tests"
+    [ goldenTest' "cabal-fmt",
+      goldenTest' "Cabal",
+      goldenTest' "Cabal-notab",
+      goldenTest' "simple-example",
+      goldenTest' "tree-diff",
+      goldenTest' "fragment-missing",
+      goldenTest' "fragment-empty",
+      goldenTest' "fragment-wrong-field",
+      goldenTest' "fragment-wrong-type",
+      goldenTest' "fragment-multiple",
+      goldenTest' "fragment-section",
+      goldenTest' "issue69",
+      goldenTest' "issue29"
+    ]
 
 goldenTest' :: String -> TestTree
 goldenTest' n = goldenTest n readGolden makeTest cmp writeGolden
