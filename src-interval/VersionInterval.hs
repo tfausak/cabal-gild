@@ -42,7 +42,6 @@ module VersionInterval
   )
 where
 
-import Control.Applicative (liftA2)
 import Control.Monad (join)
 import Data.List (sortOn)
 import Data.List.NonEmpty (NonEmpty (..), cons)
@@ -302,7 +301,7 @@ validVersionIntervals (VersionIntervals intervals) =
           UB uv -> case l' of LB lv -> uv == lv
 
 pairs :: [a] -> [(a, a)]
-pairs xs = zip xs (tail xs)
+pairs xs = zip xs (drop 1 xs)
 
 validLB :: LB -> Bool
 validLB (LB v) = validVersion v
