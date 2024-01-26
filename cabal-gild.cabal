@@ -9,7 +9,7 @@ description:
   Tuned for Oleg's preference, but has some knobs still.
 
 license:            GPL-3.0-or-later AND BSD-3-Clause
-license-file:       LICENSE
+license-file:       LICENSE.txt
 author:             Oleg Grenrus <oleg.grenrus@iki.fi>
 maintainer:         Oleg Grenrus <oleg.grenrus@iki.fi>
 tested-with:
