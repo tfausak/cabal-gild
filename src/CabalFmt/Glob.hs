@@ -1,25 +1,23 @@
 module CabalFmt.Glob where
 
-import Data.List          (isInfixOf)
+import CabalFmt.Prelude
+import Data.List (isInfixOf)
 import Data.List.NonEmpty (NonEmpty (..))
-
-import qualified System.FilePath       as Native (splitDirectories)
+import qualified System.FilePath as Native (splitDirectories)
 import qualified System.FilePath.Posix as Posix (splitDirectories)
 
-import CabalFmt.Prelude
-
 data Glob = Glob FilePath [GlobPiece]
-  deriving Show
+  deriving (Show)
 
 data GlobPiece
-    = GlobStarStar
-    | GlobPiece (NonEmpty GlobChar)
-  deriving Show
+  = GlobStarStar
+  | GlobPiece (NonEmpty GlobChar)
+  deriving (Show)
 
 data GlobChar
-    = GlobStar
-    | GlobChar Char
-  deriving Show
+  = GlobStar
+  | GlobChar Char
+  deriving (Show)
 
 -- | Match glob
 --
@@ -27,45 +25,45 @@ data GlobChar
 --
 -- >>> map (match g) ["foo", "cbits/header.h", "cbits/source.c", "cbits/dir/source.c"]
 -- [False,False,True,True]
---
 match :: Glob -> FilePath -> Bool
-match (Glob g1 gs0) fp = go0 (Native.splitDirectories fp) where
-    go0 []     = False
-    go0 (p:ps) = p == g1 && go ps gs0
+match (Glob g1 gs0) fp = go0 (Native.splitDirectories fp)
+  where
+    go0 [] = False
+    go0 (p : ps) = p == g1 && go ps gs0
 
     go :: [FilePath] -> [GlobPiece] -> Bool
-    go []     []                  = True
-    go []     (_:_)               = False
-    go (_:_)  []                  = False
-    go (s:ss) (GlobStarStar : gs) = go (s:ss) gs || go ss (GlobStarStar : gs)
-    go (s:ss) (GlobPiece cs : gs) = matches s (toList cs) && go ss gs
+    go [] [] = True
+    go [] (_ : _) = False
+    go (_ : _) [] = False
+    go (s : ss) (GlobStarStar : gs) = go (s : ss) gs || go ss (GlobStarStar : gs)
+    go (s : ss) (GlobPiece cs : gs) = matches s (toList cs) && go ss gs
 
     matches :: FilePath -> [GlobChar] -> Bool
-    matches []     []                = True
-    matches (_:_)  []                = False
-    matches []     (_:_)             = False
-    matches (x:xs) (GlobStar : cs)   = matches (x:xs) cs || matches xs (GlobStar : cs)
-    matches (x:xs) (GlobChar c : cs) = x == c && matches xs cs
+    matches [] [] = True
+    matches (_ : _) [] = False
+    matches [] (_ : _) = False
+    matches (x : xs) (GlobStar : cs) = matches (x : xs) cs || matches xs (GlobStar : cs)
+    matches (x : xs) (GlobChar c : cs) = x == c && matches xs cs
 
 parseGlob :: String -> Either String Glob
 parseGlob input = case Posix.splitDirectories input of
-    []     -> Left "empty path"
-    (x:xs) -> do
-        p <- parseFirstPiece x
-        ps <- traverse parsePiece xs
-        return (Glob p ps)
+  [] -> Left "empty path"
+  (x : xs) -> do
+    p <- parseFirstPiece x
+    ps <- traverse parsePiece xs
+    return (Glob p ps)
   where
     parseFirstPiece :: String -> Either String FilePath
-    parseFirstPiece ""                    = Left "empty path segment"
+    parseFirstPiece "" = Left "empty path segment"
     parseFirstPiece s | "*" `isInfixOf` s = Left "wild card in first path segment"
-    parseFirstPiece s                     = Right s
+    parseFirstPiece s = Right s
 
     parsePiece :: String -> Either String GlobPiece
-    parsePiece ""                     = Left "empty path segment"
-    parsePiece "**"                   = Right GlobStarStar
+    parsePiece "" = Left "empty path segment"
+    parsePiece "**" = Right GlobStarStar
     parsePiece s | "**" `isInfixOf` s = Left $ "** inside path segment: " ++ s
-    parsePiece (c:cs)                 = Right (GlobPiece (parseChar c :| map parseChar cs))
+    parsePiece (c : cs) = Right (GlobPiece (parseChar c :| map parseChar cs))
 
     parseChar :: Char -> GlobChar
     parseChar '*' = GlobStar
-    parseChar c   = GlobChar c
+    parseChar c = GlobChar c

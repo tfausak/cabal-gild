@@ -1,37 +1,35 @@
 {-# LANGUAGE OverloadedStrings #-}
-module CabalFmt.FreeText (
-    fieldlinesToFreeText,
+
+module CabalFmt.FreeText
+  ( fieldlinesToFreeText,
     showFreeText,
-) where
-
-import Data.List (foldl')
-
-import qualified Distribution.CabalSpecVersion as C
-import qualified Distribution.Fields.Field     as C
-import qualified Distribution.Parsec           as C
-import qualified Distribution.Parsec.Position  as C
-import qualified Distribution.Pretty           as C
-import qualified Distribution.Utils.String     as C (trim)
-import qualified Text.PrettyPrint              as PP
+  )
+where
 
 import CabalFmt.Prelude
+import Data.List (foldl')
+import qualified Distribution.CabalSpecVersion as C
+import qualified Distribution.Fields.Field as C
+import qualified Distribution.Parsec as C
+import qualified Distribution.Parsec.Position as C
+import qualified Distribution.Pretty as C
+import qualified Distribution.Utils.String as C (trim)
+import qualified Text.PrettyPrint as PP
 
 showFreeText :: C.CabalSpecVersion -> String -> PP.Doc
 showFreeText v
-    | v >= C.CabalSpecV3_0
-    = C.showFreeTextV3
-
-    | otherwise
-    = C.showFreeText
+  | v >= C.CabalSpecV3_0 =
+      C.showFreeTextV3
+  | otherwise =
+      C.showFreeText
 
 -- This should perfectly be exported from Cabal-syntax
 fieldlinesToFreeText :: C.CabalSpecVersion -> C.Position -> [C.FieldLine C.Position] -> String
 fieldlinesToFreeText v
-    | v >= C.CabalSpecV3_0
-    = fieldlinesToFreeText3
-
-    | otherwise
-    = const fieldlinesToFreeText2
+  | v >= C.CabalSpecV3_0 =
+      fieldlinesToFreeText3
+  | otherwise =
+      const fieldlinesToFreeText2
 
 fieldlinesToFreeText2 :: [C.FieldLine C.Position] -> String
 fieldlinesToFreeText2 [C.FieldLine _ "."] = "."
@@ -68,10 +66,10 @@ fieldlinesToFreeText3 pos (C.FieldLine pos1 bs1 : fls2@(C.FieldLine pos2 _ : _))
 
     mk :: Int -> C.Position -> C.FieldLine C.Position -> (C.Position, String)
     mk col p (C.FieldLine q bs) =
-      ( q
-      -- in Cabal-syntax there is no upper limit, i.e. no min
-      -- we squash multiple empty lines to one
-      , replicate (min 2 newlines) '\n'
+      ( q,
+        -- in Cabal-syntax there is no upper limit, i.e. no min
+        -- we squash multiple empty lines to one
+        replicate (min 2 newlines) '\n'
           ++ replicate indent ' '
           ++ fromUTF8BS bs
       )
