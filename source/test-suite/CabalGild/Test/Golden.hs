@@ -50,9 +50,9 @@ goldenTest' n =
             $ cabalGild inputPath input
         putStrLn $ ">>> output = " <> show output
         putStrLn $ ">>> ws = " <> show ws
-        expected <- readFile goldenPath
+        expected <- lines <$> readFile goldenPath
         putStrLn $ ">>> expected = " <> show expected
-        let actual = unlines (fmap ("-- " <>) ws) <> output
+        let actual = fmap ("-- " <>) ws <> lines output
         putStrLn $ ">>> actual = " <> show actual
         actual HUnit.@?= expected
     ]
