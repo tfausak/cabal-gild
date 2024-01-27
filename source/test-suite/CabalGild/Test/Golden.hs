@@ -7,8 +7,8 @@ import CabalGild.Prelude
 import qualified Control.Exception as Exception
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Char8 as BS8
-import qualified Data.ByteString.Lazy as LBS
 import qualified Data.Map as Map
+import Distribution.Utils.Generic (toUTF8LBS)
 import System.FilePath ((-<.>), (</>))
 import System.IO (hClose, hFlush)
 import System.IO.Temp (withSystemTempFile)
@@ -48,9 +48,10 @@ goldenTest' n =
               Left err -> Exception.throwIO err
               Right (output, ws) ->
                 Golden.createDirectoriesAndWriteFile outputPath
-                  . LBS.fromStrict
-                  . toUTF8BS
-                  $ unlines (fmap ("-- " <>) ws) <> output
+                  . toUTF8LBS
+                  . unlines
+                  $ fmap ("-- " <>) ws
+                    <> lines output
     ]
   where
     goldenPath = "fixtures" </> n -<.> "format"
