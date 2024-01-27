@@ -15,7 +15,6 @@
 module VersionInterval
   ( -- * Version intervals
     VersionIntervals,
-    unVersionIntervals,
 
     -- * Conversions
     toVersionIntervals,
@@ -83,10 +82,6 @@ singleton x = x :| []
 -- Slighly simplifying, 'normalizeVersionRange' shouldn't destroy @^>=@ in version range expressions.
 newtype VersionIntervals = VersionIntervals [VersionInterval]
   deriving (Eq, Show)
-
--- | Inspect the list of version intervals.
-unVersionIntervals :: VersionIntervals -> [VersionInterval]
-unVersionIntervals (VersionIntervals is) = is
 
 -- | Version interval.
 --

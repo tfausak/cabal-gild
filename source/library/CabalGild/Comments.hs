@@ -128,12 +128,6 @@ data FieldPath
   | Nth Int FieldPath -- nth field
   deriving (Eq, Ord, Show)
 
-fieldPathSize :: FieldPath -> Int
-fieldPathSize = go 0
-  where
-    go !acc End = acc
-    go !acc (Nth _ fp) = go (succ acc) fp
-
 fieldUniverseN :: [C.Field ann] -> [(FieldPath, C.Field ann)]
 fieldUniverseN = concat . zipWith g [0 ..]
   where
