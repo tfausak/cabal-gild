@@ -49,9 +49,10 @@ goldenTest' n =
               Right (output, ws) ->
                 Golden.createDirectoriesAndWriteFile outputPath
                   . toUTF8LBS
-                  . unlines
+                  . intercalate "\n"
                   $ fmap ("-- " <>) ws
                     <> lines output
+                    <> [""]
     ]
   where
     goldenPath = "fixtures" </> n -<.> "format"
