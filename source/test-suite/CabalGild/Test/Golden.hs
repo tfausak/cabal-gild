@@ -41,13 +41,19 @@ goldenTest' n =
     n
     [ goldenTest "old" readGolden makeTest cmp writeGolden,
       HUnit.testCase "new" $ do
+        putStrLn $ ">>> n = " <> show n
         input <- BS.readFile inputPath
+        putStrLn $ ">>> input = " <> show input
         (output, ws) <-
           either Exception.throwIO pure
             . runCabalGild files defaultOptions
             $ cabalGild inputPath input
-        expected <- lines <$> readFile goldenPath
-        let actual = fmap ("-- " <>) ws <> lines output
+        putStrLn $ ">>> output = " <> show output
+        putStrLn $ ">>> ws = " <> show ws
+        expected <- readFile goldenPath
+        putStrLn $ ">>> expected = " <> show expected
+        let actual = unlines (fmap ("-- " <>) ws) <> output
+        putStrLn $ ">>> actual = " <> show actual
         actual HUnit.@?= expected
     ]
   where
