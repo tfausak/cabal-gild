@@ -4,14 +4,17 @@ import CabalGild (cabalGild)
 import CabalGild.Monad (runCabalGild)
 import CabalGild.Options (defaultOptions)
 import CabalGild.Prelude
+import qualified Control.Exception as Exception
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Char8 as BS8
+import qualified Data.ByteString.Lazy as LBS
 import qualified Data.Map as Map
 import System.FilePath ((-<.>), (</>))
 import System.IO (hClose, hFlush)
 import System.IO.Temp (withSystemTempFile)
 import System.Process (readProcessWithExitCode)
 import Test.Tasty (TestTree, testGroup)
+import qualified Test.Tasty.Golden as Golden
 import Test.Tasty.Golden.Advanced (goldenTest)
 
 tests :: TestTree
@@ -34,7 +37,21 @@ tests =
     ]
 
 goldenTest' :: String -> TestTree
-goldenTest' n = goldenTest n readGolden makeTest cmp writeGolden
+goldenTest' n =
+  testGroup
+    n
+    [ goldenTest "old" readGolden makeTest cmp writeGolden,
+      let outputPath = "tmp" </> "cabal-gild-" <> n -<.> "txt"
+       in Golden.goldenVsFile "new" goldenPath outputPath $ do
+            contents <- BS.readFile inputPath
+            case runCabalGild files defaultOptions $ cabalGild inputPath contents of
+              Left err -> Exception.throwIO err
+              Right (output, ws) ->
+                Golden.createDirectoriesAndWriteFile outputPath
+                  . LBS.fromStrict
+                  . toUTF8BS
+                  $ unlines (fmap ("-- " <>) ws) <> output
+    ]
   where
     goldenPath = "fixtures" </> n -<.> "format"
     inputPath = "fixtures" </> n -<.> "cabal"
