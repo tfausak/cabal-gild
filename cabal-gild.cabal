@@ -136,6 +136,5 @@ test-suite cabal-gild-test-suite
     , tasty-quickcheck
     , temporary
     , cabal-gild
-    , text
 
 -- end file comment
