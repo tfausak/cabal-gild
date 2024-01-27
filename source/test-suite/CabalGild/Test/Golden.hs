@@ -8,14 +8,13 @@ import qualified Control.Exception as Exception
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Char8 as BS8
 import qualified Data.Map as Map
-import Distribution.Utils.Generic (toUTF8LBS)
 import System.FilePath ((-<.>), (</>))
 import System.IO (hClose, hFlush)
 import System.IO.Temp (withSystemTempFile)
 import System.Process (readProcessWithExitCode)
 import Test.Tasty (TestTree, testGroup)
-import qualified Test.Tasty.Golden as Golden
 import Test.Tasty.Golden.Advanced (goldenTest)
+import qualified Test.Tasty.HUnit as HUnit
 
 tests :: TestTree
 tests =
@@ -41,18 +40,15 @@ goldenTest' n =
   testGroup
     n
     [ goldenTest "old" readGolden makeTest cmp writeGolden,
-      let outputPath = "tmp" </> "cabal-gild-" <> n -<.> "txt"
-       in Golden.goldenVsFile "new" goldenPath outputPath $ do
-            contents <- BS.readFile inputPath
-            case runCabalGild files defaultOptions $ cabalGild inputPath contents of
-              Left err -> Exception.throwIO err
-              Right (output, ws) ->
-                Golden.createDirectoriesAndWriteFile outputPath
-                  . toUTF8LBS
-                  . intercalate "\n"
-                  $ fmap ("-- " <>) ws
-                    <> lines output
-                    <> [""]
+      HUnit.testCase "new" $ do
+        input <- BS.readFile inputPath
+        (output, ws) <-
+          either Exception.throwIO pure
+            . runCabalGild files defaultOptions
+            $ cabalGild inputPath input
+        expected <- lines <$> readFile goldenPath
+        let actual = fmap ("-- " <>) ws <> lines output
+        actual HUnit.@?= expected
     ]
   where
     goldenPath = "fixtures" </> n -<.> "format"
