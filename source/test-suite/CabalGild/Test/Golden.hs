@@ -122,4 +122,4 @@ files =
       p ("cbits" </> "sub" </> "source3.c") "..."
     ]
   where
-    p x y = (x, BS.filter (/= 0x0d) . Encoding.encodeUtf8 $ Text.pack y)
+    p x y = (x, Encoding.encodeUtf8 $ Text.pack y)
