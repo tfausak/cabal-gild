@@ -75,9 +75,9 @@ parsePragma bs = case dropPrefix bs of
       GlobalPragma . PragmaOptIndent <$> C.integral
 
     fragment :: C.ParsecParser Pragma
-    fragment = do
-      C.spaces
-      FieldPragma . PragmaFragment <$> C.parsecToken
+    fragment =
+      FieldPragma . PragmaFragment
+        <$> C.between C.spaces C.spaces C.parsecToken
 
     globFiles :: C.ParsecParser Pragma
     globFiles = do
