@@ -7,6 +7,8 @@ import CabalGild.Prelude
 import qualified Control.Exception as Exception
 import qualified Data.ByteString as BS
 import qualified Data.Map as Map
+import qualified Data.Text as Text
+import qualified Data.Text.Encoding as Encoding
 import System.FilePath ((-<.>), (</>))
 import System.IO (hClose, hFlush)
 import System.IO.Temp (withSystemTempFile)
@@ -120,4 +122,4 @@ files =
       p ("cbits" </> "sub" </> "source3.c") "..."
     ]
   where
-    p x y = (x, toUTF8BS y)
+    p x y = (x, Encoding.encodeUtf8 $ Text.pack y)
