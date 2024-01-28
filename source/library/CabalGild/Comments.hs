@@ -101,7 +101,7 @@ overAnn f h = go' id
 -------------------------------------------------------------------------------
 
 extractComments :: BS.ByteString -> [(Int, Comments)]
-extractComments = go . zip [1 ..] . map (BS.dropWhile isSpace8) . BS8.lines
+extractComments = go . zip [1 ..] . map (BS.dropWhileEnd isCR . BS.dropWhile isSpace8) . BS8.lines
   where
     go :: [(Int, BS.ByteString)] -> [(Int, Comments)]
     go [] = []
@@ -113,6 +113,8 @@ extractComments = go . zip [1 ..] . map (BS.dropWhile isSpace8) . BS8.lines
     (f .|| g) x = f x || g x
 
     isSpace8 w = w == 9 || w == 32
+
+    isCR = (==) 13
 
     isComment :: BS.ByteString -> Bool
     isComment = BS.isPrefixOf "--"
