@@ -9,11 +9,7 @@ import qualified Data.ByteString as BS
 import qualified Data.ByteString.Char8 as BS8
 import qualified Data.Map as Map
 import System.FilePath ((-<.>), (</>))
-import System.IO (hClose, hFlush)
-import System.IO.Temp (withSystemTempFile)
-import System.Process (readProcessWithExitCode)
 import Test.Tasty (TestTree, testGroup)
-import Test.Tasty.Golden.Advanced (goldenTest)
 import qualified Test.Tasty.HUnit as HUnit
 
 tests :: TestTree
@@ -39,8 +35,7 @@ goldenTest' :: String -> TestTree
 goldenTest' n =
   testGroup
     n
-    [ goldenTest "old" readGolden makeTest cmp writeGolden,
-      HUnit.testCase "new" $ do
+    [ HUnit.testCase "successfully formats" $ do
         input <- BS.readFile inputPath
         (output, warnings) <-
           either Exception.throwIO pure
@@ -49,7 +44,7 @@ goldenTest' n =
         expected <- readFile goldenPath
         let actual = unlines (fmap ("-- " <>) warnings) <> output
         actual HUnit.@?= expected,
-      HUnit.testCase "idempotent" $ do
+      HUnit.testCase "round trips" $ do
         input <- BS.readFile inputPath
         (expected, _) <-
           either Exception.throwIO pure
@@ -65,51 +60,6 @@ goldenTest' n =
   where
     goldenPath = "fixtures" </> n -<.> "format"
     inputPath = "fixtures" </> n -<.> "cabal"
-
-    readGolden = BS.readFile goldenPath
-    writeGolden = BS.writeFile goldenPath
-
-    makeTest = do
-      contents <- BS.readFile inputPath
-      case runCabalGild files defaultOptions $ cabalGild inputPath contents of
-        Left err -> fail ("First pass: " ++ show err)
-        Right (output', ws) -> do
-          -- idempotent
-          case runCabalGild files defaultOptions $ cabalGild inputPath (toUTF8BS output') of
-            Left err -> fail ("Second pass: " ++ show err)
-            Right (output'', _) -> do
-              unless (output' == output'') $ do
-                putStrLn "<<<<<<<"
-                putStr output'
-                putStrLn "======="
-                putStr output''
-                putStrLn ">>>>>>>"
-                fail "Output not idempotent"
-              return (toUTF8BS $ unlines (map ("-- " ++) ws) ++ output')
-
-    cmp a b
-      | a == b = return Nothing
-      | otherwise =
-          withSystemTempFile "cabal-gild-test.txt" $ \fpA hdlA ->
-            withSystemTempFile "cabal-gild-test.txt" $ \fpB hdlB -> do
-              BS.hPutStr hdlA a
-              BS.hPutStr hdlB b
-              hFlush hdlA
-              hFlush hdlB
-              hClose hdlA
-              hClose hdlB
-
-              Just . postProcess <$> readProcess' "diff" ["-u", fpA, fpB] ""
-
-    postProcess :: String -> String
-    postProcess = unlines . (["======"] ++) . map (concatMap char) . (++ ["======"]) . lines
-      where
-        char '\r' = "{CR}"
-        char c = [c]
-
-    readProcess' proc args input = do
-      (_, out, _) <- readProcessWithExitCode proc args input
-      return out
 
 files :: Map.Map FilePath BS.ByteString
 files =
