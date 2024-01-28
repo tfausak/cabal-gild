@@ -116,6 +116,7 @@ extractComments = go . zip [1 ..] . map (BS.dropWhileEnd isCR . BS.dropWhile isS
     isSpace8 :: (Eq a, Num a) => a -> Bool
     isSpace8 w = w == 9 || w == 32
 
+    isCR :: (Eq a, Num a) => a -> Bool
     isCR = (==) 13
 
     isComment :: BS.ByteString -> Bool

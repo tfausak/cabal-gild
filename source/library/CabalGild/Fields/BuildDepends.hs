@@ -114,6 +114,7 @@ prettyMany Options {optSpecVersion = v, optTabular = tab} deps' =
       where
         vr' = normaliseVersionRange' vr
 
+        comma :: String
         comma
           | isFirst, v < C.CabalSpecV2_2 = " "
           | otherwise = ","
