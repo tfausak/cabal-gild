@@ -47,6 +47,8 @@ common executable
 library
   import:          library
   hs-source-dirs:  source/library
+  other-modules:   PackageInfo_cabal_gild
+  autogen-modules: PackageInfo_cabal_gild
 
   -- GHC boot libraries
   build-depends:
@@ -56,6 +58,7 @@ library
     , directory ^>=1.3.8.1
     , filepath ^>=1.4.100.4
     , mtl ^>=2.3.1
+    , optparse-applicative ^>=0.18.1.0
     , parsec ^>=3.1.17.0
     , pretty ^>=1.1.3.6
 
@@ -72,6 +75,7 @@ library
     CabalGild.Fields.TestedWith
     CabalGild.FreeText
     CabalGild.Glob
+    CabalGild.Main
     CabalGild.Monad
     CabalGild.Options
     CabalGild.Parser
@@ -85,15 +89,9 @@ library
     VersionInterval
 
 executable cabal-gild
-  import:          executable
-  hs-source-dirs:  source/executable
-  main-is:         Main.hs
-  other-modules:   PackageInfo_cabal_gild
-  autogen-modules: PackageInfo_cabal_gild
-  build-depends:
-    , bytestring
-    , filepath
-    , optparse-applicative ^>=0.18.1.0
+  import:         executable
+  hs-source-dirs: source/executable
+  main-is:        Main.hs
 
 test-suite cabal-gild-test-suite
   import:         executable
