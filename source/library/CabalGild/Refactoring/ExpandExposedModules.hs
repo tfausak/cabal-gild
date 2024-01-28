@@ -42,6 +42,7 @@ refactoringExpandExposedModules (C.Field name@(C.Name (_, _, pragmas) _n) fls) =
     parse :: (MonadCabalGild r m) => [FieldPragma] -> m [(FilePath, [C.ModuleName])]
     parse = fmap mconcat . traverse go
       where
+        go :: (MonadCabalGild r m) => FieldPragma -> m [(FilePath, [C.ModuleName])]
         go (PragmaExpandModules fp mns) = return [(fp, mns)]
         go p = do
           displayWarning $ "Skipped pragma " ++ show p

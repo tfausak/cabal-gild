@@ -136,6 +136,7 @@ instance MonadError Error CabalGildIO where
   catchError m h = CabalGildIO $ ReaderT $ \r ->
     catch (unCabalGildIO' r m) (unCabalGildIO' r . h)
     where
+      unCabalGildIO' :: Options' -> CabalGildIO a -> IO a
       unCabalGildIO' r m' = runReaderT (unCabalGildIO m') r
 
 instance MonadCabalGild Options' CabalGildIO where
@@ -204,6 +205,7 @@ getDirectoryContentsRecursive' ignore' topdir = recurseDirectories [""]
       files' <- recurseDirectories (dirs' ++ dirs)
       return (files ++ files')
       where
+        collect :: [FilePath] -> [FilePath] -> [[Char]] -> m ([FilePath], [FilePath])
         collect files dirs' [] =
           return
             ( reverse files,

@@ -55,6 +55,7 @@ renderParseError filepath contents errors warnings =
     rows :: [(String, Int, Bool)]
     rows = zipWith f (BS8.lines contents) [1 ..]
       where
+        f :: BS8.ByteString -> b -> (String, b, Bool)
         f bs i = let s = C.fromUTF8BS bs in (s, i, isEmptyOrComment s)
 
     rowsZipper = listToZipper rows

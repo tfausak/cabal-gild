@@ -32,10 +32,9 @@ common library
     -Weverything -Wno-all-missed-specialisations -Wno-implicit-prelude
     -Wno-missed-specialisations -Wno-missing-deriving-strategies
     -Wno-missing-export-lists -Wno-missing-import-lists
-    -Wno-missing-kind-signatures -Wno-missing-local-signatures
-    -Wno-missing-role-annotations -Wno-missing-safe-haskell-mode
-    -Wno-monomorphism-restriction -Wno-prepositive-qualified-module
-    -Wno-safe -Wno-unsafe
+    -Wno-missing-kind-signatures -Wno-missing-role-annotations
+    -Wno-missing-safe-haskell-mode -Wno-monomorphism-restriction
+    -Wno-prepositive-qualified-module -Wno-safe -Wno-unsafe
 
   if flag(pedantic)
     ghc-options: -Werror

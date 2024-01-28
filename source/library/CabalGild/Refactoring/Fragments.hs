@@ -83,5 +83,6 @@ refactoringFragments field = do
     parse :: (MonadCabalGild r m) => [FieldPragma] -> m (Maybe FilePath)
     parse = fmap asum . traverse go
       where
+        go :: (Monad m) => FieldPragma -> m (Maybe FilePath)
         go (PragmaFragment f) = return (Just f)
         go _ = return Nothing

@@ -64,7 +64,8 @@ cabalGild filepath contents = do
   let (inputFieldsC, endComments) = attachComments contents inputFields'
 
   -- parse pragmas
-  let parse (pos, c) = case parsePragmas c of (ws, ps) -> traverse_ displayWarning ws $> (pos, c, ps)
+  let parse :: (MonadCabalGild r f) => (a, Comments) -> f (a, Comments, [Pragma])
+      parse (pos, c) = case parsePragmas c of (ws, ps) -> traverse_ displayWarning ws $> (pos, c, ps)
   inputFieldsP' <- traverse (traverse parse) inputFieldsC
   endCommentsPragmas <- case parsePragmas endComments of
     (ws, ps) -> traverse_ displayWarning ws $> ps

@@ -110,8 +110,10 @@ extractComments = go . zip [1 ..] . map (BS.dropWhileEnd isCR . BS.dropWhile isS
           (h, t) -> (n, Comments $ bs : map snd h) : go t
       | otherwise = go rest
 
+    (.||) :: (t -> Bool) -> (t -> Bool) -> t -> Bool
     (f .|| g) x = f x || g x
 
+    isSpace8 :: (Eq a, Num a) => a -> Bool
     isSpace8 w = w == 9 || w == 32
 
     isCR = (==) 13
@@ -132,11 +134,13 @@ data FieldPath
 fieldUniverseN :: [C.Field ann] -> [(FieldPath, C.Field ann)]
 fieldUniverseN = concat . zipWith g [0 ..]
   where
+    g :: Int -> C.Field ann -> [(FieldPath, C.Field ann)]
     g n f' = [(Nth n p, f'') | (p, f'') <- fieldUniverse f']
 
 fieldUniverse :: C.Field ann -> [(FieldPath, C.Field ann)]
 fieldUniverse f@(C.Section _ _ fs) = (End, f) : concat (zipWith g [0 ..] fs)
   where
+    g :: Int -> C.Field ann -> [(FieldPath, C.Field ann)]
     g n f' = [(Nth n p, f'') | (p, f'') <- fieldUniverse f']
 fieldUniverse f@(C.Field _ _) = [(End, f)]
 

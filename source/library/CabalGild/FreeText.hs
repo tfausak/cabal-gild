@@ -35,6 +35,7 @@ fieldlinesToFreeText2 :: [C.FieldLine C.Position] -> String
 fieldlinesToFreeText2 [C.FieldLine _ "."] = "."
 fieldlinesToFreeText2 fls = intercalate "\n" (map go fls)
   where
+    go :: C.FieldLine ann -> String
     go (C.FieldLine _ bs)
       | s == "." = ""
       | otherwise = s

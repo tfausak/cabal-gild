@@ -43,6 +43,7 @@ main = do
             O.header "cabal-gild - .cabal file reformatter"
           ]
 
+    versionP :: O.Parser (a -> a)
     versionP =
       O.infoOption (showVersion version) $
         O.long "version" <> O.help "Show version"

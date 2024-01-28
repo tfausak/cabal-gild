@@ -431,6 +431,7 @@ intervalToVersionRange2 (LB l) (MB m)
       EQ -> Just (fmap majorBoundVersion (acc []))
       GT -> Nothing
 
+    snoc :: ([a] -> c) -> a -> [a] -> c
     snoc xs x = xs . (x :)
 
     supermajor :: Version -> Int

@@ -33,6 +33,7 @@ pretty =
     . nub
     . sortBy (cmp `on` map strToLower . C.components)
   where
+    cmp :: (Ord a) => [a] -> [a] -> Ordering
     cmp a b = case dropCommonPrefix a b of
       ([], []) -> EQ
       ([], _ : _) -> LT

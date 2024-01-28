@@ -38,6 +38,7 @@ refactoringGlobFiles (C.Field name@(C.Name (_, _, pragmas) _n) fls) = do
     parse :: (MonadCabalGild r m) => [FieldPragma] -> m [Glob]
     parse = fmap mconcat . traverse go
       where
+        go :: (MonadCabalGild r m) => FieldPragma -> m [Glob]
         go (PragmaGlobFiles g) = return [g]
         go p = do
           displayWarning $ "Skipped pragma " ++ show p
