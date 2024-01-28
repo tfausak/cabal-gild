@@ -83,4 +83,5 @@ files =
       p ("cbits" </> "sub" </> "source3.c") "..."
     ]
   where
+    p :: a -> String -> (a, ByteString)
     p x y = (x, BS8.pack y)
