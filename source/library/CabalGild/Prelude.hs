@@ -1,5 +1,3 @@
-{-# LANGUAGE CPP #-}
-
 -- |
 -- License: GPL-3.0-or-later
 -- Copyright: Oleg Grenrus
@@ -98,10 +96,6 @@ import Distribution.Compat.Lens (over, view)
 import Distribution.Compat.Newtype (pack', unpack')
 import qualified Distribution.Utils.Generic as C
 import System.FilePath (dropExtension, splitDirectories)
-
-#ifdef MIN_VERSION_base_orphans
-import Data.Orphans ()
-#endif
 
 traverseOf ::
   ((a -> f b) -> s -> f t) ->
