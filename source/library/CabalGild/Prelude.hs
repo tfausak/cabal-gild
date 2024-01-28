@@ -104,7 +104,6 @@ import Data.Orphans ()
 #endif
 
 traverseOf ::
-  (Applicative f) =>
   ((a -> f b) -> s -> f t) ->
   (a -> f b) ->
   s ->
