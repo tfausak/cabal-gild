@@ -35,7 +35,7 @@ common library
     -Wno-missing-kind-signatures -Wno-missing-local-signatures
     -Wno-missing-role-annotations -Wno-missing-safe-haskell-mode
     -Wno-monomorphism-restriction -Wno-prepositive-qualified-module
-    -Wno-safe -Wno-term-variable-capture -Wno-unsafe
+    -Wno-safe -Wno-unsafe
 
   if flag(pedantic)
     ghc-options: -Werror

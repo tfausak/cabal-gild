@@ -93,7 +93,7 @@ overAnn f h = go' id
     go' :: (FieldPath -> FieldPath) -> [C.Field a] -> [C.Field b]
     go' g = zipWith (go g) [0 ..]
 
-    (<$$>) :: (Functor f, Functor g) => (x -> y) -> f (g x) -> f (g y)
+    (<$$>) :: (Functor f1, Functor f2) => (x -> y) -> f1 (f2 x) -> f1 (f2 y)
     x <$$> y = (x <$>) <$> y
 
 -------------------------------------------------------------------------------
