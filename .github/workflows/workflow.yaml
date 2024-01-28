@@ -1,7 +1,7 @@
 {
   "jobs": {
     "build": {
-      "name": "Build on ${{ matrix.platform }}",
+      "name": "Build on ${{ matrix.platform }} with GHC ${{ matrix.ghc }}",
       "runs-on": "${{ matrix.platform }}-${{ matrix.version }}",
       "steps": [
         {
@@ -15,7 +15,7 @@
           "uses": "haskell-actions/setup@v2",
           "with": {
             "cabal-version": "3.10.2.1",
-            "ghc-version": "9.8.1"
+            "ghc-version": "${{ matrix.ghc }}"
           }
         },
         {
@@ -45,9 +45,9 @@
         {
           "uses": "actions/cache@v4",
           "with": {
-            "key": "${{ matrix.platform }}-${{ hashFiles('cabal.project.freeze') }}",
+            "key": "${{ matrix.platform }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project.freeze') }}",
             "path": "${{ steps.haskell.outputs.cabal-store }}",
-            "restore-keys": "${{ matrix.platform }}-"
+            "restore-keys": "${{ matrix.platform }}-${{ matrix.ghc }}-"
           }
         },
         {
@@ -71,7 +71,7 @@
         {
           "uses": "actions/upload-artifact@v4",
           "with": {
-            "name": "cabal-gild-${{ matrix.platform }}-${{ github.sha }}",
+            "name": "cabal-gild-${{ matrix.platform }}-${{ matrix.ghc }}-${{ github.sha }}",
             "path": "artifact"
           }
         },
@@ -83,14 +83,17 @@
         "matrix": {
           "include": [
             {
+              "ghc": "9.8.1",
               "platform": "macos",
               "version": 13
             },
             {
+              "ghc": "9.8.1",
               "platform": "ubuntu",
               "version": 22.04
             },
             {
+              "ghc": "9.8.1",
               "extension": ".exe",
               "platform": "windows",
               "version": 2022
