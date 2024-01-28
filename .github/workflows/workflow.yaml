@@ -88,6 +88,11 @@
               "version": 13
             },
             {
+              "ghc": "9.6.4",
+              "platform": "ubuntu",
+              "version": 22.04
+            },
+            {
               "ghc": "9.8.1",
               "platform": "ubuntu",
               "version": 22.04
