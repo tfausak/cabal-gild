@@ -42,12 +42,24 @@ goldenTest' n =
     [ goldenTest "old" readGolden makeTest cmp writeGolden,
       HUnit.testCase "new" $ do
         input <- BS.readFile inputPath
-        (output, ws) <-
+        (output, warnings) <-
           either Exception.throwIO pure
             . runCabalGild files defaultOptions
             $ cabalGild inputPath input
         expected <- readFile goldenPath
-        let actual = unlines (fmap ("-- " <>) ws) <> output
+        let actual = unlines (fmap ("-- " <>) warnings) <> output
+        actual HUnit.@?= expected,
+      HUnit.testCase "idempotent" $ do
+        input <- BS.readFile inputPath
+        (expected, _) <-
+          either Exception.throwIO pure
+            . runCabalGild files defaultOptions
+            $ cabalGild inputPath input
+        (actual, _) <-
+          either Exception.throwIO pure
+            . runCabalGild files defaultOptions
+            . cabalGild inputPath
+            $ toUTF8BS expected
         actual HUnit.@?= expected
     ]
   where
