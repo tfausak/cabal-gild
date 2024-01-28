@@ -22,7 +22,7 @@
           "run": "cabal sdist --output-dir artifact"
         },
         {
-          "run": "cabal configure --enable-optimization=2 --enable-tests --jobs"
+          "run": "cabal configure --enable-optimization=2 --enable-tests --flags=pedantic --jobs"
         },
         {
           "run": "cat cabal.project.local"

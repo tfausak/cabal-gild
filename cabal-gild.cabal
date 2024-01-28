@@ -24,6 +24,10 @@ source-repository head
   type:     git
   location: https://github.com/tfausak/cabal-gild
 
+flags pedantic
+  default: False
+  manual: True
+
 common library
   build-depends:
     , base ^>=4.19.0.0
@@ -46,6 +50,9 @@ common library
     -Wno-safe
     -Wno-term-variable-capture
     -Wno-unsafe
+
+  if flag(pedantic)
+    ghc-options: -Werror
 
 common executable
   import: library
