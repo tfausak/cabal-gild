@@ -26,7 +26,7 @@ flag pedantic
   manual:  True
 
 common library
-  build-depends:    base ^>=4.18.2.0 || ^>=4.19.0.0
+  build-depends:    base ^>=4.17.2.1 || ^>=4.18.2.0 || ^>=4.19.0.0
   default-language: Haskell2010
   ghc-options:
     -Weverything -Wno-all-missed-specialisations -Wno-implicit-prelude
@@ -55,11 +55,11 @@ library
   -- GHC boot libraries
   build-depends:
     , bytestring ^>=0.11.5.3 || ^>=0.12.0.2
-    , Cabal-syntax ^>=3.10.1.0
+    , Cabal-syntax ^>=3.8.1.0 || ^>=3.10.1.0
     , containers ^>=0.6.7
-    , directory ^>=1.3.8.1
-    , filepath ^>=1.4.100.1
-    , mtl ^>=2.3.1
+    , directory ^>=1.3.7.1
+    , filepath ^>=1.4.2.2
+    , mtl ^>=2.2.2 || ^>=2.3.1
     , optparse-applicative ^>=0.18.1.0
     , parsec ^>=3.1.16.1
     , pretty ^>=1.1.3.6

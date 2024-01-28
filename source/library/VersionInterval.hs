@@ -156,7 +156,7 @@ stage1 opt = cataVersionRange alg
     -- union: just merge the version intervals
     alg (UnionVersionRangesF v1 v2) = v1 ++ v2
     -- intersection: pairwise intersect. Strip empty intervals. Sort to restore the invariant.
-    alg (IntersectVersionRangesF v1 v2) = catMaybes $ liftA2 intersectInterval (opt v1) (opt v2)
+    alg (IntersectVersionRangesF v1 v2) = catMaybes $ intersectInterval <$> opt v1 <*> opt v2
 
 -------------------------------------------------------------------------------
 -- Stage2
