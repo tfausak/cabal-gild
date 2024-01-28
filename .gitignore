@@ -1,4 +1,2 @@
-dist/
-dist-newstyle/
-.ghc.environment.*
-/tmp/
+/cabal.project.*
+/dist-newstyle/

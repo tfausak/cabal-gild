@@ -12,10 +12,7 @@ license:            GPL-3.0-or-later AND BSD-3-Clause
 license-file:       LICENSE.txt
 author:             Oleg Grenrus <oleg.grenrus@iki.fi>
 maintainer:         Taylor Fausak
-
-extra-doc-files:
-  Changelog.md
-
+extra-doc-files:    Changelog.md
 extra-source-files:
   fixtures/*.cabal
   fixtures/*.format
@@ -24,62 +21,47 @@ source-repository head
   type:     git
   location: https://github.com/tfausak/cabal-gild
 
-flags pedantic
+flag pedantic
   default: False
-  manual: True
+  manual:  True
 
 common library
-  build-depends:
-    , base ^>=4.19.0.0
+  build-depends:    base ^>=4.19.0.0
   default-language: Haskell2010
   ghc-options:
-    -Weverything
-    -Wno-all-missed-specialisations
-    -Wno-implicit-prelude
-    -Wno-missed-specialisations
-    -Wno-missing-deriving-strategies
-    -Wno-missing-export-lists
-    -Wno-missing-import-lists
-    -Wno-missing-kind-signatures
-    -Wno-missing-local-signatures
-    -Wno-missing-role-annotations
-    -Wno-missing-safe-haskell-mode
-    -Wno-monomorphism-restriction
-    -Wno-prepositive-qualified-module
-    -Wno-redundant-constraints
-    -Wno-safe
-    -Wno-term-variable-capture
+    -Weverything -Wno-all-missed-specialisations -Wno-implicit-prelude
+    -Wno-missed-specialisations -Wno-missing-deriving-strategies
+    -Wno-missing-export-lists -Wno-missing-import-lists
+    -Wno-missing-kind-signatures -Wno-missing-local-signatures
+    -Wno-missing-role-annotations -Wno-missing-safe-haskell-mode
+    -Wno-monomorphism-restriction -Wno-prepositive-qualified-module
+    -Wno-redundant-constraints -Wno-safe -Wno-term-variable-capture
     -Wno-unsafe
 
   if flag(pedantic)
     ghc-options: -Werror
 
 common executable
-  import: library
-
+  import:        library
   build-depends: cabal-gild
-  ghc-options: -rtsopts -threaded
+  ghc-options:   -rtsopts -threaded
 
 library
-  import: library
-
-  hs-source-dirs:   source/library
+  import:          library
+  hs-source-dirs:  source/library
 
   -- GHC boot libraries
   build-depends:
-    , bytestring    ^>=0.10.8.2 || ^>=0.11.3.1 || ^>=0.12.0.2
-    , Cabal-syntax  ^>=3.10.1.0
-    , containers    ^>=0.5.11.0 || ^>=0.6.0.1
-    , directory     ^>=1.3.1.5
-    , filepath      ^>=1.4.2
-    , mtl           ^>=2.2.2    || ^>=2.3.1
-    , parsec        ^>=3.1.13.0
-    , pretty        ^>=1.1.3.6
+    , bytestring ^>=0.12.0.2
+    , Cabal-syntax ^>=3.10.2.0
+    , containers ^>=0.6.8
+    , directory ^>=1.3.8.1
+    , filepath ^>=1.4.100.4
+    , mtl ^>=2.3.1
+    , parsec ^>=3.1.17.0
+    , pretty ^>=1.1.3.6
 
-  if impl(ghc <8.10)
-    build-depends: base-orphans ^>=0.9.1
-
-  -- cabal-gild: expand src
+  -- cabal-gild: expand source/library
   exposed-modules:
     CabalGild
     CabalGild.Comments
@@ -104,38 +86,22 @@ library
     CabalGild.Refactoring.Type
     VersionInterval
 
-  other-extensions:
-    DeriveFunctor
-    DerivingStrategies
-    ExistentialQuantification
-    FlexibleContexts
-    GeneralizedNewtypeDeriving
-    OverloadedStrings
-    RankNTypes
-    ScopedTypeVariables
-
 executable cabal-gild
-  import: executable
-
-  hs-source-dirs:   source/executable
-  main-is:          Main.hs
-  other-modules:    PackageInfo_cabal_gild
-  autogen-modules:  PackageInfo_cabal_gild
-
-  -- dependencies in library
+  import:          executable
+  hs-source-dirs:  source/executable
+  main-is:         Main.hs
+  other-modules:   PackageInfo_cabal_gild
+  autogen-modules: PackageInfo_cabal_gild
   build-depends:
     , bytestring
     , filepath
-
-  -- extra dependencies
-  build-depends:    optparse-applicative >=0.14.3.0 && <0.19
+    , optparse-applicative ^>=0.18.1.0
 
 test-suite cabal-gild-test-suite
-  import: executable
-
-  type:             exitcode-stdio-1.0
-  hs-source-dirs:   source/test-suite
-  main-is:          Main.hs
+  import:         executable
+  type:           exitcode-stdio-1.0
+  hs-source-dirs: source/test-suite
+  main-is:        Main.hs
   other-modules:
     CabalGild.Test.Golden
     CabalGild.Test.Interval
@@ -145,15 +111,11 @@ test-suite cabal-gild-test-suite
     , bytestring
     , Cabal-syntax
     , containers
-
-  -- test dependencies
-  build-depends:
-    , Cabal-syntax
     , filepath
-    , integer-logarithms  ^>=1.0.3.1
-    , QuickCheck
-    , tasty
-    , tasty-hunit
-    , tasty-quickcheck
+    , integer-logarithms ^>=1.0.3.1
+    , QuickCheck ^>=2.14.3
+    , tasty ^>=1.5
+    , tasty-hunit ^>=0.10.1
+    , tasty-quickcheck ^>=0.10.3
 
 -- end file comment
