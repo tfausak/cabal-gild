@@ -159,11 +159,76 @@
           }
         }
       ]
+    },
+    "release": {
+      "if": "github.event_name == 'release'",
+      "name": "Release",
+      "needs": "build",
+      "runs-on": "ubuntu-22.04",
+      "steps": [
+        {
+          "uses": "actions/download-artifact@v4",
+          "with": {
+            "name": "cabal-gild-ubuntu-9.8.1-${{ github.sha }}",
+            "path": "artifact-ubuntu"
+          }
+        },
+        {
+          "uses": "svenstaro/upload-release-action@v2",
+          "with": {
+            "asset_name": "cabal-gild-${{ github.event.release.tag_name }}.tar.gz",
+            "file": "artifact-ubuntu/cabal-gild-${{ github.event.release.tag_name }}.tar.gz"
+          }
+        },
+        {
+          "uses": "svenstaro/upload-release-action@v2",
+          "with": {
+            "asset_name": "cabal-gild-${{ github.event.release.tag_name }}-ubuntu",
+            "file": "artifact-ubuntu/cabal-gild"
+          }
+        },
+        {
+          "uses": "actions/download-artifact@v4",
+          "with": {
+            "name": "cabal-gild-macos-9.8.1-${{ github.sha }}",
+            "path": "artifact-macos"
+          }
+        },
+        {
+          "uses": "svenstaro/upload-release-action@v2",
+          "with": {
+            "asset_name": "cabal-gild-${{ github.event.release.tag_name }}-macos",
+            "file": "artifact-macos/cabal-gild"
+          }
+        },
+        {
+          "uses": "actions/download-artifact@v4",
+          "with": {
+            "name": "cabal-gild-windows-9.8.1-${{ github.sha }}",
+            "path": "artifact-windows"
+          }
+        },
+        {
+          "uses": "svenstaro/upload-release-action@v2",
+          "with": {
+            "asset_name": "cabal-gild-${{ github.event.release.tag_name }}-windows.exe",
+            "file": "artifact-windows/cabal-gild.exe"
+          }
+        },
+        {
+          "run": "cabal upload --publish --username '${{ secrets.HACKAGE_USERNAME }}' --password '${{ secrets.HACKAGE_PASSWORD }}' artifact-ubuntu/cabal-gild-${{ github.event.release.tag_name }}.tar.gz"
+        }
+      ]
     }
   },
   "name": "Workflow",
   "on": {
     "push": null,
+    "release": {
+      "types": [
+        "created"
+      ]
+    },,
     "schedule": [
       {
         "cron": "0 0 * * 1"
