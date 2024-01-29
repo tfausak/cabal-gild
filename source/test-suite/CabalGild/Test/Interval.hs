@@ -28,7 +28,6 @@ import Distribution.Types.VersionRange
     withinVersion,
   )
 import Distribution.Version (transformCaretUpper)
-import Math.NumberTheory.Logarithms (intLog2)
 import Test.QuickCheck (Arbitrary (..), (===))
 import qualified Test.QuickCheck as QC
 import Test.Tasty (TestTree, testGroup)
@@ -316,7 +315,10 @@ instance Arbitrary Version where
     ]
 
 instance Arbitrary VersionRange where
-  arbitrary = QC.sized $ \n -> genVersionRange (intLog2 (max 1 n))
+  arbitrary =
+    let intToDouble :: Int -> Double
+        intToDouble = fromIntegral
+     in QC.sized $ genVersionRange . round . logBase 2 . intToDouble . max 1
 
   shrink vr = case projectVersionRange vr of
     LaterVersionF v -> laterVersion <$> shrink v

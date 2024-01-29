@@ -113,7 +113,6 @@ test-suite cabal-gild-test-suite
     , Cabal-syntax
     , containers
     , filepath
-    , integer-logarithms ^>=1.0.3.1
     , QuickCheck ^>=2.14.3
     , tasty ^>=1.5
     , tasty-hunit ^>=0.10.1
