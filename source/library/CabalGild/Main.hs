@@ -13,7 +13,7 @@ import qualified Data.ByteString as BS
 import Data.Traversable (for)
 import Data.Version (showVersion)
 import qualified Options.Applicative as O
-import PackageInfo_cabal_gild (version)
+import Paths_cabal_gild (version)
 import System.Exit (exitFailure)
 import System.FilePath (takeDirectory)
 import System.IO (hPutStrLn, stderr)

@@ -49,8 +49,8 @@ common executable
 library
   import:          library
   hs-source-dirs:  source/library
-  other-modules:   PackageInfo_cabal_gild
-  autogen-modules: PackageInfo_cabal_gild
+  other-modules:   Paths_cabal_gild
+  autogen-modules: Paths_cabal_gild
 
   -- GHC boot libraries
   build-depends:
