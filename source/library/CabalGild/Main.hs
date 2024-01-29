@@ -8,20 +8,37 @@ import CabalGild.Error (Error (SomeError), renderError)
 import CabalGild.Monad (runCabalGildIO)
 import CabalGild.Options
 import CabalGild.Prelude
-import Control.Applicative (many, (<**>))
+import qualified Control.Monad as Monad
+import qualified Control.Monad.Catch as Exception
 import qualified Data.ByteString as BS
 import Data.Traversable (for)
-import Data.Version (showVersion)
-import qualified Options.Applicative as O
-import Paths_cabal_gild (version)
+import qualified Data.Version as Version
+import qualified Paths_cabal_gild as This
+import qualified System.Console.GetOpt as GetOpt
+import qualified System.Environment as Environment
 import System.Exit (exitFailure)
+import qualified System.Exit as Exit
 import System.FilePath (takeDirectory)
 import System.IO (hPutStrLn, stderr)
+import qualified Text.Read as Read
 
 main :: IO ()
 main = do
-  (opts', filepaths) <- O.execParser optsP'
-  let opts = runOptionsMorphism opts' defaultOptions
+  arguments <- Environment.getArgs
+  let (flags, filepaths, unknowns, invalids) = GetOpt.getOpt' GetOpt.Permute flagOptions arguments
+  mapM_ (Exception.throwM . userError . mappend "unknown option: ") unknowns
+  mapM_ (Exception.throwM . userError . mappend "invalid option: ") invalids
+  config <- flagsToConfig flags
+  let opts = configOptions config
+
+  Monad.when (configHelp config) $ do
+    name <- Environment.getProgName
+    putStr $ GetOpt.usageInfo name flagOptions
+    Exit.exitSuccess
+
+  Monad.when (configVersion config) $ do
+    putStrLn $ Version.showVersion This.version
+    Exit.exitSuccess
 
   notFormatted <-
     catMaybes <$> case filepaths of
@@ -34,19 +51,6 @@ main = do
     for_ notFormatted $ \filepath ->
       hPutStrLn stderr $ "error: Input " <> filepath <> " is not formatted."
     exitFailure
-  where
-    optsP' =
-      O.info (optsP <**> O.helper <**> versionP) $
-        mconcat
-          [ O.fullDesc,
-            O.progDesc "Reformat .cabal files",
-            O.header "cabal-gild - .cabal file reformatter"
-          ]
-
-    versionP :: O.Parser (a -> a)
-    versionP =
-      O.infoOption (showVersion version) $
-        O.long "version" <> O.help "Show version"
 
 main' :: Options -> Maybe FilePath -> BS.ByteString -> IO (Maybe FilePath)
 main' opts mfilepath input = do
@@ -86,69 +90,63 @@ main' opts mfilepath input = do
 -- Options parser
 -------------------------------------------------------------------------------
 
-optsP :: O.Parser (OptionsMorphism, [FilePath])
-optsP =
-  (,)
-    <$> optsP'
-    <*> many (O.strArgument (O.metavar "FILE..." <> O.help "input files"))
-  where
-    optsP' =
-      fmap mconcat $
-        many $
-          asum
-            [ werrorP,
-              noWerrorP,
-              indentP,
-              tabularP,
-              noTabularP,
-              cabalFileP,
-              noCabalFileP,
-              stdoutP,
-              inplaceP,
-              checkP,
-              rootP
-            ]
+data Flag
+  = FlagCabalFile Bool
+  | FlagError Bool
+  | FlagHelp
+  | FlagIndent String
+  | FlagMode Mode
+  | FlagStdinInputFile String
+  | FlagTabular Bool
+  | FlagVersion
+  deriving (Eq, Show)
 
-    werrorP =
-      O.flag' (mkOptionsMorphism $ \opts -> opts {optError = True}) $
-        O.long "Werror" <> O.help "Treat warnings as errors"
+flagOptions :: [GetOpt.OptDescr Flag]
+flagOptions =
+  [ GetOpt.Option [] ["Werror"] (GetOpt.NoArg $ FlagError True) "Treat warnings as errors",
+    GetOpt.Option [] ["Wno-error"] (GetOpt.NoArg $ FlagError False) "",
+    GetOpt.Option [] ["indent"] (GetOpt.ReqArg FlagIndent "N") "Indentation",
+    GetOpt.Option [] ["tabular"] (GetOpt.NoArg $ FlagTabular True) "Tabular formatting",
+    GetOpt.Option [] ["no-tabular"] (GetOpt.NoArg $ FlagTabular False) "",
+    GetOpt.Option [] ["cabal-file"] (GetOpt.NoArg $ FlagCabalFile True) "",
+    GetOpt.Option ['n'] ["no-cabal-file"] (GetOpt.NoArg $ FlagCabalFile False) "Don't parse as .cabal file",
+    GetOpt.Option [] ["stdout"] (GetOpt.NoArg $ FlagMode ModeStdout) "Write output to stdout (default)",
+    GetOpt.Option ['i'] ["inplace"] (GetOpt.NoArg $ FlagMode ModeInplace) "Process files in-place",
+    GetOpt.Option ['c'] ["check"] (GetOpt.NoArg $ FlagMode ModeCheck) "Fail with non-zero exit code if input is not formatted",
+    GetOpt.Option [] ["stdin-input-file"] (GetOpt.ReqArg FlagStdinInputFile "FILE") "When reading from STDIN, use this file path to resolve relative references",
+    GetOpt.Option ['h'] ["help"] (GetOpt.NoArg FlagHelp) "Show this help text",
+    GetOpt.Option [] ["version"] (GetOpt.NoArg FlagVersion) "Show version"
+  ]
 
-    noWerrorP =
-      O.flag' (mkOptionsMorphism $ \opts -> opts {optError = False}) $
-        O.long "Wno-error"
+data Config = Config
+  { configHelp :: Bool,
+    configOptions :: Options,
+    configVersion :: Bool
+  }
+  deriving (Show)
 
-    indentP =
-      O.option (fmap (\n -> mkOptionsMorphism $ \opts -> opts {optIndent = n}) O.auto) $
-        O.long "indent" <> O.help "Indentation" <> O.metavar "N"
+initialConfig :: Config
+initialConfig =
+  Config
+    { configHelp = False,
+      configOptions = defaultOptions,
+      configVersion = False
+    }
 
-    tabularP =
-      O.flag' (mkOptionsMorphism $ \opts -> opts {optTabular = True}) $
-        O.long "tabular" <> O.help "Tabular formatting"
+applyFlag :: (Exception.MonadThrow m) => Config -> Flag -> m Config
+applyFlag c f = case f of
+  FlagCabalFile b -> pure c {configOptions = (configOptions c) {optCabalFile = b}}
+  FlagError b -> pure c {configOptions = (configOptions c) {optError = b}}
+  FlagHelp -> pure c {configHelp = True}
+  FlagIndent s -> do
+    i <- case Read.readMaybe s of
+      Nothing -> Exception.throwM . userError $ "invalid indent: " <> show s
+      Just i -> pure i
+    pure c {configOptions = (configOptions c) {optIndent = i}}
+  FlagMode m -> pure c {configOptions = (configOptions c) {optMode = m}}
+  FlagStdinInputFile s -> pure c {configOptions = (configOptions c) {optStdinInputFile = Just s}}
+  FlagTabular b -> pure c {configOptions = (configOptions c) {optTabular = b}}
+  FlagVersion -> pure c {configVersion = True}
 
-    noTabularP =
-      O.flag' (mkOptionsMorphism $ \opts -> opts {optTabular = False}) $
-        O.long "no-tabular"
-
-    cabalFileP =
-      O.flag' (mkOptionsMorphism $ \opts -> opts {optCabalFile = True}) $
-        O.long "cabal-file"
-
-    noCabalFileP =
-      O.flag' (mkOptionsMorphism $ \opts -> opts {optCabalFile = False}) $
-        O.short 'n' <> O.long "no-cabal-file" <> O.help "Don't parse as .cabal file"
-
-    stdoutP =
-      O.flag' (mkOptionsMorphism $ \opts -> opts {optMode = ModeStdout}) $
-        O.long "stdout" <> O.help "Write output to stdout (default)"
-
-    inplaceP =
-      O.flag' (mkOptionsMorphism $ \opts -> opts {optMode = ModeInplace}) $
-        O.short 'i' <> O.long "inplace" <> O.help "Process files in-place"
-
-    checkP =
-      O.flag' (mkOptionsMorphism $ \opts -> opts {optMode = ModeCheck}) $
-        O.short 'c' <> O.long "check" <> O.help "Fail with non-zero exit code if input is not formatted"
-
-    rootP =
-      O.option (fmap (\f -> mkOptionsMorphism $ \opts -> opts {optStdinInputFile = Just f}) O.str) $
-        O.long "stdin-input-file" <> O.help "When reading from STDIN, use this file path to resolve relative references" <> O.metavar "FILE"
+flagsToConfig :: (Exception.MonadThrow m) => [Flag] -> m Config
+flagsToConfig = Monad.foldM applyFlag initialConfig
