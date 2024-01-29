@@ -13,12 +13,14 @@ import CabalGild.Comments
 import CabalGild.Monad
 import CabalGild.Parser
 import CabalGild.Pragma
-import CabalGild.Prelude
 import CabalGild.Refactoring.Type
+import qualified Control.Monad as Monad
+import qualified Data.Foldable as Foldable
 import qualified Distribution.Fields as C
 import qualified Distribution.Fields.Field as C
 import qualified Distribution.Fields.Pretty as C
 import qualified Distribution.Parsec as C
+import Distribution.Utils.Generic (fromUTF8BS)
 import Text.PrettyPrint (hsep, render)
 
 -- | Expand fragments.
@@ -48,7 +50,7 @@ refactoringFragments field = do
               displayWarning $ "Fragment " ++ p ++ " contains a field " ++ show n' ++ ", expecting section " ++ showSection name arg ++ "."
               pure Nothing
             (C.Field name@(C.Name _ n) _, C.Field (C.Name _ n') fls' : rest) -> do
-              unless (null rest) $
+              Monad.unless (null rest) $
                 displayWarning $
                   "Fragment " ++ p ++ " contains multiple fields or sections, using only the first."
               if n == n'
@@ -59,11 +61,11 @@ refactoringFragments field = do
                   displayWarning $ "Fragment " ++ p ++ " contains field " ++ show n' ++ ", expecting field " ++ show n ++ "."
                   pure Nothing
             (C.Section name@(C.Name _ _) arg _, C.Section name'@(C.Name _ _) arg' fs' : rest) -> do
-              unless (null rest) $
+              Monad.unless (null rest) $
                 displayWarning $
                   "Fragment " ++ p ++ " contains multiple fields or sections, using only the first."
 
-              if void name == void name' && map void arg == map void arg'
+              if Monad.void name == Monad.void name' && map Monad.void arg == map Monad.void arg'
                 then do
                   pure (Just (C.Section name arg (noCommentsPragmas fs')))
                 else do
@@ -74,14 +76,14 @@ refactoringFragments field = do
     noCommentsPragmas = map ((C.zeroPos, Comments [], []) <$)
 
     getPragmas :: C.Field CommentsPragmas -> [FieldPragma]
-    getPragmas = trdOf3 . C.fieldAnn
+    getPragmas = (\(_, _, z) -> z) . C.fieldAnn
 
     showSection :: C.Name ann -> [C.SectionArg ann] -> String
     showSection (C.Name _ n) [] = show n
     showSection (C.Name _ n) args = show (fromUTF8BS n ++ " " ++ render (hsep (C.prettySectionArgs n args)))
 
     parse :: (MonadCabalGild r m) => [FieldPragma] -> m (Maybe FilePath)
-    parse = fmap asum . traverse go
+    parse = fmap Foldable.asum . traverse go
       where
         go :: (Monad m) => FieldPragma -> m (Maybe FilePath)
         go (PragmaFragment f) = return (Just f)

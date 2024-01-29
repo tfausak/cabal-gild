@@ -7,12 +7,13 @@ import CabalGild (cabalGild)
 import CabalGild.Error (Error (SomeError), renderError)
 import CabalGild.Monad (runCabalGildIO)
 import CabalGild.Options
-import CabalGild.Prelude
 import qualified Control.Monad as Monad
 import qualified Control.Monad.Catch as Exception
 import qualified Data.ByteString as BS
+import qualified Data.Maybe as Maybe
 import Data.Traversable (for)
 import qualified Data.Version as Version
+import Distribution.Utils.Generic (toUTF8BS)
 import qualified Paths_cabal_gild as This
 import qualified System.Console.GetOpt as GetOpt
 import qualified System.Environment as Environment
@@ -41,21 +42,21 @@ main = do
     Exit.exitSuccess
 
   notFormatted <-
-    catMaybes <$> case filepaths of
+    Maybe.catMaybes <$> case filepaths of
       [] -> fmap pure $ BS.getContents >>= main' opts Nothing
       (_ : _) -> for filepaths $ \filepath -> do
         contents <- BS.readFile filepath
         main' opts (Just filepath) contents
 
-  when ((optMode opts == ModeCheck) && not (null notFormatted)) $ do
-    for_ notFormatted $ \filepath ->
+  Monad.when ((optMode opts == ModeCheck) && not (null notFormatted)) $ do
+    Monad.forM_ notFormatted $ \filepath ->
       hPutStrLn stderr $ "error: Input " <> filepath <> " is not formatted."
     exitFailure
 
 main' :: Options -> Maybe FilePath -> BS.ByteString -> IO (Maybe FilePath)
 main' opts mfilepath input = do
   -- name of the input
-  let filepath = fromMaybe "<stdin>" mfilepath
+  let filepath = Maybe.fromMaybe "<stdin>" mfilepath
 
   mroot <-
     fmap takeDirectory <$> case (mfilepath, optStdinInputFile opts) of
@@ -78,7 +79,7 @@ main' opts mfilepath input = do
         ModeStdout -> BS.putStr outputBS
         ModeInplace -> case mfilepath of
           Nothing -> BS.putStr outputBS
-          Just _ -> unless formatted $ BS.writeFile filepath outputBS
+          Just _ -> Monad.unless formatted $ BS.writeFile filepath outputBS
         _ -> return ()
 
       return $ if formatted then Nothing else Just filepath

@@ -13,9 +13,12 @@ where
 
 import CabalGild.Fields
 import CabalGild.Options
-import CabalGild.Prelude
+import Control.Arrow ((&&&))
+import qualified Data.Char as Char
 import Data.List (dropWhileEnd)
+import qualified Data.List as List
 import qualified Distribution.CabalSpecVersion as C
+import qualified Distribution.Compat.Newtype as Newtype
 import qualified Distribution.FieldGrammar as C
 import qualified Distribution.Parsec as C
 import qualified Distribution.Pretty as C
@@ -36,10 +39,10 @@ buildToolDependsF :: Options -> FieldDescrs () ()
 buildToolDependsF opts = singletonF "build-tool-depends" (prettyExe opts) parseExe
 
 parse :: (C.CabalParsing m) => m [C.Dependency]
-parse = unpack' (C.alaList C.CommaVCat) <$> C.parsec
+parse = Newtype.unpack' (C.alaList C.CommaVCat) <$> C.parsec
 
 parseExe :: (C.CabalParsing m) => m [C.ExeDependency]
-parseExe = unpack' (C.alaList C.CommaVCat) <$> C.parsec
+parseExe = Newtype.unpack' (C.alaList C.CommaVCat) <$> C.parsec
 
 normaliseVersionRange' :: C.VersionRange -> C.VersionRange
 normaliseVersionRange' vr = either fromConversionProblem id (normaliseVersionRange vr)
@@ -63,7 +66,7 @@ pretty opts deps = case deps of
     where
       deps' :: [(String, C.VersionRange)]
       deps' =
-        sortOn (map toLower . fst) $
+        List.sortOn (map Char.toLower . fst) $
           map (prettyDepNoVersion &&& C.depVerRange) $
             C.fromDepMap . C.toDepMap $ -- this combines duplicate packages
               deps
@@ -87,7 +90,7 @@ prettyExe opts deps = case deps of
     where
       deps' :: [(String, C.VersionRange)]
       deps' =
-        sortOn (map toLower . fst) $
+        List.sortOn (map Char.toLower . fst) $
           map
             (exeDepExeName &&& exeDepVerRange)
             -- C.fromDepMap . C.toDepMap -- this combines duplicate packages

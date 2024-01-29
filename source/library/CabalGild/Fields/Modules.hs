@@ -10,7 +10,10 @@ module CabalGild.Fields.Modules
 where
 
 import CabalGild.Fields
-import CabalGild.Prelude
+import qualified Data.Char as Char
+import qualified Data.Function as Function
+import qualified Data.List as List
+import qualified Distribution.Compat.Newtype as Newtype
 import qualified Distribution.FieldGrammar as C
 import qualified Distribution.ModuleName as C
 import qualified Distribution.Parsec as C
@@ -24,14 +27,14 @@ otherModulesF :: FieldDescrs () ()
 otherModulesF = singletonF "other-modules" pretty parse
 
 parse :: (C.CabalParsing m) => m [C.ModuleName]
-parse = unpack' (C.alaList' C.VCat C.MQuoted) <$> C.parsec
+parse = Newtype.unpack' (C.alaList' C.VCat C.MQuoted) <$> C.parsec
 
 pretty :: [C.ModuleName] -> PP.Doc
 pretty =
   PP.vcat
     . map C.pretty
-    . nub
-    . sortBy (cmp `on` map strToLower . C.components)
+    . List.nub
+    . List.sortBy (cmp `Function.on` map strToLower . C.components)
   where
     cmp :: (Ord a) => [a] -> [a] -> Ordering
     cmp a b = case dropCommonPrefix a b of
@@ -41,7 +44,7 @@ pretty =
       (a', b') -> compare a' b'
 
 strToLower :: String -> String
-strToLower = map toLower
+strToLower = map Char.toLower
 
 dropCommonPrefix :: (Eq a) => [a] -> [a] -> ([a], [a])
 dropCommonPrefix [] [] = ([], [])

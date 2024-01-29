@@ -6,13 +6,14 @@ module CabalGild.FreeText
   )
 where
 
-import CabalGild.Prelude
 import Data.List (foldl')
+import qualified Data.List as List
 import qualified Distribution.CabalSpecVersion as C
 import qualified Distribution.Fields.Field as C
 import qualified Distribution.Parsec as C
 import qualified Distribution.Parsec.Position as C
 import qualified Distribution.Pretty as C
+import Distribution.Utils.Generic (fromUTF8BS)
 import qualified Distribution.Utils.String as C (trim)
 import qualified Text.PrettyPrint as PP
 
@@ -33,7 +34,7 @@ fieldlinesToFreeText v
 
 fieldlinesToFreeText2 :: [C.FieldLine C.Position] -> String
 fieldlinesToFreeText2 [C.FieldLine _ "."] = "."
-fieldlinesToFreeText2 fls = intercalate "\n" (map go fls)
+fieldlinesToFreeText2 fls = List.intercalate "\n" (map go fls)
   where
     go :: C.FieldLine ann -> String
     go (C.FieldLine _ bs)

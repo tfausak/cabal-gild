@@ -12,24 +12,28 @@ where
 
 import CabalGild.Monad
 import CabalGild.Pragma
-import CabalGild.Prelude
 import CabalGild.Refactoring.Type
+import qualified Data.List as List
+import qualified Data.Maybe as Maybe
+import qualified Distribution.Compat.Lens as Lens
 import qualified Distribution.Fields as C
 import qualified Distribution.ModuleName as C
+import Distribution.Utils.Generic (toUTF8BS)
+import qualified System.FilePath as FilePath
 
 refactoringExpandExposedModules :: FieldRefactoring
 refactoringExpandExposedModules C.Section {} = pure Nothing
 refactoringExpandExposedModules (C.Field name@(C.Name (_, _, pragmas) _n) fls) = do
   dirs <- parse pragmas
-  files <- traverseOf (traverse . _1) getFiles dirs
+  files <- (traverse . Lens._1) getFiles dirs
 
   let newModules :: [C.FieldLine CommentsPragmas]
       newModules =
-        catMaybes
-          [ return $ C.FieldLine emptyCommentsPragmas $ toUTF8BS $ intercalate "." parts
+        Maybe.catMaybes
+          [ return $ C.FieldLine emptyCommentsPragmas $ toUTF8BS $ List.intercalate "." parts
             | (files', mns) <- files,
               file <- files',
-              let parts = splitDirectories $ dropExtension file,
+              let parts = FilePath.splitDirectories $ FilePath.dropExtension file,
               all C.validModuleComponent parts,
               let mn = C.fromComponents parts, -- TODO: don't use fromComponents
               mn `notElem` mns

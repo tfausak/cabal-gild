@@ -1,8 +1,8 @@
 module CabalGild.Glob where
 
-import CabalGild.Prelude
 import Data.List (isInfixOf)
 import Data.List.NonEmpty (NonEmpty (..))
+import qualified Data.List.NonEmpty as NonEmpty
 import qualified System.FilePath as Native (splitDirectories)
 import qualified System.FilePath.Posix as Posix (splitDirectories)
 
@@ -36,7 +36,7 @@ match (Glob g1 gs0) fp = go0 (Native.splitDirectories fp)
     go [] (_ : _) = False
     go (_ : _) [] = False
     go (s : ss) (GlobStarStar : gs) = go (s : ss) gs || go ss (GlobStarStar : gs)
-    go (s : ss) (GlobPiece cs : gs) = matches s (toList cs) && go ss gs
+    go (s : ss) (GlobPiece cs : gs) = matches s (NonEmpty.toList cs) && go ss gs
 
     matches :: FilePath -> [GlobChar] -> Bool
     matches [] [] = True

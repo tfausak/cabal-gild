@@ -13,7 +13,10 @@ where
 -- when parsing glob syntax since only `/` is valid, and not '\\'
 
 import CabalGild.Fields
-import CabalGild.Prelude
+import qualified Data.Char as Char
+import qualified Data.Function as Function
+import qualified Data.List as List
+import qualified Distribution.Compat.Newtype as Newtype
 import qualified Distribution.FieldGrammar as C
 import qualified Distribution.Fields as C
 import qualified Distribution.Parsec as C
@@ -43,14 +46,14 @@ fileFields =
   ]
 
 parse :: (C.CabalParsing m) => m [FilePath]
-parse = unpack' (C.alaList' C.VCat C.FilePathNT) <$> C.parsec
+parse = Newtype.unpack' (C.alaList' C.VCat C.FilePathNT) <$> C.parsec
 
 pretty :: [FilePath] -> PP.Doc
 pretty =
   PP.vcat
     . map C.showFilePath
-    . nub
-    . sortBy (cmp `on` map strToLower . Posix.splitDirectories)
+    . List.nub
+    . List.sortBy (cmp `Function.on` map strToLower . Posix.splitDirectories)
   where
     cmp :: (Ord a) => [a] -> [a] -> Ordering
     cmp a b = case dropCommonPrefix a b of
@@ -60,7 +63,7 @@ pretty =
       (a', b') -> compare a' b'
 
 strToLower :: String -> String
-strToLower = map toLower
+strToLower = map Char.toLower
 
 dropCommonPrefix :: (Eq a) => [a] -> [a] -> ([a], [a])
 dropCommonPrefix [] [] = ([], [])

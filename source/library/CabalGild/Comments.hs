@@ -8,10 +8,10 @@
 -- Copyright: Oleg Grenrus
 module CabalGild.Comments where
 
-import CabalGild.Prelude
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Char8 as BS8
 import qualified Data.Map.Strict as Map
+import qualified Data.Maybe as Maybe
 import qualified Distribution.Fields as C
 import qualified Distribution.Fields.Field as C
 import qualified Distribution.Parsec as C
@@ -60,7 +60,7 @@ attachComments input inputFields =
         (flip (<>))
         [ (path, cs)
           | (l, cs) <- comments,
-            path <- toList (findPath C.fieldAnn l inputFieldsU)
+            path <- Maybe.maybeToList (findPath C.fieldAnn l inputFieldsU)
         ]
 
     endComments :: Comments
@@ -68,11 +68,11 @@ attachComments input inputFields =
       mconcat
         [ cs
           | (l, cs) <- comments,
-            isNothing (findPath C.fieldAnn l inputFieldsU)
+            Maybe.isNothing (findPath C.fieldAnn l inputFieldsU)
         ]
 
     attach :: FieldPath -> C.Position -> (C.Position, Comments)
-    attach fp pos = (pos, fromMaybe mempty (Map.lookup fp comments'))
+    attach fp pos = (pos, Maybe.fromMaybe mempty (Map.lookup fp comments'))
 
     attach' :: C.Position -> (C.Position, Comments)
     attach' pos = (pos, mempty)

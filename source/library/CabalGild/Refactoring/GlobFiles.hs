@@ -12,9 +12,10 @@ where
 import CabalGild.Glob
 import CabalGild.Monad
 import CabalGild.Pragma
-import CabalGild.Prelude
 import CabalGild.Refactoring.Type
+import qualified Data.Maybe as Maybe
 import qualified Distribution.Fields as C
+import Distribution.Utils.Generic (toUTF8BS)
 import qualified System.FilePath as Native
 import qualified System.FilePath.Posix as Posix
 
@@ -26,7 +27,7 @@ refactoringGlobFiles (C.Field name@(C.Name (_, _, pragmas) _n) fls) = do
 
   let newFiles :: [C.FieldLine CommentsPragmas]
       newFiles =
-        catMaybes
+        Maybe.catMaybes
           [ return $ C.FieldLine emptyCommentsPragmas $ toUTF8BS file
             | file <- files
           ]
