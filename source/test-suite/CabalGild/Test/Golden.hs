@@ -3,11 +3,11 @@ module CabalGild.Test.Golden (tests) where
 import CabalGild (cabalGild)
 import CabalGild.Monad (runCabalGild)
 import CabalGild.Options (defaultOptions)
-import CabalGild.Prelude
 import qualified Control.Exception as Exception
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Char8 as BS8
 import qualified Data.Map as Map
+import Distribution.Utils.Generic (toUTF8BS)
 import System.FilePath ((-<.>), (</>))
 import Test.Tasty (TestTree, testGroup)
 import qualified Test.Tasty.HUnit as HUnit
@@ -83,5 +83,5 @@ files =
       p ("cbits" </> "sub" </> "source3.c") "..."
     ]
   where
-    p :: a -> String -> (a, ByteString)
+    p :: a -> String -> (a, BS.ByteString)
     p x y = (x, BS8.pack y)

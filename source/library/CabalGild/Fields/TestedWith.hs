@@ -11,10 +11,10 @@ where
 
 import CabalGild.Fields
 import CabalGild.Options
-import CabalGild.Prelude
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
 import qualified Distribution.CabalSpecVersion as C
+import qualified Distribution.Compat.Newtype as Newtype
 import qualified Distribution.Compiler as C
 import qualified Distribution.FieldGrammar as C
 import qualified Distribution.Parsec as C
@@ -26,7 +26,7 @@ testedWithF :: Options -> FieldDescrs () ()
 testedWithF Options {optSpecVersion = ver} = singletonF "tested-with" pretty parse
   where
     parse :: (C.CabalParsing m) => m [(C.CompilerFlavor, C.VersionRange)]
-    parse = unpack' (C.alaList' C.FSep C.TestedWith) <$> C.parsec
+    parse = Newtype.unpack' (C.alaList' C.FSep C.TestedWith) <$> C.parsec
 
     pretty :: [(C.CompilerFlavor, C.VersionRange)] -> PP.Doc
     pretty tw0 =
@@ -58,7 +58,7 @@ leadingComma v xs = PP.vcat $ zipWith comma (True : repeat False) xs
       | isFirst, v < C.CabalSpecV3_0 = PP.char ' ' PP.<+> doc
       | otherwise = PP.char ',' PP.<+> doc
 
-isVersionSet :: C.VersionRange -> Maybe (Set C.Version)
+isVersionSet :: C.VersionRange -> Maybe (Set.Set C.Version)
 isVersionSet vr = go Set.empty (C.asVersionIntervals vr)
   where
     go !acc [] = Just acc

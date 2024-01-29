@@ -17,8 +17,8 @@ module CabalGild.Fields
   )
 where
 
-import CabalGild.Prelude
 import qualified Data.Map.Strict as Map
+import qualified Distribution.Compat.Newtype as Newtype
 import qualified Distribution.FieldGrammar as C
 import qualified Distribution.Fields.Field as C
 import qualified Distribution.Parsec as C
@@ -86,20 +86,20 @@ instance C.FieldGrammar PrettyParsec FieldDescrs where
       f s = PP.text (show s)
 
   uniqueFieldAla fn _pack _ =
-    singletonF fn (C.pretty . pack' _pack) (unpack' _pack <$> C.parsec)
+    singletonF fn (C.pretty . Newtype.pack' _pack) (Newtype.unpack' _pack <$> C.parsec)
 
   optionalFieldAla fn _pack _ =
-    singletonF fn (C.pretty . pack' _pack) (unpack' _pack <$> C.parsec)
+    singletonF fn (C.pretty . Newtype.pack' _pack) (Newtype.unpack' _pack <$> C.parsec)
 
   optionalFieldDefAla fn _pack _ def =
-    singletonF fn f (unpack' _pack <$> C.parsec)
+    singletonF fn f (Newtype.unpack' _pack <$> C.parsec)
     where
       f s
         | s == def = PP.empty
-        | otherwise = C.pretty (pack' _pack s)
+        | otherwise = C.pretty (Newtype.pack' _pack s)
 
   monoidalFieldAla fn _pack _ =
-    singletonF fn (C.pretty . pack' _pack) (unpack' _pack <$> C.parsec)
+    singletonF fn (C.pretty . Newtype.pack' _pack) (Newtype.unpack' _pack <$> C.parsec)
 
   freeTextField fn _ = F $ Map.singleton fn FreeText
   freeTextFieldDef fn _ = F $ Map.singleton fn FreeText

@@ -4,8 +4,10 @@ module CabalGild.Pragma where
 
 import CabalGild.Comments
 import CabalGild.Glob
-import CabalGild.Prelude
+import qualified Data.Bifunctor as Bifunctor
 import qualified Data.ByteString as BS
+import qualified Data.Either as Either
+import qualified Data.Maybe as Maybe
 import qualified Distribution.Compat.CharParsing as C
 import qualified Distribution.ModuleName as C
 import qualified Distribution.Parsec as C
@@ -40,10 +42,10 @@ data GlobalPragma
 -- | Parse pragma from 'ByteString'.
 --
 -- An error ('Left') is reported only if input 'ByteString' starts with @-- cabal-gild:@.
-parsePragma :: ByteString -> Either String (Maybe Pragma)
+parsePragma :: BS.ByteString -> Either String (Maybe Pragma)
 parsePragma bs = case dropPrefix bs of
   Nothing -> Right Nothing
-  Just bs' -> bimap show Just $ C.runParsecParser parser "<input>" $ C.fieldLineStreamFromBS bs'
+  Just bs' -> Bifunctor.bimap show Just $ C.runParsecParser parser "<input>" $ C.fieldLineStreamFromBS bs'
   where
     dropPrefix bs0 = do
       bs1 <- BS.stripPrefix "--" bs0
@@ -87,7 +89,7 @@ parsePragma bs = case dropPrefix bs of
         Right g -> return $ FieldPragma $ PragmaGlobFiles g
         Left e -> C.unexpected e
 
-stripWhitespace :: ByteString -> ByteString
+stripWhitespace :: BS.ByteString -> BS.ByteString
 stripWhitespace bs = case BS.uncons bs of
   Nothing -> bs
   Just (w, bs')
@@ -95,4 +97,4 @@ stripWhitespace bs = case BS.uncons bs of
     | otherwise -> bs
 
 parsePragmas :: Comments -> ([String], [Pragma])
-parsePragmas = fmap catMaybes . partitionEithers . map parsePragma . unComments
+parsePragmas = fmap Maybe.catMaybes . Either.partitionEithers . map parsePragma . unComments

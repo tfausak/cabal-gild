@@ -85,7 +85,6 @@ library
     CabalGild.Options
     CabalGild.Parser
     CabalGild.Pragma
-    CabalGild.Prelude
     CabalGild.Refactoring
     CabalGild.Refactoring.ExpandExposedModules
     CabalGild.Refactoring.Fragments

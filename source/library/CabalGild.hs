@@ -21,13 +21,18 @@ import CabalGild.Monad
 import CabalGild.Options
 import CabalGild.Parser
 import CabalGild.Pragma
-import CabalGild.Prelude
 import CabalGild.Refactoring
 import Control.Monad (join)
+import qualified Control.Monad.Except as Except
 import Control.Monad.Reader (asks, local)
 import qualified Data.ByteString as BS
+import qualified Data.Either as Either
+import qualified Data.Foldable as Foldable
+import Data.Function ((&))
 import Data.Functor (($>))
+import qualified Data.Maybe as Maybe
 import qualified Distribution.CabalSpecVersion as C
+import qualified Distribution.Compat.Lens as Lens
 import qualified Distribution.FieldGrammar.Parsec as C
 import qualified Distribution.Fields as C
 import qualified Distribution.Fields.ConfVar as C
@@ -50,7 +55,7 @@ import qualified Text.PrettyPrint as PP
 cabalGild :: (MonadCabalGild r m) => FilePath -> BS.ByteString -> m String
 cabalGild filepath contents = do
   -- determine cabal-version
-  cabalFile <- asks (optCabalFile . view options)
+  cabalFile <- asks (optCabalFile . Lens.view options)
   csv <-
     if cabalFile
       then do
@@ -65,10 +70,10 @@ cabalGild filepath contents = do
 
   -- parse pragmas
   let parse :: (MonadCabalGild r f) => (a, Comments) -> f (a, Comments, [Pragma])
-      parse (pos, c) = case parsePragmas c of (ws, ps) -> traverse_ displayWarning ws $> (pos, c, ps)
+      parse (pos, c) = case parsePragmas c of (ws, ps) -> Foldable.traverse_ displayWarning ws $> (pos, c, ps)
   inputFieldsP' <- traverse (traverse parse) inputFieldsC
   endCommentsPragmas <- case parsePragmas endComments of
-    (ws, ps) -> traverse_ displayWarning ws $> ps
+    (ws, ps) -> Foldable.traverse_ displayWarning ws $> ps
 
   -- apply refactorings
   let inputFieldsP :: [C.Field CommentsPragmas]
@@ -81,23 +86,23 @@ cabalGild filepath contents = do
       pragmas =
         fst $
           partitionPragmas $
-            foldMap (foldMap trdOf3) inputFieldsP' <> endCommentsPragmas
+            foldMap (foldMap $ \(_, _, z) -> z) inputFieldsP' <> endCommentsPragmas
 
       optsEndo :: OptionsMorphism
       optsEndo = foldMap pragmaToOM pragmas
 
-  local (over options $ \o -> runOptionsMorphism optsEndo $ o {optSpecVersion = csv}) $ do
-    indentWith <- asks (optIndent . view options)
+  local (Lens.over options $ \o -> runOptionsMorphism optsEndo $ o {optSpecVersion = csv}) $ do
+    indentWith <- asks (optIndent . Lens.view options)
     let inputFields = inputFieldsR
 
     outputPrettyFields <-
       genericFromParsecFields
-        (\n ann -> prettyFieldLines n (fstOf3 ann))
+        (\n (x, _, _) -> prettyFieldLines n x)
         prettySectionArgs
         inputFields
 
     return $
-      C.showFields' (fromComments . sndOf3) (const id) indentWith outputPrettyFields
+      C.showFields' (fromComments . (\(_, y, _) -> y)) (const id) indentWith outputPrettyFields
         & if nullComments endComments
           then id
           else (++ unlines ("" : [C.fromUTF8BS c | c <- unComments endComments]))
@@ -127,13 +132,13 @@ genericFromParsecFields f g = goMany
 
 prettyFieldLines :: (MonadCabalGild r m) => C.FieldName -> C.Position -> [C.FieldLine CommentsPragmas] -> m PP.Doc
 prettyFieldLines fn pos fls =
-  fromMaybe (C.prettyFieldLines fn fls) <$> knownField fn pos fls
+  Maybe.fromMaybe (C.prettyFieldLines fn fls) <$> knownField fn pos fls
 
 knownField :: (MonadCabalGild r m) => C.FieldName -> C.Position -> [C.FieldLine CommentsPragmas] -> m (Maybe PP.Doc)
 knownField fn pos fls = do
-  opts <- asks (view options)
+  opts <- asks (Lens.view options)
   let v = optSpecVersion opts
-  let ft = fieldlinesToFreeText v pos (fmap (fmap fstOf3) fls)
+  let ft = fieldlinesToFreeText v pos (fmap (fmap $ \(x, _, _) -> x) fls)
   let ft' = showFreeText v ft
 
   return $ join $ fieldDescrLookup (fieldDescrs opts) fn (Just ft') $ \p pp ->
@@ -161,7 +166,7 @@ fieldDescrs opts =
 
 prettySectionArgs :: (MonadCabalGild r m) => C.FieldName -> [C.SectionArg ann] -> m [PP.Doc]
 prettySectionArgs x args =
-  prettySectionArgs' x args `catchError` \_ ->
+  prettySectionArgs' x args `Except.catchError` \_ ->
     return (C.prettySectionArgs x args)
 
 prettySectionArgs' :: (MonadCabalGild r m) => a -> [C.SectionArg ann] -> m [PP.Doc]
@@ -195,7 +200,7 @@ ppConfVar (C.Impl c v)
 -------------------------------------------------------------------------------
 
 partitionPragmas :: [Pragma] -> ([GlobalPragma], [FieldPragma])
-partitionPragmas = partitionEithers . map p
+partitionPragmas = Either.partitionEithers . map p
   where
     p (GlobalPragma x) = Left x
     p (FieldPragma x) = Right x

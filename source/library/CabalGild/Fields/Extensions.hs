@@ -10,7 +10,8 @@ module CabalGild.Fields.Extensions
 where
 
 import CabalGild.Fields
-import CabalGild.Prelude
+import qualified Data.List as List
+import qualified Distribution.Compat.Newtype as Newtype
 import qualified Distribution.FieldGrammar as C
 import qualified Distribution.Parsec as C
 import qualified Distribution.Pretty as C
@@ -24,7 +25,7 @@ defaultExtensionsF :: FieldDescrs () ()
 defaultExtensionsF = singletonF "default-extensions" pretty parse
 
 parse :: (C.CabalParsing m) => m [C.Extension]
-parse = unpack' (C.alaList' C.FSep C.MQuoted) <$> C.parsec
+parse = Newtype.unpack' (C.alaList' C.FSep C.MQuoted) <$> C.parsec
 
 pretty :: [C.Extension] -> PP.Doc
-pretty = PP.vcat . map C.pretty . sortOn C.prettyShow
+pretty = PP.vcat . map C.pretty . List.sortOn C.prettyShow
