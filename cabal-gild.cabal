@@ -12,7 +12,10 @@ license:            GPL-3.0-or-later AND BSD-3-Clause
 license-file:       LICENSE.txt
 author:             Oleg Grenrus <oleg.grenrus@iki.fi>
 maintainer:         Taylor Fausak
-extra-doc-files:    Changelog.md
+extra-doc-files:
+  CHANGELOG.md
+  README.md
+
 extra-source-files:
   fixtures/*.cabal
   fixtures/*.format

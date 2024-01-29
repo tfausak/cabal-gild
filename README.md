@@ -61,24 +61,3 @@ executable cabal-gild
     OverloadedStrings
     RankNTypes
 ```
-
-## Editor Integration
-
-### Emacs
-
-If you have `cabal-gild` in your `$PATH`, you can auto-format `.cabal` files in
-your project by putting this in the project directory's `.dir-locals.el`:
-
-```elisp
-((haskell-cabal-mode
-  (eval .
-    (add-hook 'before-save-hook
-      (lambda () (haskell-mode-buffer-apply-command "cabal-gild")) nil t))))
-```
-
-### Vim
-
-There are currently two options, both requiring `cabal-gild` to be in your `$PATH`:
-
-  - [`vim-cabalfmt`](https://github.com/sdiehl/vim-cabalfmt), a standalone plugin
-  - [`neoformat`](https://github.com/sbdchd/neoformat), a general formatter with `cabal-gild` support
