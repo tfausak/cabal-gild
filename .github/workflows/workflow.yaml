@@ -1,0 +1,238 @@
+{
+  "jobs": {
+    "build": {
+      "name": "Build on ${{ matrix.platform }} with GHC ${{ matrix.ghc }}",
+      "runs-on": "${{ matrix.platform }}-${{ matrix.version }}",
+      "steps": [
+        {
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "run": "mkdir artifact"
+        },
+        {
+          "id": "haskell",
+          "uses": "haskell-actions/setup@v2",
+          "with": {
+            "cabal-version": "3.10.2.1",
+            "ghc-version": "${{ matrix.ghc }}"
+          }
+        },
+        {
+          "run": "cabal sdist --output-dir artifact"
+        },
+        {
+          "run": "cabal configure --enable-optimization=2 --enable-tests --flags=pedantic --jobs"
+        },
+        {
+          "run": "cat cabal.project.local"
+        },
+        {
+          "run": "cp cabal.project.local artifact"
+        },
+        {
+          "run": "cabal freeze"
+        },
+        {
+          "run": "cat cabal.project.freeze"
+        },
+        {
+          "run": "cp cabal.project.freeze artifact"
+        },
+        {
+          "run": "cabal outdated --v2-freeze-file cabal.project.freeze"
+        },
+        {
+          "uses": "actions/cache@v4",
+          "with": {
+            "key": "${{ matrix.platform }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project.freeze') }}",
+            "path": "${{ steps.haskell.outputs.cabal-store }}",
+            "restore-keys": "${{ matrix.platform }}-${{ matrix.ghc }}-"
+          }
+        },
+        {
+          "run": "cabal build --only-download"
+        },
+        {
+          "run": "cabal build --only-dependencies"
+        },
+        {
+          "run": "cabal build"
+        },
+        {
+          "run": "cp $( cabal list-bin cabal-gild ) artifact"
+        },
+        {
+          "uses": "svenstaro/upx-action@v2",
+          "with": {
+            "files": "artifact/cabal-gild${{ matrix.extension }}"
+          }
+        },
+        {
+          "uses": "actions/upload-artifact@v4",
+          "with": {
+            "name": "cabal-gild-${{ matrix.platform }}-${{ matrix.ghc }}-${{ github.sha }}",
+            "path": "artifact"
+          }
+        },
+        {
+          "run": "cabal run -- cabal-gild-test-suite"
+        }
+      ],
+      "strategy": {
+        "matrix": {
+          "include": [
+            {
+              "ghc": "9.8.1",
+              "platform": "macos",
+              "version": 13
+            },
+            {
+              "ghc": "9.4.8",
+              "platform": "ubuntu",
+              "version": 22.04
+            },
+            {
+              "ghc": "9.6.4",
+              "platform": "ubuntu",
+              "version": 22.04
+            },
+            {
+              "ghc": "9.8.1",
+              "platform": "ubuntu",
+              "version": 22.04
+            },
+            {
+              "extension": ".exe",
+              "ghc": "9.8.1",
+              "platform": "windows",
+              "version": 2022
+            }
+          ]
+        }
+      }
+    },
+    "cabal": {
+      "name": "Cabal",
+      "runs-on": "ubuntu-22.04",
+      "steps": [
+        {
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "run": "cabal check"
+        }
+      ]
+    },
+    "hlint": {
+      "name": "HLint",
+      "runs-on": "ubuntu-22.04",
+      "steps": [
+        {
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "uses": "haskell-actions/hlint-setup@v2",
+          "with": {
+            "version": 3.8
+          }
+        },
+        {
+          "uses": "haskell-actions/hlint-run@v2",
+          "with": {
+            "fail-on": "status"
+          }
+        }
+      ]
+    },
+    "ormolu": {
+      "name": "Ormolu",
+      "runs-on": "ubuntu-22.04",
+      "steps": [
+        {
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "uses": "haskell-actions/run-ormolu@v14",
+          "with": {
+            "version": "0.7.3.0"
+          }
+        }
+      ]
+    },
+    "release": {
+      "if": "github.event_name == 'release'",
+      "name": "Release",
+      "needs": "build",
+      "runs-on": "ubuntu-22.04",
+      "steps": [
+        {
+          "uses": "actions/download-artifact@v4",
+          "with": {
+            "name": "cabal-gild-ubuntu-9.8.1-${{ github.sha }}",
+            "path": "artifact-ubuntu"
+          }
+        },
+        {
+          "uses": "svenstaro/upload-release-action@v2",
+          "with": {
+            "asset_name": "cabal-gild-${{ github.event.release.tag_name }}.tar.gz",
+            "file": "artifact-ubuntu/cabal-gild-${{ github.event.release.tag_name }}.tar.gz"
+          }
+        },
+        {
+          "uses": "svenstaro/upload-release-action@v2",
+          "with": {
+            "asset_name": "cabal-gild-${{ github.event.release.tag_name }}-ubuntu",
+            "file": "artifact-ubuntu/cabal-gild"
+          }
+        },
+        {
+          "uses": "actions/download-artifact@v4",
+          "with": {
+            "name": "cabal-gild-macos-9.8.1-${{ github.sha }}",
+            "path": "artifact-macos"
+          }
+        },
+        {
+          "uses": "svenstaro/upload-release-action@v2",
+          "with": {
+            "asset_name": "cabal-gild-${{ github.event.release.tag_name }}-macos",
+            "file": "artifact-macos/cabal-gild"
+          }
+        },
+        {
+          "uses": "actions/download-artifact@v4",
+          "with": {
+            "name": "cabal-gild-windows-9.8.1-${{ github.sha }}",
+            "path": "artifact-windows"
+          }
+        },
+        {
+          "uses": "svenstaro/upload-release-action@v2",
+          "with": {
+            "asset_name": "cabal-gild-${{ github.event.release.tag_name }}-windows.exe",
+            "file": "artifact-windows/cabal-gild.exe"
+          }
+        },
+        {
+          "run": "cabal upload --publish --username '${{ secrets.HACKAGE_USERNAME }}' --password '${{ secrets.HACKAGE_PASSWORD }}' artifact-ubuntu/cabal-gild-${{ github.event.release.tag_name }}.tar.gz"
+        }
+      ]
+    }
+  },
+  "name": "Workflow",
+  "on": {
+    "push": null,
+    "release": {
+      "types": [
+        "created"
+      ]
+    },
+    "schedule": [
+      {
+        "cron": "0 0 * * 1"
+      }
+    ]
+  }
+}

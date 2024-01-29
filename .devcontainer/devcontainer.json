@@ -1,0 +1,14 @@
+{
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "haskell.haskell"
+      ]
+    }
+  },
+  "dockerComposeFile": "compose.yaml",
+  "postCreateCommand": "cabal update",
+  "postStartCommand": "git config --global --add safe.directory \"$PWD\"",
+  "service": "devcontainer",
+  "workspaceFolder": "/workspace"
+}
