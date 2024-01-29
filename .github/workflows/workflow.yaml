@@ -103,8 +103,8 @@
               "version": 22.04
             },
             {
-              "ghc": "9.8.1",
               "extension": ".exe",
+              "ghc": "9.8.1",
               "platform": "windows",
               "version": 2022
             }
@@ -228,7 +228,7 @@
       "types": [
         "created"
       ]
-    },,
+    },
     "schedule": [
       {
         "cron": "0 0 * * 1"
