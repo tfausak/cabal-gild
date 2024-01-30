@@ -2,8 +2,7 @@
 -- License: GPL-3.0-or-later
 -- Copyright: Oleg Grenrus
 module CabalGild.Options
-  ( Mode (..),
-    Options (..),
+  ( Options (..),
     defaultOptions,
     OptionsMorphism,
     mkOptionsMorphism,
@@ -12,14 +11,9 @@ module CabalGild.Options
   )
 where
 
+import qualified CabalGild.Type.Mode as Mode
 import qualified Distribution.CabalSpecVersion as C
 import Distribution.Compat.Lens (LensLike')
-
-data Mode
-  = ModeStdout
-  | ModeInplace
-  | ModeCheck
-  deriving (Eq, Show)
 
 data Options = Options
   { optError :: !Bool,
@@ -27,7 +21,7 @@ data Options = Options
     optTabular :: !Bool,
     optCabalFile :: !Bool,
     optSpecVersion :: !C.CabalSpecVersion,
-    optMode :: !Mode,
+    optMode :: !Mode.Mode,
     optStdinInputFile :: !(Maybe FilePath)
   }
   deriving (Show)
@@ -40,7 +34,7 @@ defaultOptions =
       optTabular = True,
       optCabalFile = True,
       optSpecVersion = C.cabalSpecLatest,
-      optMode = ModeStdout,
+      optMode = Mode.Stdout,
       optStdinInputFile = Nothing
     }
 

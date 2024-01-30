@@ -90,6 +90,9 @@ library
     CabalGild.Refactoring.Fragments
     CabalGild.Refactoring.GlobFiles
     CabalGild.Refactoring.Type
+    CabalGild.Type.Config
+    CabalGild.Type.Flag
+    CabalGild.Type.Mode
     VersionInterval
 
 executable cabal-gild
