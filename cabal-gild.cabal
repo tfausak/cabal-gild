@@ -1,6 +1,6 @@
 cabal-version:      2.2
 name:               cabal-gild
-version:            0.2.1.0
+version:            0.2.1.1
 synopsis:           Format .cabal files
 category:           Development
 description:
