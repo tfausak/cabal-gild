@@ -7,14 +7,14 @@
 --
 -- This is a demo application of how you can make Cabal-like
 -- file formatter.
-module CabalGild (cabalGild) where
+module CabalGild where
 
 import CabalGild.Comments
 import CabalGild.Fields
-import CabalGild.Fields.BuildDepends
-import CabalGild.Fields.Extensions
-import CabalGild.Fields.Modules
-import CabalGild.Fields.SourceFiles
+import CabalGild.Fields.BuildDepends hiding (parse)
+import CabalGild.Fields.Extensions hiding (parse)
+import CabalGild.Fields.Modules hiding (parse)
+import CabalGild.Fields.SourceFiles hiding (parse)
 import CabalGild.Fields.TestedWith
 import CabalGild.FreeText
 import CabalGild.Monad
@@ -22,6 +22,7 @@ import CabalGild.Options
 import CabalGild.Parser
 import CabalGild.Pragma
 import CabalGild.Refactoring
+import CabalGild.Refactoring.Type (CommentsPragmas)
 import Control.Monad (join)
 import qualified Control.Monad.Except as Except
 import Control.Monad.Reader (asks, local)

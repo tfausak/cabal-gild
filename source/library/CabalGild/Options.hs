@@ -1,15 +1,7 @@
 -- |
 -- License: GPL-3.0-or-later
 -- Copyright: Oleg Grenrus
-module CabalGild.Options
-  ( Options (..),
-    defaultOptions,
-    OptionsMorphism,
-    mkOptionsMorphism,
-    runOptionsMorphism,
-    HasOptions (..),
-  )
-where
+module CabalGild.Options where
 
 import qualified CabalGild.Type.Mode as Mode
 import qualified Distribution.CabalSpecVersion as C

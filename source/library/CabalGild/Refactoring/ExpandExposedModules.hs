@@ -5,10 +5,7 @@
 -- |
 -- License: GPL-3.0-or-later
 -- Copyright: Oleg Grenrus
-module CabalGild.Refactoring.ExpandExposedModules
-  ( refactoringExpandExposedModules,
-  )
-where
+module CabalGild.Refactoring.ExpandExposedModules where
 
 import CabalGild.Monad
 import CabalGild.Pragma

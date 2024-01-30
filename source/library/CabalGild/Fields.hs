@@ -9,13 +9,7 @@
 -- |
 -- License: GPL-3.0-or-later
 -- Copyright: Oleg Grenrus
-module CabalGild.Fields
-  ( FieldDescrs,
-    fieldDescrLookup,
-    coerceFieldDescrs,
-    singletonF,
-  )
-where
+module CabalGild.Fields where
 
 import qualified Data.Map.Strict as Map
 import qualified Distribution.Compat.Newtype as Newtype

@@ -3,11 +3,7 @@
 -- |
 -- License: GPL-3.0-or-later
 -- Copyright: Oleg Grenrus
-module CabalGild.Fields.Modules
-  ( otherModulesF,
-    exposedModulesF,
-  )
-where
+module CabalGild.Fields.Modules where
 
 import CabalGild.Fields
 import qualified Data.Char as Char

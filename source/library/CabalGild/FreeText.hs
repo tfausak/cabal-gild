@@ -1,10 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module CabalGild.FreeText
-  ( fieldlinesToFreeText,
-    showFreeText,
-  )
-where
+module CabalGild.FreeText where
 
 import Data.List (foldl')
 import qualified Data.List as List

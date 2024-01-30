@@ -3,11 +3,7 @@
 -- |
 -- License: GPL-3.0-or-later
 -- Copyright: Oleg Grenrus
-module CabalGild.Fields.SourceFiles
-  ( sourceFilesF,
-    fileFields,
-  )
-where
+module CabalGild.Fields.SourceFiles where
 
 -- Make sure we explicitly use Posix's splitDirectories
 -- when parsing glob syntax since only `/` is valid, and not '\\'

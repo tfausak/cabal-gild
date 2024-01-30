@@ -1,4 +1,4 @@
-module CabalGild.Test.Golden (tests) where
+module CabalGild.Test.Golden where
 
 import CabalGild (cabalGild)
 import CabalGild.Monad (runCabalGild)

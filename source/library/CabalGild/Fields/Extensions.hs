@@ -3,11 +3,7 @@
 -- |
 -- License: GPL-3.0-or-later
 -- Copyright: Oleg Grenrus
-module CabalGild.Fields.Extensions
-  ( otherExtensionsF,
-    defaultExtensionsF,
-  )
-where
+module CabalGild.Fields.Extensions where
 
 import CabalGild.Fields
 import qualified Data.List as List

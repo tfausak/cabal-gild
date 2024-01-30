@@ -4,12 +4,7 @@
 -- |
 -- License: GPL-3.0-or-later
 -- Copyright: Oleg Grenrus
-module CabalGild.Fields.BuildDepends
-  ( buildDependsF,
-    setupDependsF,
-    buildToolDependsF,
-  )
-where
+module CabalGild.Fields.BuildDepends where
 
 import CabalGild.Fields
 import CabalGild.Options

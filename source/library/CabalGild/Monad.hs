@@ -7,21 +7,7 @@
 -- |
 -- License: GPL-3.0-or-later
 -- Copyright: Oleg Grenrus
-module CabalGild.Monad
-  ( -- * Monad class
-    MonadCabalGild (..),
-    getFiles,
-    Contents (..),
-
-    -- * Pure implementation
-    CabalGild,
-    runCabalGild,
-
-    -- * IO implementation
-    CabalGildIO,
-    runCabalGildIO,
-  )
-where
+module CabalGild.Monad where
 
 import CabalGild.Error
 import CabalGild.Options

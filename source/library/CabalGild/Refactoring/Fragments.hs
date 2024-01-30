@@ -4,10 +4,7 @@
 -- |
 -- License: GPL-3.0-or-later
 -- Copyright: Oleg Grenrus
-module CabalGild.Refactoring.Fragments
-  ( refactoringFragments,
-  )
-where
+module CabalGild.Refactoring.Fragments where
 
 import CabalGild.Comments
 import CabalGild.Monad

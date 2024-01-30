@@ -12,34 +12,7 @@
 -- preserve the caret operator @^>=x.y@.  This constraint a priori
 -- specifies the same interval as @==x.y.*@, but indicates that newer
 -- versions could be acceptable (@allow-newer: ^@).
-module VersionInterval
-  ( -- * Version intervals
-    VersionIntervals,
-
-    -- * Conversions
-    toVersionIntervals,
-    fromVersionIntervals,
-    ConversionProblem (..),
-
-    -- ** Normalisation
-    normaliseVersionRange,
-
-    -- * Version intervals view
-    VersionInterval (..),
-    LB (..),
-    MB (..),
-    UB (..),
-    Bound (..),
-
-    -- * For testing
-    validVersionInterval,
-    validVersionIntervals,
-    intersectInterval,
-    stage1,
-    stage2,
-    stage3,
-  )
-where
+module VersionInterval where
 
 import Control.Monad (join)
 import Data.List (sortOn)

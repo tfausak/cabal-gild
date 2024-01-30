@@ -3,13 +3,7 @@
 -- |
 -- License: GPL-3.0-or-later
 -- Copyright: Oleg Grenrus
-module CabalGild.Refactoring.Type
-  ( FieldRefactoring,
-    CommentsPragmas,
-    emptyCommentsPragmas,
-    rewriteFields,
-  )
-where
+module CabalGild.Refactoring.Type where
 
 import CabalGild.Comments
 import CabalGild.Monad

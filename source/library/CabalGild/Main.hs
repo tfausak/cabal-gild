@@ -1,7 +1,7 @@
 -- |
 -- License: BSD-3-Clause
 -- Copyright: Oleg Grenrus
-module CabalGild.Main (main) where
+module CabalGild.Main where
 
 import CabalGild (cabalGild)
 import CabalGild.Error (Error (SomeError), renderError)

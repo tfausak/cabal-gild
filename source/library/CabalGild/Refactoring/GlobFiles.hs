@@ -4,10 +4,7 @@
 -- |
 -- License: GPL-3.0-or-later
 -- Copyright: Oleg Grenrus
-module CabalGild.Refactoring.GlobFiles
-  ( refactoringGlobFiles,
-  )
-where
+module CabalGild.Refactoring.GlobFiles where
 
 import CabalGild.Glob
 import CabalGild.Monad

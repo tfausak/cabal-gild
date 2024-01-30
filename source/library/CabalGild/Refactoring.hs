@@ -4,11 +4,7 @@
 -- |
 -- License: GPL-3.0-or-later
 -- Copyright: Oleg Grenrus
-module CabalGild.Refactoring
-  ( CommentsPragmas,
-    refactor,
-  )
-where
+module CabalGild.Refactoring where
 
 import CabalGild.Fields.SourceFiles
 import CabalGild.Monad

@@ -4,10 +4,7 @@
 -- |
 -- License: GPL-3.0-or-later
 -- Copyright: Oleg Grenrus
-module CabalGild.Fields.TestedWith
-  ( testedWithF,
-  )
-where
+module CabalGild.Fields.TestedWith where
 
 import CabalGild.Fields
 import CabalGild.Options
