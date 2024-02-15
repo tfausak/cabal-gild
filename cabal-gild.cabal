@@ -126,5 +126,6 @@ test-suite cabal-gild-test-suite
     bytestring,
     containers,
     exceptions,
+    filepath,
     hspec ^>=2.11.7,
     transformers,

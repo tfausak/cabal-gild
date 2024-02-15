@@ -16,6 +16,7 @@ import qualified Data.Function as Function
 import qualified Data.Functor.Identity as Identity
 import qualified Data.Map as Map
 import qualified GHC.Stack as Stack
+import qualified System.FilePath as FilePath
 import qualified Test.Hspec as Hspec
 
 main :: IO ()
@@ -744,7 +745,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
           runTest
             (Gild.mainWith "" [])
             ( Map.singleton Nothing (String.toUtf8 "library\n -- cabal-gild: discover .\n exposed-modules:"),
-              Map.singleton "./." ["M.hs"]
+              Map.singleton (FilePath.combine "." ".") ["M.hs"]
             )
             Map.empty
     a `Hspec.shouldBe` Right ()
@@ -756,7 +757,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
           runTest
             (Gild.mainWith "" [])
             ( Map.singleton Nothing (String.toUtf8 "library\n -- cabal-gild: discover .\n other-modules:"),
-              Map.singleton "./." ["M.hs"]
+              Map.singleton (FilePath.combine "." ".") ["M.hs"]
             )
             Map.empty
     a `Hspec.shouldBe` Right ()
