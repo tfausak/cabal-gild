@@ -12,7 +12,4 @@ newtype ParseError = ParseError
   deriving (Eq, Show)
 
 instance Exception.Exception ParseError where
-  displayException =
-    mappend "parse error: "
-      . Exception.displayException
-      . unwrap
+  displayException = mappend "parse error: " . show . unwrap
