@@ -1,19 +1,17 @@
 cabal-version: 2.2
-name: cabal-gild
-version: 0.3.0.0
-category: Development
-synopsis: Formats package descriptions.
-description:
-  cabal-gild is an opinionated formatter for Haskell package descriptions,
-  which are also known as @.cabal@ files.
-
 author: Taylor Fausak
-maintainer: Taylor Fausak
-license: MIT
-license-file: LICENSE.txt
+category: Development
+description: Gild formats package descriptions.
 extra-doc-files:
   CHANGELOG.md
   README.md
+
+license: MIT
+license-file: LICENSE.txt
+maintainer: Taylor Fausak
+name: cabal-gild
+synopsis: Formats package descriptions.
+version: 0.3.0.0
 
 source-repository head
   type: git
@@ -55,8 +53,6 @@ common executable
 
 library
   import: library
-  hs-source-dirs: source/library
-  other-modules: Paths_cabal_gild
   autogen-modules: Paths_cabal_gild
   build-depends:
     Cabal-syntax ^>=3.8.1.0 || ^>=3.10.1.0,
@@ -112,6 +108,9 @@ library
     CabalGild.Type.Set
     CabalGild.Type.SomeParsecParser
 
+  hs-source-dirs: source/library
+  other-modules: Paths_cabal_gild
+
 executable cabal-gild
   import: executable
   hs-source-dirs: source/executable
@@ -119,9 +118,6 @@ executable cabal-gild
 
 test-suite cabal-gild-test-suite
   import: executable
-  type: exitcode-stdio-1.0
-  hs-source-dirs: source/test-suite
-  main-is: Main.hs
   build-depends:
     bytestring,
     containers,
@@ -129,3 +125,7 @@ test-suite cabal-gild-test-suite
     filepath,
     hspec ^>=2.11.7,
     transformers,
+
+  hs-source-dirs: source/test-suite
+  main-is: Main.hs
+  type: exitcode-stdio-1.0
