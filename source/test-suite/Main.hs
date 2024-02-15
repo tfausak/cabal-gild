@@ -764,6 +764,45 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.singleton Nothing (String.toUtf8 "library\n  -- cabal-gild: discover .\n  other-modules: M\n")
 
+  Hspec.it "discovers a nested module" $ do
+    let (a, s, w) =
+          runTest
+            (Gild.mainWith "" [])
+            ( Map.singleton Nothing (String.toUtf8 "library\n -- cabal-gild: discover .\n exposed-modules:"),
+              Map.singleton (FilePath.combine "." ".") [FilePath.combine "N" "O.hs"]
+            )
+            Map.empty
+    a `Hspec.shouldBe` Right ()
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.singleton Nothing (String.toUtf8 "library\n  -- cabal-gild: discover .\n  exposed-modules: N.O\n")
+
+  Hspec.it "discovers multiple modules" $ do
+    let (a, s, w) =
+          runTest
+            (Gild.mainWith "" [])
+            ( Map.singleton Nothing (String.toUtf8 "library\n -- cabal-gild: discover .\n exposed-modules:"),
+              Map.singleton (FilePath.combine "." ".") ["M.hs", "N.hs"]
+            )
+            Map.empty
+    a `Hspec.shouldBe` Right ()
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.singleton Nothing (String.toUtf8 "library\n  -- cabal-gild: discover .\n  exposed-modules:\n    M\n    N\n")
+
+  Hspec.it "ignores discover pragma separated by comment" $ do
+    expectGilded
+      "library\n -- cabal-gild: discover .\n -- foo\n exposed-modules: M"
+      "library\n  -- cabal-gild: discover .\n  -- foo\n  exposed-modules: M\n"
+
+  Hspec.it "ignores misplaced discover pragma" $ do
+    expectGilded
+      "-- cabal-gild: discover .\nname: p"
+      "-- cabal-gild: discover .\nname: p\n"
+
+  Hspec.it "ignores unknown pragma" $ do
+    expectGilded
+      "-- cabal-gild: unknown"
+      "-- cabal-gild: unknown\n"
+
 expectGilded :: (Stack.HasCallStack) => String -> String -> Hspec.Expectation
 expectGilded input expected = do
   let (a, s, w) =
