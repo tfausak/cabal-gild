@@ -39,8 +39,8 @@ field ::
 field p f = case f of
   Fields.Field n _ -> fmap (Maybe.fromMaybe f) . MaybeT.runMaybeT $ do
     Monad.guard $ Set.member (Name.value n) relevantFieldNames
-    c <- MaybeT.hoistMaybe . Utils.safeLast $ Name.annotation n
-    Pragma.Discover x <- MaybeT.hoistMaybe . Parsec.simpleParsecBS $ Comment.value c
+    c <- hoistMaybe . Utils.safeLast $ Name.annotation n
+    Pragma.Discover x <- hoistMaybe . Parsec.simpleParsecBS $ Comment.value c
     let d = FilePath.combine (FilePath.takeDirectory p) x
     fs <- Trans.lift $ MonadWalk.walk d
     pure
@@ -58,3 +58,8 @@ relevantFieldNames =
       [ "exposed-modules",
         "other-modules"
       ]
+
+-- This was added in transformers-0.6.0.0. See
+-- <https://hub.darcs.net/ross/transformers/issue/49>.
+hoistMaybe :: (Applicative f) => Maybe a -> MaybeT.MaybeT f a
+hoistMaybe = MaybeT.MaybeT . pure

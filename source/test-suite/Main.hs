@@ -472,8 +472,8 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
 
   Hspec.it "adds a trailing comma to build-tools when possible" $ do
     expectGilded
-      "cabal-version: 2.2\nlibrary\n build-tools: q , p == 1"
-      "cabal-version: 2.2\n\nlibrary\n  build-tools:\n    p ==1,\n    q >=0,\n"
+      "cabal-version: 2.2\nlibrary\n build-tools: p == 1, q == 2"
+      "cabal-version: 2.2\n\nlibrary\n  build-tools:\n    p ==1,\n    q ==2,\n"
 
   Hspec.it "does not add a trailing comma to build-tools with one element" $ do
     expectGilded
@@ -569,8 +569,8 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
 
   Hspec.it "adds a trailing comma to build-depends when possible" $ do
     expectGilded
-      "cabal-version: 2.2\nlibrary\n build-depends: q , p == 1"
-      "cabal-version: 2.2\n\nlibrary\n  build-depends:\n    p ==1,\n    q,\n"
+      "cabal-version: 2.2\nlibrary\n build-depends: p == 1, q == 2"
+      "cabal-version: 2.2\n\nlibrary\n  build-depends:\n    p ==1,\n    q ==2,\n"
 
   Hspec.it "does not add a trailing comma to build-depends with one element" $ do
     expectGilded
@@ -596,8 +596,8 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
 
   Hspec.it "adds a trailing comma to code-generators when possible" $ do
     expectGilded
-      "cabal-version: 2.2\ntest-suite x\n code-generators: b, a"
-      "cabal-version: 2.2\n\ntest-suite x\n  code-generators:\n    b,\n    a,\n"
+      "cabal-version: 2.2\ntest-suite x\n code-generators: a, b"
+      "cabal-version: 2.2\n\ntest-suite x\n  code-generators:\n    a,\n    b,\n"
 
   Hspec.it "does not add a trailing comma to code-generators with one element" $ do
     expectGilded
