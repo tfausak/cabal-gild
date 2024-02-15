@@ -23,7 +23,7 @@ version       : 0.0.0.0
 
 library
   build-depends: mtl>=2.3, base
-  ghc-options: -Wall
+  ghc-options:-Wall
   if impl(ghc>=9.8)
     ghc-options: -Wmissing-role-annotations
 ```
