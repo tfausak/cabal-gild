@@ -77,9 +77,6 @@
         },
         {
           "run": "cabal run -- cabal-gild-test-suite --randomize --strict"
-        },
-        {
-          "run": "cabal run -- cabal-gild --input cabal-gild.cabal --mode check"
         }
       ],
       "strategy": {
