@@ -191,7 +191,7 @@
         {
           "uses": "svenstaro/upload-release-action@v2",
           "with": {
-            "asset_name": "cabal-gild-${{ github.event.release.tag_name }}-ubuntu-amd64",
+            "asset_name": "cabal-gild-${{ github.event.release.tag_name }}-linux-x64",
             "file": "artifact-ubuntu-22.04/cabal-gild"
           }
         },
@@ -205,7 +205,7 @@
         {
           "uses": "svenstaro/upload-release-action@v2",
           "with": {
-            "asset_name": "cabal-gild-${{ github.event.release.tag_name }}-macos-amd64",
+            "asset_name": "cabal-gild-${{ github.event.release.tag_name }}-darwin-x64",
             "file": "artifact-macos-13/cabal-gild"
           }
         },
@@ -219,7 +219,7 @@
         {
           "uses": "svenstaro/upload-release-action@v2",
           "with": {
-            "asset_name": "cabal-gild-${{ github.event.release.tag_name }}-macos-arm64",
+            "asset_name": "cabal-gild-${{ github.event.release.tag_name }}-darwin-arm64",
             "file": "artifact-macos-14/cabal-gild"
           }
         },
@@ -233,7 +233,7 @@
         {
           "uses": "svenstaro/upload-release-action@v2",
           "with": {
-            "asset_name": "cabal-gild-${{ github.event.release.tag_name }}-windows-amd64.exe",
+            "asset_name": "cabal-gild-${{ github.event.release.tag_name }}-win32-x64.exe",
             "file": "artifact-windows-2022/cabal-gild.exe"
           }
         },
