@@ -1,9 +1,0 @@
-roots = [
-  "^Main[.]main$",
-  "^Paths_cabal_gild[.]",
-]
-root-instances = [
-  { class = "[.]Eq$" },
-  { class = "[.]Show$" },
-]
-unused-types = true
