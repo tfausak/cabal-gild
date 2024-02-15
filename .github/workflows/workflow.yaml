@@ -76,7 +76,7 @@
           }
         },
         {
-          "run": "cabal run -- cabal-gild-test-suite"
+          "run": "cabal run -- cabal-gild-test-suite --randomize --strict"
         }
       ],
       "strategy": {
@@ -85,7 +85,7 @@
             {
               "ghc": "9.8.1",
               "platform": "macos",
-              "version": 13
+              "version": 14
             },
             {
               "ghc": "9.4.8",
