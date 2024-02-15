@@ -2,6 +2,7 @@
 
 module CabalGild.Action.Format where
 
+import CabalGild.Compat.Cabal ()
 import qualified CabalGild.Extra.FieldLine as FieldLine
 import qualified CabalGild.Extra.Name as Name
 import qualified CabalGild.Extra.String as String
@@ -89,9 +90,9 @@ parsers =
           "asm-sources" =: SPP.set @Newtypes.VCat @Newtypes.FilePathNT,
           "autogen-includes" =: SPP.set @Newtypes.FSep @Newtypes.FilePathNT,
           "autogen-modules" =: SPP.set @Newtypes.VCat @(Newtypes.MQuoted ModuleName.ModuleName),
-          "build-depends" =: SPP.list @Newtypes.CommaVCat @(Identity.Identity Dependency.Dependency), -- TODO
-          "build-tool-depends" =: SPP.list @Newtypes.CommaFSep @(Identity.Identity ExeDependency.ExeDependency), -- TODO
-          "build-tools" =: SPP.list @Newtypes.CommaFSep @(Identity.Identity LegacyExeDependency.LegacyExeDependency), -- TODO
+          "build-depends" =: SPP.set @Newtypes.CommaVCat @(Identity.Identity Dependency.Dependency),
+          "build-tool-depends" =: SPP.set @Newtypes.CommaFSep @(Identity.Identity ExeDependency.ExeDependency),
+          "build-tools" =: SPP.set @Newtypes.CommaFSep @(Identity.Identity LegacyExeDependency.LegacyExeDependency),
           "c-sources" =: SPP.set @Newtypes.VCat @Newtypes.FilePathNT,
           "cc-options" =: SPP.list @Newtypes.NoCommaFSep @Newtypes.Token',
           "cmm-options" =: SPP.list @Newtypes.NoCommaFSep @Newtypes.Token',
@@ -132,14 +133,14 @@ parsers =
           "ld-options" =: SPP.list @Newtypes.NoCommaFSep @Newtypes.Token',
           "license-files" =: SPP.set @Newtypes.FSep @Newtypes.FilePathNT,
           "mixins" =: SPP.set @Newtypes.CommaVCat @(Identity.Identity Mixin.Mixin),
-          "options" =: SPP.list @Newtypes.FSep @(Identity.Identity ForeignLibOption.ForeignLibOption), -- TODO
+          "options" =: SPP.set @Newtypes.FSep @(Identity.Identity ForeignLibOption.ForeignLibOption),
           "other-extensions" =: SPP.set @Newtypes.FSep @(Newtypes.MQuoted Extension.Extension),
-          "other-languages" =: SPP.list @Newtypes.FSep @(Newtypes.MQuoted Extension.Language), -- TODO
+          "other-languages" =: SPP.set @Newtypes.FSep @(Newtypes.MQuoted Extension.Language),
           "other-modules" =: SPP.set @Newtypes.VCat @(Newtypes.MQuoted ModuleName.ModuleName),
-          "pkgconfig-depends" =: SPP.list @Newtypes.CommaFSep @(Identity.Identity PkgconfigDependency.PkgconfigDependency), -- TODO
-          "reexported-modules" =: SPP.list @Newtypes.CommaVCat @(Identity.Identity ModuleReexport.ModuleReexport), -- TODO
-          "setup-depends" =: SPP.list @Newtypes.CommaVCat @(Identity.Identity Dependency.Dependency), -- TODO
+          "pkgconfig-depends" =: SPP.set @Newtypes.CommaFSep @(Identity.Identity PkgconfigDependency.PkgconfigDependency),
+          "reexported-modules" =: SPP.set @Newtypes.CommaVCat @(Identity.Identity ModuleReexport.ModuleReexport),
+          "setup-depends" =: SPP.set @Newtypes.CommaVCat @(Identity.Identity Dependency.Dependency),
           "signatures" =: SPP.set @Newtypes.VCat @(Newtypes.MQuoted ModuleName.ModuleName),
-          "tested-with" =: SPP.list @Newtypes.FSep @Newtypes.TestedWith, -- TODO
+          "tested-with" =: SPP.set @Newtypes.FSep @Newtypes.TestedWith,
           "virtual-modules" =: SPP.set @Newtypes.VCat @(Newtypes.MQuoted ModuleName.ModuleName)
         ]
