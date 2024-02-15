@@ -15,25 +15,25 @@ import qualified Data.Set as Set
 import qualified Distribution.Fields as Fields
 import qualified Distribution.Parsec as Parsec
 import qualified Distribution.Utils.Generic as Utils
-import qualified System.OsPath as OsPath
+import qualified System.FilePath as FilePath
 
 run ::
   (Exception.MonadThrow m, MonadWalk.MonadWalk m) =>
-  OsPath.OsPath ->
+  FilePath ->
   ([Fields.Field [Comment.Comment a]], cs) ->
   m ([Fields.Field [Comment.Comment a]], cs)
 run p (fs, cs) = (,) <$> fields p fs <*> pure cs
 
 fields ::
   (Exception.MonadThrow m, MonadWalk.MonadWalk m) =>
-  OsPath.OsPath ->
+  FilePath ->
   [Fields.Field [Comment.Comment a]] ->
   m [Fields.Field [Comment.Comment a]]
 fields = mapM . field
 
 field ::
   (Exception.MonadThrow m, MonadWalk.MonadWalk m) =>
-  OsPath.OsPath ->
+  FilePath ->
   Fields.Field [Comment.Comment a] ->
   m (Fields.Field [Comment.Comment a])
 field p f = case f of
@@ -41,14 +41,13 @@ field p f = case f of
     Monad.guard $ Set.member (Name.value n) relevantFieldNames
     c <- MaybeT.hoistMaybe . Utils.safeLast $ Name.annotation n
     Pragma.Discover x <- MaybeT.hoistMaybe . Parsec.simpleParsecBS $ Comment.value c
-    hs <- OsPath.encodeUtf ".hs"
-    let d = OsPath.combine (OsPath.takeDirectory p) x
+    let d = FilePath.combine (FilePath.takeDirectory p) x
     fs <- Trans.lift $ MonadWalk.walk d
     pure
       . Fields.Field n
       . fmap (ModuleName.toFieldLine [])
-      . Maybe.mapMaybe (ModuleName.fromOsPath . OsPath.makeRelative d)
-      $ Maybe.mapMaybe (OsPath.stripExtension hs) fs
+      . Maybe.mapMaybe (ModuleName.fromFilePath . FilePath.makeRelative d)
+      $ Maybe.mapMaybe (FilePath.stripExtension "hs") fs
   Fields.Section n sas fs -> Fields.Section n sas <$> fields p fs
 
 relevantFieldNames :: Set.Set Fields.FieldName

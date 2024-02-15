@@ -1,19 +1,19 @@
 module CabalGild.Class.MonadWalk where
 
-import qualified System.Directory.OsPath as Directory
-import qualified System.OsPath as OsPath
+import qualified System.Directory as Directory
+import qualified System.FilePath as FilePath
 
 class (Monad m) => MonadWalk m where
-  walk :: OsPath.OsPath -> m [OsPath.OsPath]
+  walk :: FilePath -> m [FilePath]
 
 instance MonadWalk IO where
   walk = listDirectoryRecursively
 
-listDirectoryRecursively :: OsPath.OsPath -> IO [OsPath.OsPath]
+listDirectoryRecursively :: FilePath -> IO [FilePath]
 listDirectoryRecursively d = do
   es <- Directory.listDirectory d
   let f e = do
-        let p = OsPath.combine d e
+        let p = FilePath.combine d e
         b <- Directory.doesDirectoryExist p
         if b
           then listDirectoryRecursively p

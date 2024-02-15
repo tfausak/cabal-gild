@@ -1,5 +1,4 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE QuasiQuotes #-}
 
 import qualified CabalGild.Class.MonadLog as MonadLog
 import qualified CabalGild.Class.MonadRead as MonadRead
@@ -17,7 +16,6 @@ import qualified Data.Function as Function
 import qualified Data.Functor.Identity as Identity
 import qualified Data.Map as Map
 import qualified GHC.Stack as Stack
-import qualified System.OsPath as OsPath
 import qualified Test.Hspec as Hspec
 
 main :: IO ()
@@ -46,7 +44,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     let (a, s, w) =
           runTest
             (Gild.mainWith "" ["--input", "input.cabal"])
-            (Map.singleton (Just [OsPath.osp|input.cabal|]) (String.toUtf8 ""), Map.empty)
+            (Map.singleton (Just "input.cabal") (String.toUtf8 ""), Map.empty)
             Map.empty
     a `Hspec.shouldBe` Right ()
     w `Hspec.shouldBe` []
@@ -60,7 +58,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             Map.empty
     a `Hspec.shouldBe` Right ()
     w `Hspec.shouldBe` []
-    s `Hspec.shouldSatisfy` Map.member (Just [OsPath.osp|output.cabal|])
+    s `Hspec.shouldSatisfy` Map.member (Just "output.cabal")
 
   Hspec.it "succeeds when checking formatted input" $ do
     let (a, s, w) =
@@ -746,7 +744,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
           runTest
             (Gild.mainWith "" [])
             ( Map.singleton Nothing (String.toUtf8 "library\n -- cabal-gild: discover .\n exposed-modules:"),
-              Map.singleton [OsPath.osp|./.|] [[OsPath.osp|M.hs|]]
+              Map.singleton "./." ["M.hs"]
             )
             Map.empty
     a `Hspec.shouldBe` Right ()
@@ -758,7 +756,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
           runTest
             (Gild.mainWith "" [])
             ( Map.singleton Nothing (String.toUtf8 "library\n -- cabal-gild: discover .\n other-modules:"),
-              Map.singleton [OsPath.osp|./.|] [[OsPath.osp|M.hs|]]
+              Map.singleton "./." ["M.hs"]
             )
             Map.empty
     a `Hspec.shouldBe` Right ()
@@ -810,9 +808,9 @@ runTest t r = Identity.runIdentity . RWST.runRWST (ExceptT.runExceptT $ runTestT
 
 type E = Problem
 
-type R = (S, Map.Map OsPath.OsPath [OsPath.OsPath])
+type R = (S, Map.Map FilePath [FilePath])
 
-type S = Map.Map (Maybe OsPath.OsPath) ByteString.ByteString
+type S = Map.Map (Maybe FilePath) ByteString.ByteString
 
 type W = [String]
 
