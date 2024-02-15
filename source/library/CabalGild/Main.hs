@@ -13,6 +13,7 @@ import qualified CabalGild.Class.MonadRead as MonadRead
 import qualified CabalGild.Class.MonadWalk as MonadWalk
 import qualified CabalGild.Class.MonadWrite as MonadWrite
 import qualified CabalGild.Exception.CheckFailure as CheckFailure
+import qualified CabalGild.Exception.ParseError as ParseError
 import qualified CabalGild.Type.Config as Config
 import qualified CabalGild.Type.Flag as Flag
 import qualified CabalGild.Type.Mode as Mode
@@ -70,7 +71,9 @@ mainWith name arguments = do
     Exception.throwM Exit.ExitSuccess
 
   input <- MonadRead.read $ Config.input config
-  fields <- either Exception.throwM pure $ Fields.readFields input
+  fields <-
+    either (Exception.throwM . ParseError.ParseError) pure $
+      Fields.readFields input
   let csv = GetCabalVersion.fromFields fields
       comments = ExtractComments.fromByteString input
   output <-
