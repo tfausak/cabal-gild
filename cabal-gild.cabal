@@ -85,10 +85,10 @@ library
     CabalGild.Class.MonadWalk
     CabalGild.Class.MonadWrite
     CabalGild.Compat.Cabal
+    CabalGild.Compat.Parsec
     CabalGild.Exception.CheckFailure
     CabalGild.Exception.InvalidMode
     CabalGild.Exception.InvalidOption
-    CabalGild.Exception.ParseError
     CabalGild.Exception.UnexpectedArgument
     CabalGild.Exception.UnknownOption
     CabalGild.Extra.Either

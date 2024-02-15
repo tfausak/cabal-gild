@@ -5,6 +5,7 @@
 module CabalGild.Compat.Cabal where
 
 #if !MIN_VERSION_Cabal_syntax(3, 10, 1)
+
 import qualified Distribution.Types.Dependency as Dependency
 import qualified Distribution.Types.VersionRange.Internal as VersionRange
 import qualified Distribution.Types.ExeDependency as ExeDependency
@@ -24,4 +25,5 @@ deriving instance Ord ModuleReexport.ModuleReexport
 deriving instance Ord PkgconfigDependency.PkgconfigDependency
 deriving instance Ord PkgconfigVersionRange.PkgconfigVersionRange
 deriving instance Ord VersionRange.VersionRange
+
 #endif
