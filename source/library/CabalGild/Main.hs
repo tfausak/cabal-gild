@@ -1,153 +1,93 @@
--- |
--- License: BSD-3-Clause
--- Copyright: Oleg Grenrus
-module CabalGild.Main (main) where
+module CabalGild.Main where
 
-import CabalGild (cabalGild)
-import CabalGild.Error (Error (SomeError), renderError)
-import CabalGild.Monad (runCabalGildIO)
-import CabalGild.Options
+import qualified CabalGild.Action.AttachComments as AttachComments
+import qualified CabalGild.Action.Discover as Discover
+import qualified CabalGild.Action.ExtractComments as ExtractComments
+import qualified CabalGild.Action.Format as Format
+import qualified CabalGild.Action.GetCabalVersion as GetCabalVersion
+import qualified CabalGild.Action.Reindent as Reindent
+import qualified CabalGild.Action.RemovePositions as RemovePositions
+import qualified CabalGild.Action.Render as Render
+import qualified CabalGild.Class.MonadLog as MonadLog
+import qualified CabalGild.Class.MonadRead as MonadRead
+import qualified CabalGild.Class.MonadWalk as MonadWalk
+import qualified CabalGild.Class.MonadWrite as MonadWrite
+import qualified CabalGild.Exception.CheckFailure as CheckFailure
+import qualified CabalGild.Exception.ParseError as ParseError
+import qualified CabalGild.Type.Config as Config
+import qualified CabalGild.Type.Flag as Flag
+import qualified CabalGild.Type.Mode as Mode
 import qualified Control.Monad as Monad
 import qualified Control.Monad.Catch as Exception
-import qualified Data.ByteString as BS
 import qualified Data.Maybe as Maybe
-import Data.Traversable (for)
 import qualified Data.Version as Version
-import Distribution.Utils.Generic (toUTF8BS)
+import qualified Distribution.Fields as Fields
 import qualified Paths_cabal_gild as This
 import qualified System.Console.GetOpt as GetOpt
 import qualified System.Environment as Environment
-import System.Exit (exitFailure)
 import qualified System.Exit as Exit
-import System.FilePath (takeDirectory)
-import System.IO (hPutStrLn, stderr)
-import qualified Text.Read as Read
+import qualified System.IO as IO
 
-main :: IO ()
-main = do
+defaultMain :: IO ()
+defaultMain = Exception.handle onException $ do
+  name <- Environment.getProgName
   arguments <- Environment.getArgs
-  let (flags, filepaths, unknowns, invalids) = GetOpt.getOpt' GetOpt.Permute flagOptions arguments
-  mapM_ (Exception.throwM . userError . mappend "unknown option: ") unknowns
-  mapM_ (Exception.throwM . userError . mappend "invalid option: ") invalids
-  config <- flagsToConfig flags
-  let opts = configOptions config
+  mainWith name arguments
 
-  Monad.when (configHelp config) $ do
-    name <- Environment.getProgName
-    putStr $ GetOpt.usageInfo name flagOptions
-    Exit.exitSuccess
+onException :: Exception.SomeException -> IO a
+onException e = case Exception.fromException e of
+  Just exitCode -> Exit.exitWith exitCode
+  Nothing -> do
+    IO.hPutStrLn IO.stderr $ Exception.displayException e
+    Exit.exitFailure
 
-  Monad.when (configVersion config) $ do
-    putStrLn $ Version.showVersion This.version
-    Exit.exitSuccess
+mainWith ::
+  ( MonadLog.MonadLog m,
+    MonadRead.MonadRead m,
+    Exception.MonadThrow m,
+    MonadWalk.MonadWalk m,
+    MonadWrite.MonadWrite m
+  ) =>
+  String ->
+  [String] ->
+  m ()
+mainWith name arguments = do
+  flags <- Flag.fromArguments arguments
+  config <- Config.fromFlags flags
+  let version = Version.showVersion This.version
 
-  notFormatted <-
-    Maybe.catMaybes <$> case filepaths of
-      [] -> fmap pure $ BS.getContents >>= main' opts Nothing
-      (_ : _) -> for filepaths $ \filepath -> do
-        contents <- BS.readFile filepath
-        main' opts (Just filepath) contents
+  Monad.when (Config.help config) $ do
+    let header =
+          unlines
+            [ name <> " version " <> version,
+              "",
+              "<https://github.com/tfausak/cabal-gild>"
+            ]
+    MonadLog.log $ GetOpt.usageInfo header Flag.options
+    Exception.throwM Exit.ExitSuccess
 
-  Monad.when ((optMode opts == ModeCheck) && not (null notFormatted)) $ do
-    Monad.forM_ notFormatted $ \filepath ->
-      hPutStrLn stderr $ "error: Input " <> filepath <> " is not formatted."
-    exitFailure
+  Monad.when (Config.version config) $ do
+    MonadLog.logLn version
+    Exception.throwM Exit.ExitSuccess
 
-main' :: Options -> Maybe FilePath -> BS.ByteString -> IO (Maybe FilePath)
-main' opts mfilepath input = do
-  -- name of the input
-  let filepath = Maybe.fromMaybe "<stdin>" mfilepath
+  input <- MonadRead.read $ Config.input config
+  fields <-
+    either (Exception.throwM . ParseError.ParseError) pure $
+      Fields.readFields input
+  let csv = GetCabalVersion.fromFields fields
+      comments = ExtractComments.fromByteString input
+  output <-
+    ( AttachComments.run
+        Monad.>=> Reindent.run csv
+        Monad.>=> RemovePositions.run
+        Monad.>=> Discover.run (Maybe.fromMaybe (Config.stdin config) $ Config.input config)
+        Monad.>=> Format.run csv
+        Monad.>=> Render.run
+      )
+      (fields, comments)
 
-  mroot <-
-    fmap takeDirectory <$> case (mfilepath, optStdinInputFile opts) of
-      (Just _, Just _) -> do
-        renderError $ SomeError "cannot pass both --stdin-input-file and FILE"
-        exitFailure
-      (Just f, Nothing) -> pure $ Just f
-      (Nothing, Just f) -> pure $ Just f
-      (Nothing, Nothing) -> pure Nothing
-
-  -- process
-  res <- runCabalGildIO mroot opts (cabalGild filepath input)
-
-  case res of
-    Right output -> do
-      let outputBS = toUTF8BS output
-          formatted = outputBS == input
-
-      case optMode opts of
-        ModeStdout -> BS.putStr outputBS
-        ModeInplace -> case mfilepath of
-          Nothing -> BS.putStr outputBS
-          Just _ -> Monad.unless formatted $ BS.writeFile filepath outputBS
-        _ -> return ()
-
-      return $ if formatted then Nothing else Just filepath
-    Left err -> do
-      renderError err
-      exitFailure
-
--------------------------------------------------------------------------------
--- Options parser
--------------------------------------------------------------------------------
-
-data Flag
-  = FlagCabalFile Bool
-  | FlagError Bool
-  | FlagHelp
-  | FlagIndent String
-  | FlagMode Mode
-  | FlagStdinInputFile String
-  | FlagTabular Bool
-  | FlagVersion
-  deriving (Eq, Show)
-
-flagOptions :: [GetOpt.OptDescr Flag]
-flagOptions =
-  [ GetOpt.Option [] ["Werror"] (GetOpt.NoArg $ FlagError True) "Treat warnings as errors",
-    GetOpt.Option [] ["Wno-error"] (GetOpt.NoArg $ FlagError False) "",
-    GetOpt.Option [] ["indent"] (GetOpt.ReqArg FlagIndent "N") "Indentation",
-    GetOpt.Option [] ["tabular"] (GetOpt.NoArg $ FlagTabular True) "Tabular formatting",
-    GetOpt.Option [] ["no-tabular"] (GetOpt.NoArg $ FlagTabular False) "",
-    GetOpt.Option [] ["cabal-file"] (GetOpt.NoArg $ FlagCabalFile True) "",
-    GetOpt.Option ['n'] ["no-cabal-file"] (GetOpt.NoArg $ FlagCabalFile False) "Don't parse as .cabal file",
-    GetOpt.Option [] ["stdout"] (GetOpt.NoArg $ FlagMode ModeStdout) "Write output to stdout (default)",
-    GetOpt.Option ['i'] ["inplace"] (GetOpt.NoArg $ FlagMode ModeInplace) "Process files in-place",
-    GetOpt.Option ['c'] ["check"] (GetOpt.NoArg $ FlagMode ModeCheck) "Fail with non-zero exit code if input is not formatted",
-    GetOpt.Option [] ["stdin-input-file"] (GetOpt.ReqArg FlagStdinInputFile "FILE") "When reading from STDIN, use this file path to resolve relative references",
-    GetOpt.Option ['h'] ["help"] (GetOpt.NoArg FlagHelp) "Show this help text",
-    GetOpt.Option [] ["version"] (GetOpt.NoArg FlagVersion) "Show version"
-  ]
-
-data Config = Config
-  { configHelp :: Bool,
-    configOptions :: Options,
-    configVersion :: Bool
-  }
-  deriving (Show)
-
-initialConfig :: Config
-initialConfig =
-  Config
-    { configHelp = False,
-      configOptions = defaultOptions,
-      configVersion = False
-    }
-
-applyFlag :: (Exception.MonadThrow m) => Config -> Flag -> m Config
-applyFlag c f = case f of
-  FlagCabalFile b -> pure c {configOptions = (configOptions c) {optCabalFile = b}}
-  FlagError b -> pure c {configOptions = (configOptions c) {optError = b}}
-  FlagHelp -> pure c {configHelp = True}
-  FlagIndent s -> do
-    i <- case Read.readMaybe s of
-      Nothing -> Exception.throwM . userError $ "invalid indent: " <> show s
-      Just i -> pure i
-    pure c {configOptions = (configOptions c) {optIndent = i}}
-  FlagMode m -> pure c {configOptions = (configOptions c) {optMode = m}}
-  FlagStdinInputFile s -> pure c {configOptions = (configOptions c) {optStdinInputFile = Just s}}
-  FlagTabular b -> pure c {configOptions = (configOptions c) {optTabular = b}}
-  FlagVersion -> pure c {configVersion = True}
-
-flagsToConfig :: (Exception.MonadThrow m) => [Flag] -> m Config
-flagsToConfig = Monad.foldM applyFlag initialConfig
+  case Config.mode config of
+    Mode.Check ->
+      Monad.when (output /= input) $
+        Exception.throwM CheckFailure.CheckFailure
+    Mode.Format -> MonadWrite.write (Config.output config) output
