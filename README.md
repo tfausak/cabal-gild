@@ -7,10 +7,13 @@
 Gild is an opinionated command line utility that formats Haskell package
 descriptions, which are also known as `*.cabal` files.
 
-Gild started as a fork of [cabal-fmt][] by @phadej, but is now totally
-separate.
+To run Gild in CI, consider using [cabal-gild-setup-action][].
 
-[cabal-fmt]: https://github.com/phadej/cabal-fmt
+[cabal-gild-setup-action]: https://github.com/tfausak/cabal-gild-setup-action
+
+Gild started as a fork of [phadej/cabal-fmt][] by, but is now totally separate.
+
+[phadej/cabal-fmt]: https://github.com/phadej/cabal-fmt
 
 ## Summary
 

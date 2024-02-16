@@ -150,6 +150,21 @@
         }
       ]
     },
+    "gild": {
+      "name": "Gild",
+      "runs-on": "ubuntu-22.04",
+      "steps": [
+        {
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "uses": "tfausak/cabal-gild-setup-action@v1"
+        },
+        {
+          "run": "cabal-gild --input cabal-gild.cabal --mode check"
+        }
+      ]
+    },
     "ormolu": {
       "name": "Ormolu",
       "runs-on": "ubuntu-22.04",
