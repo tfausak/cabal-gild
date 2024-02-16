@@ -2,6 +2,7 @@ module CabalGild.Exception.CheckFailure where
 
 import qualified Control.Monad.Catch as Exception
 
+-- | This exception is thrown when the input is not formatted correctly.
 data CheckFailure
   = CheckFailure
   deriving (Eq, Show)

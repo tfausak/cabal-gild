@@ -10,12 +10,16 @@ import qualified Data.Maybe as Maybe
 import qualified Data.Word as Word
 import qualified Distribution.Parsec.Position as Position
 
+-- | Extracts comments from the given byte string. This is a wrapper around
+-- 'fromLine', where lines are split using 'Latin1.lines'.
 fromByteString :: ByteString.ByteString -> [Comment.Comment Position.Position]
 fromByteString =
   Maybe.mapMaybe (uncurry fromLine)
     . zip [1 ..]
     . Latin1.lines
 
+-- | Extracts a comment from the given line. If the line does not contain a
+-- comment, the result will be 'Alternative.empty'.
 fromLine ::
   (Applicative.Alternative m, Monad m) =>
   Int ->
@@ -33,8 +37,13 @@ fromLine row line = do
         Comment.value = ByteString.dropWhileEnd isBlank rest
       }
 
+-- | Breaks a byte string into two parts: the part before the comment delimiter
+-- and the part after. If there is no comment, the part after will be empty.
 breakComment :: ByteString.ByteString -> (ByteString.ByteString, ByteString.ByteString)
 breakComment = ByteString.breakSubstring Comment.delimiter
 
+-- | Returns true if the given byte is a blank character. Currently this is a
+-- wrapper around 'ByteStringInternal.isSpaceWord8'. Perhaps it should only
+-- check for spaces and tabs though.
 isBlank :: Word.Word8 -> Bool
 isBlank = ByteStringInternal.isSpaceWord8

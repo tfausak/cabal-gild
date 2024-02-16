@@ -1,3 +1,4 @@
+-- | This module defines the main entry point for the application.
 module CabalGild.Main where
 
 import qualified CabalGild.Action.AttachComments as AttachComments
@@ -28,12 +29,19 @@ import qualified System.Environment as Environment
 import qualified System.Exit as Exit
 import qualified System.IO as IO
 
+-- | This is the main entry point for the application. It gets the command line
+-- arguments and then hands things off to 'mainWith'. If any exceptions are
+-- thrown, they will be handled by 'onException'.
 defaultMain :: IO ()
 defaultMain = Exception.handle onException $ do
   name <- Environment.getProgName
   arguments <- Environment.getArgs
   mainWith name arguments
 
+-- | If the exception was an 'Exit.ExitCode', simply exit with that code.
+-- Otherwise handle exceptions by printing them to STDERR using
+-- 'Exception.displayException' instead of 'show'. Then exit with a failing
+-- status code.
 onException :: Exception.SomeException -> IO a
 onException e = case Exception.fromException e of
   Just exitCode -> Exit.exitWith exitCode
@@ -41,6 +49,9 @@ onException e = case Exception.fromException e of
     IO.hPutStrLn IO.stderr $ Exception.displayException e
     Exit.exitFailure
 
+-- | The actual logic for the command line application. This is written using
+-- constraints so that it can be run in pure code if so desired. But most often
+-- this will be run in 'IO'.
 mainWith ::
   ( MonadLog.MonadLog m,
     MonadRead.MonadRead m,

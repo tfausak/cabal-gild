@@ -6,6 +6,9 @@ import qualified CabalGild.Exception.UnknownOption as UnknownOption
 import qualified Control.Monad.Catch as Exception
 import qualified System.Console.GetOpt as GetOpt
 
+-- | A flag, which represents a command line option. The values associated with
+-- the flags are typically not parsed. These just handle the structure of
+-- command line options.
 data Flag
   = Help Bool
   | Input String
@@ -15,6 +18,7 @@ data Flag
   | Version Bool
   deriving (Eq, Show)
 
+-- | The command line options the correspond to the flags.
 options :: [GetOpt.OptDescr Flag]
 options =
   [ GetOpt.Option
@@ -59,6 +63,9 @@ options =
       "Sets the path to the input file when using STDIN.\nDefault: '.'"
   ]
 
+-- | Converts a list of command line arguments into a list of flags. If there
+-- are any unexpected arguments, invalid options, or unknown options, an
+-- exception will be thrown.
 fromArguments :: (Exception.MonadThrow m) => [String] -> m [Flag]
 fromArguments arguments = do
   let (flgs, args, opts, errs) = GetOpt.getOpt' GetOpt.Permute options arguments
