@@ -11,12 +11,15 @@ import qualified Data.ByteString as ByteString
 import qualified Distribution.Compat.Lens as Lens
 import qualified Distribution.Fields as Fields
 
+-- | A wrapper around 'toByteString' to allow this to be composed with other
+-- actions.
 run ::
   (Applicative m) =>
   ([Fields.Field [Comment.Comment a]], [Comment.Comment a]) ->
   m ByteString.ByteString
 run = pure . uncurry toByteString
 
+-- | Renders the given fields and comments to a byte string.
 toByteString ::
   [Fields.Field [Comment.Comment a]] ->
   [Comment.Comment a] ->
@@ -28,16 +31,19 @@ toByteString fs cs =
         . Lens.set Block.lineAfterLens True
         $ fields i fs <> comments i cs
 
+-- | Renders the given fields to a block at the given indentation level.
 fields :: Int -> [Fields.Field [Comment.Comment a]] -> Block.Block
 fields = foldMap . field
 
+-- | Renders the given field to a block at the given indentation level.
+--
+-- If a field only has one line and no comments, then it can be rendered all on
+-- one line.
 field :: Int -> Fields.Field [Comment.Comment a] -> Block.Block
 field i f = case f of
   Fields.Field n fls -> case fls of
     [fl]
       | null $ FieldLine.annotation fl ->
-          -- If the field only has one line and no comments, then it can be
-          -- rendered all on one line.
           comments i (Name.annotation n)
             <> ( Block.fromLine
                    . Lens.over Line.chunkLens (mappend $ name n <> Chunk.colon)
@@ -56,8 +62,6 @@ field i f = case f of
     Lens.set Block.lineBeforeLens True
       . Lens.set Block.lineAfterLens True
       $ comments i (Name.annotation n)
-        -- Section arguments should never have comments in practice. This is
-        -- here simply to ensure that they aren't lost.
         <> comments i (concatMap SectionArg.annotation sas)
         <> Block.fromLine
           Line.Line
@@ -66,17 +70,22 @@ field i f = case f of
             }
         <> Lens.set Block.lineBeforeLens False (fields (i + 1) fs)
 
+-- | Renders the given name to a chunk.
 name :: Fields.Name a -> Chunk.Chunk
 name = Chunk.fromByteString . Name.value
 
+-- | Renders the given field lines to a block at the given indentation level.
 fieldLines :: Int -> [Fields.FieldLine [Comment.Comment a]] -> Block.Block
 fieldLines = foldMap . fieldLineC
 
+-- | Renders the given field line and its comments to a block at the given
+-- indentation level.
 fieldLineC :: Int -> Fields.FieldLine [Comment.Comment a] -> Block.Block
 fieldLineC i fl =
   comments i (FieldLine.annotation fl)
     <> Block.fromLine (fieldLine i fl)
 
+-- | Renders the given field line to a line at the given indentation level.
 fieldLine :: Int -> Fields.FieldLine a -> Line.Line
 fieldLine i =
   Line.Line i
@@ -84,9 +93,13 @@ fieldLine i =
     . Chunk.fromByteString
     . FieldLine.value
 
+-- | Renders the given section arguments to a chunk. Note that comments are
+-- ignored. In practice this isn't a problem because section arguments can't
+-- have comments attached anyway.
 sectionArgs :: [Fields.SectionArg a] -> Chunk.Chunk
 sectionArgs = Lens.set Chunk.spaceBeforeLens True . foldMap sectionArg
 
+-- | Renders the given section argument to a chunk.
 sectionArg :: Fields.SectionArg a -> Chunk.Chunk
 sectionArg sa = case sa of
   Fields.SecArgName _ bs ->
@@ -108,9 +121,11 @@ sectionArg sa = case sa of
           . Lens.set Chunk.spaceAfterLens b
           $ Chunk.fromByteString bs
 
+-- | Renders the given comments to a block at the given indentation level.
 comments :: Int -> [Comment.Comment a] -> Block.Block
 comments i cs = mempty {Block.lines = fmap (comment i) cs}
 
+-- | Renders the given comment to a line at the given indentation level.
 comment :: Int -> Comment.Comment a -> Line.Line
 comment i =
   Line.Line i

@@ -5,8 +5,10 @@ import qualified Distribution.Compat.CharParsing as CharParsing
 import qualified Distribution.FieldGrammar.Newtypes as Newtypes
 import qualified Distribution.Parsec as Parsec
 
+-- | A pragma, which is a special comment used to customize behavior.
 newtype Pragma
-  = Discover FilePath
+  = -- | Discover modules within the given directory.
+    Discover FilePath
   deriving (Eq, Show)
 
 instance Parsec.Parsec Pragma where

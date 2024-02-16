@@ -7,6 +7,11 @@
 Gild is an opinionated command line utility that formats Haskell package
 descriptions, which are also known as `*.cabal` files.
 
+Gild started as a fork of [cabal-fmt][] by @phadej, but is now totally
+separate.
+
+[cabal-fmt]: https://github.com/phadej/cabal-fmt
+
 ## Summary
 
 Given a package description like this:
@@ -18,7 +23,7 @@ version       : 0.0.0.0
 
 library
   build-depends: mtl>=2.3, base
-  ghc-options: -Wall
+  ghc-options:-Wall
   if impl(ghc>=9.8)
     ghc-options: -Wmissing-role-annotations
 ```

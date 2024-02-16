@@ -14,6 +14,9 @@ import qualified Distribution.Parsec as Parsec
 import qualified Distribution.Pretty as Pretty
 import qualified Text.PrettyPrint as PrettyPrint
 
+-- | A thin wrapper around 'Newtypes.List'. This is used to define custom
+-- instances of 'Pretty.Pretty' that use trailing commas when the Cabal spec
+-- version is recent enough (at least @2.2@).
 newtype List s b a = List
   { unwrap :: Newtypes.List s b a
   }
@@ -44,6 +47,8 @@ instance
       . fmap (Pretty.prettyVersioned @b v . Newtype.pack)
       . Newtype.unpack
 
+-- | Overlaps the more general instance in order to use trailing commas when
+-- possible.
 instance
   {-# OVERLAPPING #-}
   ( Newtype.Newtype a b,

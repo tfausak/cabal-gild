@@ -2,6 +2,8 @@
 {-# LANGUAGE StandaloneDeriving #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
+-- | This module defines orphan instances for some Cabal types. These instances
+-- are defined in more recent versions of the @Cabal-syntax@ library.
 module CabalGild.Compat.Cabal where
 
 #if !MIN_VERSION_Cabal_syntax(3, 10, 1)

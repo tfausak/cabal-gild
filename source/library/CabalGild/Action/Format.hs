@@ -14,7 +14,6 @@ import qualified Distribution.FieldGrammar.Newtypes as Newtypes
 import qualified Distribution.Fields as Fields
 import qualified Distribution.ModuleName as ModuleName
 import qualified Distribution.Parsec as Parsec
-import qualified Distribution.Pretty as Pretty
 import qualified Distribution.Types.Dependency as Dependency
 import qualified Distribution.Types.ExeDependency as ExeDependency
 import qualified Distribution.Types.ForeignLibOption as ForeignLibOption
@@ -25,6 +24,7 @@ import qualified Distribution.Types.PkgconfigDependency as PkgconfigDependency
 import qualified Language.Haskell.Extension as Extension
 import qualified Text.PrettyPrint as PrettyPrint
 
+-- | A wrapper around 'fields' to allow this to be composed with other actions.
 run ::
   (Applicative m, Monoid cs) =>
   CabalSpecVersion.CabalSpecVersion ->
@@ -32,6 +32,7 @@ run ::
   m ([Fields.Field cs], cs)
 run csv (fs, cs) = pure (fields csv fs, cs)
 
+-- | A wrapper around 'field'.
 fields ::
   (Monoid cs) =>
   CabalSpecVersion.CabalSpecVersion ->
@@ -39,6 +40,9 @@ fields ::
   [Fields.Field cs]
 fields = fmap . field
 
+-- | Formats the given field, if applicable. Otherwise returns the field as is.
+-- If the field is a section, the fields within the section will be recursively
+-- formatted.
 field ::
   (Monoid cs) =>
   CabalSpecVersion.CabalSpecVersion ->
@@ -50,39 +54,45 @@ field csv f = case f of
     Just spp -> Fields.Field n $ fieldLines csv fls spp
   Fields.Section n sas fs -> Fields.Section n sas $ fields csv fs
 
+-- | Attempts to parse the given field lines using the given parser. If parsing
+-- fails, the field lines will be returned as is. Comments within the field
+-- lines will be preserved but "float" up to the top.
 fieldLines ::
   (Monoid cs) =>
   CabalSpecVersion.CabalSpecVersion ->
   [Fields.FieldLine cs] ->
   SPP.SomeParsecParser ->
   [Fields.FieldLine cs]
-fieldLines csv fls (SPP.SomeParsecParser pp) =
-  case Parsec.runParsecParser' csv pp "" $ FieldLine.toFieldLineStream fls of
-    Left _ ->
-      -- Parsing failed, so simply return the field lines as is.
-      fls
+fieldLines csv fls SPP.SomeParsecParser {SPP.parsec = parsec, SPP.pretty = pretty} =
+  case Parsec.runParsecParser' csv parsec "" $ FieldLine.toFieldLineStream fls of
+    Left _ -> fls
     Right r ->
       fmap (\(c, l) -> Fields.FieldLine c $ String.toUtf8 l)
         . zip (foldMap FieldLine.annotation fls : repeat mempty)
         . lines
         . PrettyPrint.renderStyle style
-        $ Pretty.prettyVersioned csv r
+        $ pretty csv r
 
+-- | This style attempts to force everything to be on its own line.
 style :: PrettyPrint.Style
 style =
-  -- Everything should be on its own line.
   PrettyPrint.Style
     { PrettyPrint.mode = PrettyPrint.PageMode,
       PrettyPrint.lineLength = 0,
       PrettyPrint.ribbonsPerLine = 1
     }
 
+-- | A map from field names to parsers. This determines which parser should be
+-- used for which field. And consequently this determines which fields will be
+-- formatted.
+--
+-- Perhaps instead of being keyed on 'Fields.FieldName', this should be keyed
+-- on a path (list of field names) instead. That's because a field like
+-- @build-depends@ only really makes sense within a section like @library@.
+-- Fortunately field names are unique enough that this hasn't been a problem
+-- yet.
 parsers :: Map.Map Fields.FieldName SPP.SomeParsecParser
 parsers =
-  -- Perhaps these should use paths as keys rather than field names. That's
-  -- because some fields are only supposed to occur within certain sections.
-  -- For example, `exposed-modules` occurs in (at least) `library`. Fortunately
-  -- field names are unique enough for this not to be a problem.
   let (=:) :: String -> SPP.SomeParsecParser -> (Fields.FieldName, SPP.SomeParsecParser)
       (=:) = (,) . String.toUtf8
    in Map.fromList
