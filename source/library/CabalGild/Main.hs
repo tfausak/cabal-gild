@@ -15,16 +15,11 @@ import qualified CabalGild.Class.MonadWalk as MonadWalk
 import qualified CabalGild.Class.MonadWrite as MonadWrite
 import qualified CabalGild.Exception.CheckFailure as CheckFailure
 import qualified CabalGild.Exception.ParseError as ParseError
-import qualified CabalGild.Extra.Diff as Diff
-import qualified CabalGild.Extra.String as String
 import qualified CabalGild.Type.Config as Config
 import qualified CabalGild.Type.Flag as Flag
 import qualified CabalGild.Type.Mode as Mode
 import qualified Control.Monad as Monad
 import qualified Control.Monad.Catch as Exception
-import qualified Data.Algorithm.Diff as Diff
-import qualified Data.Algorithm.DiffOutput as DiffOutput
-import qualified Data.Function as Function
 import qualified Data.Maybe as Maybe
 import qualified Data.Version as Version
 import qualified Distribution.Fields as Fields
@@ -103,9 +98,7 @@ mainWith name arguments = do
       (fields, comments)
 
   case Config.mode config of
-    Mode.Check -> do
-      let diffs = Function.on Diff.getGroupedDiff (lines . String.fromUtf8) input output
-      Monad.unless (all Diff.isBoth diffs) $ do
-        MonadLog.log $ DiffOutput.ppDiff diffs
+    Mode.Check ->
+      Monad.when (output /= input) $
         Exception.throwM CheckFailure.CheckFailure
     Mode.Format -> MonadWrite.write (Config.output config) output
