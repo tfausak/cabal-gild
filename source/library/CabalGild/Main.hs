@@ -2,7 +2,7 @@
 module CabalGild.Main where
 
 import qualified CabalGild.Action.AttachComments as AttachComments
-import qualified CabalGild.Action.Discover as Discover
+import qualified CabalGild.Action.EvaluatePragmas as EvaluatePragmas
 import qualified CabalGild.Action.ExtractComments as ExtractComments
 import qualified CabalGild.Action.FormatFields as FormatFields
 import qualified CabalGild.Action.GetCabalVersion as GetCabalVersion
@@ -91,7 +91,7 @@ mainWith name arguments = do
     ( AttachComments.run
         Monad.>=> ReflowText.run csv
         Monad.>=> RemovePositions.run
-        Monad.>=> Discover.run (Maybe.fromMaybe (Config.stdin config) $ Config.input config)
+        Monad.>=> EvaluatePragmas.run (Maybe.fromMaybe (Config.stdin config) $ Config.input config)
         Monad.>=> FormatFields.run csv
         Monad.>=> Render.run
       )
