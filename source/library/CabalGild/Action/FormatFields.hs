@@ -1,6 +1,6 @@
 {-# LANGUAGE TypeApplications #-}
 
-module CabalGild.Action.Format where
+module CabalGild.Action.FormatFields where
 
 import CabalGild.Compat.Cabal ()
 import qualified CabalGild.Extra.FieldLine as FieldLine

@@ -69,11 +69,11 @@ library
   -- cabal-gild: discover source/library
   exposed-modules:
     CabalGild.Action.AttachComments
-    CabalGild.Action.Discover
+    CabalGild.Action.EvaluatePragmas
     CabalGild.Action.ExtractComments
-    CabalGild.Action.Format
+    CabalGild.Action.FormatFields
     CabalGild.Action.GetCabalVersion
-    CabalGild.Action.Reindent
+    CabalGild.Action.ReflowText
     CabalGild.Action.RemovePositions
     CabalGild.Action.Render
     CabalGild.Class.MonadLog

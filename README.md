@@ -12,8 +12,11 @@ To run Gild in CI, consider using [cabal-gild-setup-action][].
 [cabal-gild-setup-action]: https://github.com/tfausak/cabal-gild-setup-action
 
 Gild started as a fork of [phadej/cabal-fmt][], but is now totally separate.
+For a brief summary of the differences between Gild and `cabal-fmt`, read [the
+announcement post][].
 
 [phadej/cabal-fmt]: https://github.com/phadej/cabal-fmt
+[the announcement post]: https://taylor.fausak.me/2024/02/17/gild/
 
 ## Summary
 

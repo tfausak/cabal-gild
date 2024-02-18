@@ -2,11 +2,11 @@
 module CabalGild.Main where
 
 import qualified CabalGild.Action.AttachComments as AttachComments
-import qualified CabalGild.Action.Discover as Discover
+import qualified CabalGild.Action.EvaluatePragmas as EvaluatePragmas
 import qualified CabalGild.Action.ExtractComments as ExtractComments
-import qualified CabalGild.Action.Format as Format
+import qualified CabalGild.Action.FormatFields as FormatFields
 import qualified CabalGild.Action.GetCabalVersion as GetCabalVersion
-import qualified CabalGild.Action.Reindent as Reindent
+import qualified CabalGild.Action.ReflowText as ReflowText
 import qualified CabalGild.Action.RemovePositions as RemovePositions
 import qualified CabalGild.Action.Render as Render
 import qualified CabalGild.Class.MonadLog as MonadLog
@@ -20,6 +20,8 @@ import qualified CabalGild.Type.Flag as Flag
 import qualified CabalGild.Type.Mode as Mode
 import qualified Control.Monad as Monad
 import qualified Control.Monad.Catch as Exception
+import qualified Data.ByteString as ByteString
+import qualified Data.ByteString.Char8 as Latin1
 import qualified Data.Maybe as Maybe
 import qualified Data.Version as Version
 import qualified Distribution.Fields as Fields
@@ -89,16 +91,25 @@ mainWith name arguments = do
       comments = ExtractComments.fromByteString input
   output <-
     ( AttachComments.run
-        Monad.>=> Reindent.run csv
+        Monad.>=> ReflowText.run csv
         Monad.>=> RemovePositions.run
-        Monad.>=> Discover.run (Maybe.fromMaybe (Config.stdin config) $ Config.input config)
-        Monad.>=> Format.run csv
+        Monad.>=> EvaluatePragmas.run (Maybe.fromMaybe (Config.stdin config) $ Config.input config)
+        Monad.>=> FormatFields.run csv
         Monad.>=> Render.run
       )
       (fields, comments)
 
   case Config.mode config of
-    Mode.Check ->
-      Monad.when (output /= input) $
+    Mode.Check -> do
+      -- The input might have CRLF ("\r\n", 0x0d 0x0a) line endings, but the
+      -- output will always have LF line endings. For the purposes of the check
+      -- command, we'll consider the input formatted if it only differs from
+      -- the output in line endings.
+      let outputLines = Latin1.lines output
+          stripCR x = case ByteString.unsnoc x of
+            Just (y, 0x0d) -> y
+            _ -> x
+          inputLines = stripCR <$> Latin1.lines input
+      Monad.when (outputLines /= inputLines) $
         Exception.throwM CheckFailure.CheckFailure
     Mode.Format -> MonadWrite.write (Config.output config) output

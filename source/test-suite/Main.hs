@@ -81,6 +81,16 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
 
+  Hspec.it "succeeds when checking CRLF input" $ do
+    let (a, s, w) =
+          runTest
+            (Gild.mainWith "" ["--mode", "check"])
+            (Map.singleton Nothing (String.toUtf8 "pass: yes\r\n"), Map.empty)
+            Map.empty
+    a `Hspec.shouldBe` Right ()
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.empty
+
   Hspec.it "succeeds with empty input" $ do
     expectGilded
       ""

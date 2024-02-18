@@ -1,4 +1,4 @@
-module CabalGild.Action.Discover where
+module CabalGild.Action.EvaluatePragmas where
 
 import qualified CabalGild.Class.MonadWalk as MonadWalk
 import qualified CabalGild.Extra.ModuleName as ModuleName
@@ -25,7 +25,7 @@ run ::
   m ([Fields.Field [Comment.Comment a]], cs)
 run p (fs, cs) = (,) <$> fields p fs <*> pure cs
 
--- | Discovers modules within the given fields.
+-- | Evaluates pragmas modules within the given fields.
 fields ::
   (MonadWalk.MonadWalk m) =>
   FilePath ->
@@ -33,11 +33,12 @@ fields ::
   m [Fields.Field [Comment.Comment a]]
 fields = mapM . field
 
--- | Discovers modules within the given field. Or, if the field is a section,
--- discover modules recursively within the fields of the section. If modules
--- are discovered for a field, that fields lines are completely replaced. If
--- anything goes wrong while discovering modules, the original field is
--- returned.
+-- | Evaluates pragmas within the given field. Or, if the field is a section,
+-- evaluates pragmas recursively within the fields of the section.
+--
+-- If modules are discovered for a field, that fields lines are completely
+-- replaced. If anything goes wrong while discovering modules, the original
+-- field is returned.
 field ::
   (MonadWalk.MonadWalk m) =>
   FilePath ->
