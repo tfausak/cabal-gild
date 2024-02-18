@@ -20,6 +20,7 @@ import qualified CabalGild.Type.Flag as Flag
 import qualified CabalGild.Type.Mode as Mode
 import qualified Control.Monad as Monad
 import qualified Control.Monad.Catch as Exception
+import qualified Data.ByteString as ByteString
 import qualified Data.Maybe as Maybe
 import qualified Data.Version as Version
 import qualified Distribution.Fields as Fields
@@ -98,7 +99,11 @@ mainWith name arguments = do
       (fields, comments)
 
   case Config.mode config of
-    Mode.Check ->
-      Monad.when (output /= input) $
-        Exception.throwM CheckFailure.CheckFailure
+    Mode.Check -> do
+      let os = ByteString.split 0x0a output
+          f x = case ByteString.unsnoc x of
+            Just (y, 0x0d) -> y
+            _ -> x
+          is = f <$> ByteString.split 0x0a input
+      Monad.when (os /= is) $ Exception.throwM CheckFailure.CheckFailure
     Mode.Format -> MonadWrite.write (Config.output config) output
