@@ -73,7 +73,7 @@ library
     CabalGild.Action.ExtractComments
     CabalGild.Action.Format
     CabalGild.Action.GetCabalVersion
-    CabalGild.Action.Reindent
+    CabalGild.Action.ReflowText
     CabalGild.Action.RemovePositions
     CabalGild.Action.Render
     CabalGild.Class.MonadLog

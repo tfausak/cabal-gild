@@ -1,4 +1,4 @@
-module CabalGild.Action.Reindent where
+module CabalGild.Action.ReflowText where
 
 import qualified CabalGild.Extra.Field as Field
 import qualified CabalGild.Extra.FieldLine as FieldLine
@@ -20,7 +20,7 @@ run ::
   m ([Fields.Field (Position.Position, [Comment.Comment Position.Position])], cs)
 run csv (fs, cs) = pure (fields csv fs, cs)
 
--- | Reindents the free text field values if the Cabal spec version is recent
+-- | Reflows the free text field values if the Cabal spec version is recent
 -- enough (at least @3.0@).
 --
 -- Note that this requires comments to be already attached. That's because
@@ -35,9 +35,9 @@ fields csv fs =
     then fmap field fs
     else fs
 
--- | Reindents the free text field value if applicable. Otherwise returns the
+-- | Reflows the free text field value if applicable. Otherwise returns the
 -- field as is. If the field is a section, the fields within the section will
--- be recursively reindented.
+-- be recursively reflowed.
 field ::
   Fields.Field (Position.Position, [Comment.Comment Position.Position]) ->
   Fields.Field (Position.Position, [Comment.Comment Position.Position])
@@ -48,7 +48,7 @@ field f = case f of
       else f
   Fields.Section n sas fs -> Fields.Section n sas $ fmap field fs
 
--- | The names of the fields that should be reindented.
+-- | The names of the fields that should be reflowed.
 relevantFieldNames :: Set.Set Fields.FieldName
 relevantFieldNames =
   Set.fromList $
@@ -57,8 +57,8 @@ relevantFieldNames =
       [ "description"
       ]
 
--- | Reindents the field lines for the given field. This is just a wrapper
--- around 'fixRows' and 'fixCols'.
+-- | Reflows the field lines for the given field. This is just a wrapper around
+-- 'fixRows' and 'fixCols'.
 fieldLines ::
   Fields.Field (Position.Position, [Comment.Comment Position.Position]) ->
   [Fields.FieldLine (Position.Position, [Comment.Comment Position.Position])] ->

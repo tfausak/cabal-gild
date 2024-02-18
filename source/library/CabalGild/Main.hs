@@ -6,7 +6,7 @@ import qualified CabalGild.Action.Discover as Discover
 import qualified CabalGild.Action.ExtractComments as ExtractComments
 import qualified CabalGild.Action.Format as Format
 import qualified CabalGild.Action.GetCabalVersion as GetCabalVersion
-import qualified CabalGild.Action.Reindent as Reindent
+import qualified CabalGild.Action.ReflowText as ReflowText
 import qualified CabalGild.Action.RemovePositions as RemovePositions
 import qualified CabalGild.Action.Render as Render
 import qualified CabalGild.Class.MonadLog as MonadLog
@@ -89,7 +89,7 @@ mainWith name arguments = do
       comments = ExtractComments.fromByteString input
   output <-
     ( AttachComments.run
-        Monad.>=> Reindent.run csv
+        Monad.>=> ReflowText.run csv
         Monad.>=> RemovePositions.run
         Monad.>=> Discover.run (Maybe.fromMaybe (Config.stdin config) $ Config.input config)
         Monad.>=> Format.run csv
