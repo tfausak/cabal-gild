@@ -21,6 +21,7 @@ import qualified CabalGild.Type.Mode as Mode
 import qualified Control.Monad as Monad
 import qualified Control.Monad.Catch as Exception
 import qualified Data.ByteString as ByteString
+import qualified Data.ByteString.Char8 as Latin1
 import qualified Data.Maybe as Maybe
 import qualified Data.Version as Version
 import qualified Distribution.Fields as Fields
@@ -100,10 +101,15 @@ mainWith name arguments = do
 
   case Config.mode config of
     Mode.Check -> do
-      let os = ByteString.split 0x0a output
-          f x = case ByteString.unsnoc x of
+      -- The input might have CRLF ("\r\n", 0x0d 0x0a) line endings, but the
+      -- output will always have LF line endings. For the purposes of the check
+      -- command, we'll consider the input formatted if it only differs from
+      -- the output in line endings.
+      let outputLines = Latin1.lines output
+          stripCR x = case ByteString.unsnoc x of
             Just (y, 0x0d) -> y
             _ -> x
-          is = f <$> ByteString.split 0x0a input
-      Monad.when (os /= is) $ Exception.throwM CheckFailure.CheckFailure
+          inputLines = stripCR <$> Latin1.lines input
+      Monad.when (outputLines /= inputLines) $
+        Exception.throwM CheckFailure.CheckFailure
     Mode.Format -> MonadWrite.write (Config.output config) output
