@@ -72,6 +72,7 @@ library
     CabalGild.Action.Discover
     CabalGild.Action.ExtractComments
     CabalGild.Action.Format
+    CabalGild.Action.FormatFields
     CabalGild.Action.GetCabalVersion
     CabalGild.Action.ReflowText
     CabalGild.Action.RemovePositions
