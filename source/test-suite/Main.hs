@@ -78,7 +78,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             (Map.singleton Nothing (String.toUtf8 "fail:yes"), Map.empty)
             Map.empty
     a `Hspec.shouldSatisfy` Either.isLeft
-    w `Hspec.shouldBe` []
+    w `Hspec.shouldBe` ["1c1\n< fail:yes\n---\n> fail: yes\n"]
     s `Hspec.shouldBe` Map.empty
 
   Hspec.it "succeeds with empty input" $ do

@@ -56,6 +56,7 @@ library
   autogen-modules: Paths_cabal_gild
   build-depends:
     Cabal-syntax ^>=3.8.1.0 || ^>=3.10.1.0,
+    Diff ^>=0.5,
     bytestring ^>=0.11.3.1 || ^>=0.12.0.2,
     containers ^>=0.6.6,
     directory ^>=1.3.7.1,
@@ -87,6 +88,7 @@ library
     CabalGild.Exception.ParseError
     CabalGild.Exception.UnexpectedArgument
     CabalGild.Exception.UnknownOption
+    CabalGild.Extra.Diff
     CabalGild.Extra.Either
     CabalGild.Extra.Field
     CabalGild.Extra.FieldLine
