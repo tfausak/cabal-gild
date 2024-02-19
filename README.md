@@ -161,9 +161,9 @@ Gild supports special comments in package descriptions that act as pragmas.
 Each pragma starts with `-- cabal-gild:`. Pragmas must be the last comment
 before a field.
 
-- `-- cabal-gild: discover DIRECTORY`: This pragma will discover any Haskell
-  files in the given directory and use those to populate the list of modules.
-  For example, given this input:
+- `-- cabal-gild: discover DIRECTORY [DIRECTORY ...]`: This pragma will
+  discover any Haskell files in any of the given directories and use those to
+  populate the list of modules or signatures. For example, given this input:
 
   ``` cabal
   library
@@ -180,12 +180,13 @@ before a field.
     exposed-modules: M
   ```
 
-  This pragma only works with the `exposed-modules` and `other-modules` fields.
-  It will be ignored on all other fields.
+  This pragma only works with the `exposed-modules`, `other-modules`, and
+  `signatures` fields. It will be ignored on all other fields.
 
-  Any existing modules in the list will be ignored. The entire field will be
-  replaced. This means adding, removing, and renaming modules should be handled
-  automatically.
+  Any existing modules or signatures in the list will be ignored. The entire
+  field (including comments) will be replaced. This means adding, removing, and
+  renaming modules or signatures should be handled automatically.
 
   This pragma searches for files with any of the following extensions: `*.chs`,
-  `*.cpphs`, `*.gc`, `*.hs`, `*.hsc`, `*.lhs`, `*.ly`, `*.x`, or `*.y`,
+  `*.cpphs`, `*.gc`, `*.hs`, `*.hsc`, `*.hsig`, `*.lhs`, `*.lhsig`, `*.ly`,
+  `*.x`, or `*.y`,

@@ -17,7 +17,8 @@ import qualified Text.PrettyPrint as PrettyPrint
 -- | This type bundles up a parser and a pretty printer for some type.
 -- Typically they will just be monomorphic versions of 'Parsec.parsec' and
 -- 'Pretty.prettyVersioned'.
-data SomeParsecParser = forall a.
+data SomeParsecParser
+  = forall a.
   SomeParsecParser
   { parsec :: Parsec.ParsecParser a,
     pretty :: CabalSpecVersion.CabalSpecVersion -> a -> PrettyPrint.Doc
