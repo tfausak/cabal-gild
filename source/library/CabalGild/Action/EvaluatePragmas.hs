@@ -54,7 +54,13 @@ field p f = case f of
     case pragma of
       Pragma.Discover ds -> do
         let root = FilePath.takeDirectory p
-            directories = fmap (FilePath.combine root) $ NonEmpty.toList ds
+            directories =
+              fmap
+                ( FilePath.dropTrailingPathSeparator
+                    . FilePath.normalise
+                    . FilePath.combine root
+                )
+                $ NonEmpty.toList ds
         files <- Trans.lift . fmap mconcat $ traverse MonadWalk.walk directories
         pure
           . Fields.Field n
