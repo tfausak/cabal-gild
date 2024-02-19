@@ -31,7 +31,7 @@ fields ::
   FilePath ->
   [Fields.Field [Comment.Comment a]] ->
   m [Fields.Field [Comment.Comment a]]
-fields = mapM . field
+fields = traverse . field
 
 -- | Evaluates pragmas within the given field. Or, if the field is a section,
 -- evaluates pragmas recursively within the fields of the section.

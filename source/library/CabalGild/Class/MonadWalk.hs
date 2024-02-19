@@ -25,4 +25,4 @@ listDirectoryRecursively d = do
         if b
           then listDirectoryRecursively p
           else pure [p]
-  concat <$> mapM f es
+  mconcat <$> traverse f es

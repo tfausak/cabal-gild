@@ -4,6 +4,7 @@ import qualified CabalGild.Exception.InvalidOption as InvalidOption
 import qualified CabalGild.Exception.UnexpectedArgument as UnexpectedArgument
 import qualified CabalGild.Exception.UnknownOption as UnknownOption
 import qualified Control.Monad.Catch as Exception
+import qualified Data.Foldable as Foldable
 import qualified System.Console.GetOpt as GetOpt
 
 -- | A flag, which represents a command line option. The values associated with
@@ -69,7 +70,7 @@ options =
 fromArguments :: (Exception.MonadThrow m) => [String] -> m [Flag]
 fromArguments arguments = do
   let (flgs, args, opts, errs) = GetOpt.getOpt' GetOpt.Permute options arguments
-  mapM_ (Exception.throwM . UnexpectedArgument.fromString) args
-  mapM_ (Exception.throwM . InvalidOption.fromString) errs
-  mapM_ (Exception.throwM . UnknownOption.fromString) opts
+  Foldable.traverse_ (Exception.throwM . UnexpectedArgument.fromString) args
+  Foldable.traverse_ (Exception.throwM . InvalidOption.fromString) errs
+  Foldable.traverse_ (Exception.throwM . UnknownOption.fromString) opts
   pure flgs
