@@ -774,65 +774,71 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "library\n -- cabal-gild: discover .\n exposed-modules:"
       "library\n  -- cabal-gild: discover .\n  exposed-modules:\n    M\n    N\n"
 
-  Hspec.it "discovers a literate module" $ do
+  Hspec.it "discovers a .lhs file" $ do
     expectDiscover
       ["M.lhs"]
       "library\n -- cabal-gild: discover .\n exposed-modules:"
       "library\n  -- cabal-gild: discover .\n  exposed-modules: M\n"
 
-  Hspec.it "discovers a greencard module" $ do
+  Hspec.it "discovers a .gc file" $ do
     expectDiscover
       ["M.gc"]
       "library\n -- cabal-gild: discover .\n exposed-modules:"
       "library\n  -- cabal-gild: discover .\n  exposed-modules: M\n"
 
-  Hspec.it "discovers a c2hs module" $ do
+  Hspec.it "discovers a .chs file" $ do
     expectDiscover
       ["M.chs"]
       "library\n -- cabal-gild: discover .\n exposed-modules:"
       "library\n  -- cabal-gild: discover .\n  exposed-modules: M\n"
 
-  Hspec.it "discovers a hsc2hs module" $ do
+  Hspec.it "discovers a .hsc file" $ do
     expectDiscover
       ["M.hsc"]
       "library\n -- cabal-gild: discover .\n exposed-modules:"
       "library\n  -- cabal-gild: discover .\n  exposed-modules: M\n"
 
-  Hspec.it "discovers a happy (y) module" $ do
+  Hspec.it "discovers a .y file" $ do
     expectDiscover
       ["M.y"]
       "library\n -- cabal-gild: discover .\n exposed-modules:"
       "library\n  -- cabal-gild: discover .\n  exposed-modules: M\n"
 
-  Hspec.it "discovers a happy (ly) module" $ do
+  Hspec.it "discovers a .ly file" $ do
     expectDiscover
       ["M.ly"]
       "library\n -- cabal-gild: discover .\n exposed-modules:"
       "library\n  -- cabal-gild: discover .\n  exposed-modules: M\n"
 
-  Hspec.it "discovers an alex module" $ do
+  Hspec.it "discovers a .x file" $ do
     expectDiscover
       ["M.x"]
       "library\n -- cabal-gild: discover .\n exposed-modules:"
       "library\n  -- cabal-gild: discover .\n  exposed-modules: M\n"
 
-  Hspec.it "discovers a cpphs module" $ do
+  Hspec.it "discovers a .cpphs file" $ do
     expectDiscover
       ["M.cpphs"]
       "library\n -- cabal-gild: discover .\n exposed-modules:"
       "library\n  -- cabal-gild: discover .\n  exposed-modules: M\n"
 
-  Hspec.it "discovers a signature" $ do
+  Hspec.it "discovers a .hsig file" $ do
     expectDiscover
       ["M.hsig"]
       "library\n -- cabal-gild: discover .\n exposed-modules:"
       "library\n  -- cabal-gild: discover .\n  exposed-modules: M\n"
 
-  Hspec.it "discovers a literate signature" $ do
+  Hspec.it "discovers a .lhsig file" $ do
     expectDiscover
-      ["M.hsig"]
+      ["M.lhsig"]
       "library\n -- cabal-gild: discover .\n exposed-modules:"
       "library\n  -- cabal-gild: discover .\n  exposed-modules: M\n"
+
+  Hspec.it "discovers a signature" $ do
+    expectDiscover
+      ["S.hsig"]
+      "library\n -- cabal-gild: discover .\n signatures:"
+      "library\n  -- cabal-gild: discover .\n  signatures: S\n"
 
   Hspec.it "ignores discover pragma separated by comment" $ do
     expectGilded

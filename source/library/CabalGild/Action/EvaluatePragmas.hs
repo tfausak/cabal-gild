@@ -68,7 +68,8 @@ relevantFieldNames =
     fmap
       String.toUtf8
       [ "exposed-modules",
-        "other-modules"
+        "other-modules",
+        "signatures"
       ]
 
 -- | Attempts to strip any of the given extensions from the file path. If any
