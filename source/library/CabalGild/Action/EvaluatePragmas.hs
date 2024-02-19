@@ -9,9 +9,11 @@ import qualified CabalGild.Type.Pragma as Pragma
 import qualified Control.Monad as Monad
 import qualified Control.Monad.Trans.Class as Trans
 import qualified Control.Monad.Trans.Maybe as MaybeT
+import qualified Data.List.NonEmpty as NonEmpty
 import qualified Data.Maybe as Maybe
 import qualified Data.Set as Set
 import qualified Distribution.Fields as Fields
+import qualified Distribution.ModuleName as ModuleName
 import qualified Distribution.Parsec as Parsec
 import qualified Distribution.Utils.Generic as Utils
 import qualified System.FilePath as FilePath
@@ -47,17 +49,18 @@ field ::
 field p f = case f of
   Fields.Field n _ -> fmap (Maybe.fromMaybe f) . MaybeT.runMaybeT $ do
     Monad.guard $ Set.member (Name.value n) relevantFieldNames
-    c <- hoistMaybe . Utils.safeLast $ Name.annotation n
-    x <- hoistMaybe . Parsec.simpleParsecBS $ Comment.value c
-    y <- case x of
-      Pragma.Discover y -> pure y
-    let d = FilePath.combine (FilePath.takeDirectory p) y
-    fs <- Trans.lift $ MonadWalk.walk d
-    pure
-      . Fields.Field n
-      . fmap (ModuleName.toFieldLine [])
-      . Maybe.mapMaybe (ModuleName.fromFilePath . FilePath.makeRelative d)
-      $ Maybe.mapMaybe (stripAnyExtension extensions) fs
+    comment <- hoistMaybe . Utils.safeLast $ Name.annotation n
+    pragma <- hoistMaybe . Parsec.simpleParsecBS $ Comment.value comment
+    case pragma of
+      Pragma.Discover ds -> do
+        let root = FilePath.takeDirectory p
+            directories = fmap (FilePath.combine root) $ NonEmpty.toList ds
+        files <- Trans.lift . fmap mconcat $ traverse MonadWalk.walk directories
+        pure
+          . Fields.Field n
+          . fmap (ModuleName.toFieldLine [])
+          . Maybe.mapMaybe (toModuleName directories)
+          $ Maybe.mapMaybe (stripAnyExtension extensions) files
   Fields.Section n sas fs -> Fields.Section n sas <$> fields p fs
 
 -- | These are the names of the fields that can have this action applied to
@@ -99,6 +102,13 @@ extensions =
       "x",
       "y"
     ]
+
+-- | Attempts to convert a file path (without an extension) into a module name
+-- by making it relative to one of the given directories.
+toModuleName :: [FilePath] -> FilePath -> Maybe ModuleName.ModuleName
+toModuleName ds f =
+  Maybe.listToMaybe $
+    Maybe.mapMaybe (ModuleName.fromFilePath . flip FilePath.makeRelative f) ds
 
 -- | This was added in @transformers-0.6.0.0@. See
 -- <https://hub.darcs.net/ross/transformers/issue/49>.

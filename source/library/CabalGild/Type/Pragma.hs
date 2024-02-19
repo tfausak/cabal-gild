@@ -1,6 +1,7 @@
 module CabalGild.Type.Pragma where
 
 import qualified Control.Monad as Monad
+import qualified Data.List.NonEmpty as NonEmpty
 import qualified Distribution.Compat.CharParsing as CharParsing
 import qualified Distribution.FieldGrammar.Newtypes as Newtypes
 import qualified Distribution.Parsec as Parsec
@@ -8,7 +9,7 @@ import qualified Distribution.Parsec as Parsec
 -- | A pragma, which is a special comment used to customize behavior.
 newtype Pragma
   = -- | Discover modules within the given directory.
-    Discover FilePath
+    Discover (NonEmpty.NonEmpty FilePath)
   deriving (Eq, Show)
 
 instance Parsec.Parsec Pragma where
@@ -18,4 +19,4 @@ instance Parsec.Parsec Pragma where
     CharParsing.spaces
     Monad.void $ CharParsing.string "discover"
     CharParsing.skipSpaces1
-    Discover . Newtypes.getFilePathNT <$> Parsec.parsec
+    Discover . pure . Newtypes.getFilePathNT <$> Parsec.parsec
