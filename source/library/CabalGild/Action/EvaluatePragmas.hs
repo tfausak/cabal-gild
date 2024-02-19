@@ -91,7 +91,9 @@ extensions =
       "gc",
       "hs",
       "hsc",
+      "hsig",
       "lhs",
+      "lhsig",
       "ly",
       "x",
       "y"

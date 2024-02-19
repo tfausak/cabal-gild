@@ -774,7 +774,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "library\n -- cabal-gild: discover .\n exposed-modules:"
       "library\n  -- cabal-gild: discover .\n  exposed-modules:\n    M\n    N\n"
 
-  Hspec.it "discovers a literate haskell module" $ do
+  Hspec.it "discovers a literate module" $ do
     expectDiscover
       ["M.lhs"]
       "library\n -- cabal-gild: discover .\n exposed-modules:"
@@ -819,6 +819,18 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
   Hspec.it "discovers a cpphs module" $ do
     expectDiscover
       ["M.cpphs"]
+      "library\n -- cabal-gild: discover .\n exposed-modules:"
+      "library\n  -- cabal-gild: discover .\n  exposed-modules: M\n"
+
+  Hspec.it "discovers a signature" $ do
+    expectDiscover
+      ["M.hsig"]
+      "library\n -- cabal-gild: discover .\n exposed-modules:"
+      "library\n  -- cabal-gild: discover .\n  exposed-modules: M\n"
+
+  Hspec.it "discovers a literate signature" $ do
+    expectDiscover
+      ["M.hsig"]
       "library\n -- cabal-gild: discover .\n exposed-modules:"
       "library\n  -- cabal-gild: discover .\n  exposed-modules: M\n"
 
