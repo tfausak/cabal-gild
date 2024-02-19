@@ -861,6 +861,26 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "library\n -- cabal-gild: discover d e\n exposed-modules:"
       "library\n  -- cabal-gild: discover d e\n  exposed-modules:\n    M\n    N\n"
 
+  Hspec.it "parses an empty curly bracket section" $ do
+    expectGilded
+      "s{}"
+      "s\n"
+
+  Hspec.it "parses a curly bracket section with a field" $ do
+    expectGilded
+      "s{f:x}"
+      "s\n  f: x\n"
+
+  Hspec.it "strips blanks from a field in a curly bracket section" $ do
+    expectGilded
+      "s { f : x } "
+      "s\n  f: x\n"
+
+  Hspec.it "parses a nested curly bracket section" $ do
+    expectGilded
+      "s{t{}}"
+      "s\n  t\n"
+
 expectGilded :: (Stack.HasCallStack) => String -> String -> Hspec.Expectation
 expectGilded input expected = do
   let (a, s, w) =

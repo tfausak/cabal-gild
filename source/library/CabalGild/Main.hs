@@ -9,6 +9,7 @@ import qualified CabalGild.Action.GetCabalVersion as GetCabalVersion
 import qualified CabalGild.Action.ReflowText as ReflowText
 import qualified CabalGild.Action.RemovePositions as RemovePositions
 import qualified CabalGild.Action.Render as Render
+import qualified CabalGild.Action.StripBlanks as StripBlanks
 import qualified CabalGild.Class.MonadLog as MonadLog
 import qualified CabalGild.Class.MonadRead as MonadRead
 import qualified CabalGild.Class.MonadWalk as MonadWalk
@@ -90,7 +91,8 @@ mainWith name arguments = do
   let csv = GetCabalVersion.fromFields fields
       comments = ExtractComments.fromByteString input
   output <-
-    ( AttachComments.run
+    ( StripBlanks.run
+        Monad.>=> AttachComments.run
         Monad.>=> ReflowText.run csv
         Monad.>=> RemovePositions.run
         Monad.>=> EvaluatePragmas.run (Maybe.fromMaybe (Config.stdin config) $ Config.input config)
