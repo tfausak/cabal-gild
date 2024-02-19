@@ -81,7 +81,6 @@ library
     CabalGild.Class.MonadRead
     CabalGild.Class.MonadWalk
     CabalGild.Class.MonadWrite
-    CabalGild.Compat.Cabal
     CabalGild.Exception.CheckFailure
     CabalGild.Exception.InvalidMode
     CabalGild.Exception.InvalidOption
@@ -101,13 +100,23 @@ library
     CabalGild.Type.Chunk
     CabalGild.Type.Comment
     CabalGild.Type.Config
+    CabalGild.Type.Dependency
+    CabalGild.Type.ExeDependency
     CabalGild.Type.Flag
+    CabalGild.Type.ForeignLibOption
+    CabalGild.Type.Language
+    CabalGild.Type.LegacyExeDependency
     CabalGild.Type.Line
     CabalGild.Type.List
     CabalGild.Type.Mode
+    CabalGild.Type.ModuleReexport
+    CabalGild.Type.PkgconfigDependency
+    CabalGild.Type.PkgconfigVersionRange
     CabalGild.Type.Pragma
     CabalGild.Type.Set
     CabalGild.Type.SomeParsecParser
+    CabalGild.Type.TestedWith
+    CabalGild.Type.VersionRange
 
   hs-source-dirs: source/library
   other-modules: Paths_cabal_gild
