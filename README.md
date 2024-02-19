@@ -5,7 +5,11 @@
 [![Stackage](https://www.stackage.org/package/cabal-gild/badge/nightly?label=stackage)](https://www.stackage.org/package/cabal-gild)
 
 Gild is an opinionated command line utility that formats Haskell package
-descriptions, which are also known as `*.cabal` files.
+descriptions, which are also known as `*.cabal` files. Gild can also be used to
+automatically discover `exposed-modules`; see [the pragmas section][] for more
+about that.
+
+[the pragmas section]: #pragmas
 
 To run Gild in CI, consider using [cabal-gild-setup-action][].
 
@@ -52,11 +56,11 @@ library
     ghc-options: -Wmissing-role-annotations
 ```
 
-See the [installation][] section for how to get Gild and the [usage][] section
+See [the installation section][] for how to get Gild and [the usage section][]
 for how to use it.
 
-[installation]: #installation
-[usage]: #usage
+[the installation section]: #installation
+[the usage section]: #usage
 
 ## Goals
 
@@ -76,17 +80,18 @@ for how to use it.
   package descriptions. This means `cabal.project` files can be formatted as
   well.
 
-- The focus is on formatting only. There should be no effort made to validate
-  input or provide any checks or lints.
+- The focus should be mostly on formatting. There should be no effort made to
+  validate input or provide any checks or lints. However some quality of life
+  features, like automatic module discovery, are desireable.
 
 - The command line utility should be fast enough to run on every save. It
   should not need network access.
 
 ## Installation
 
-Go to the [latest release][] page and download the binary for your platform.
+Go to [the latest release page][] and download the binary for your platform.
 
-[latest release]: https://github.com/tfausak/cabal-gild/releases/latest
+[the latest release page]: https://github.com/tfausak/cabal-gild/releases/latest
 
 ### From Source
 
