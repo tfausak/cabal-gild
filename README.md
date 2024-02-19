@@ -162,8 +162,8 @@ Each pragma starts with `-- cabal-gild:`. Pragmas must be the last comment
 before a field.
 
 - `-- cabal-gild: discover DIRECTORY`: This pragma will discover any Haskell
-  files (`*.hs` or `*.lhs`) in the given directory and use those to populate
-  the list of modules. For example, given this input:
+  files in the given directory and use those to populate the list of modules.
+  For example, given this input:
 
   ``` cabal
   library
@@ -186,3 +186,6 @@ before a field.
   Any existing modules in the list will be ignored. The entire field will be
   replaced. This means adding, removing, and renaming modules should be handled
   automatically.
+
+  This pragma searches for files with any of the following extensions: `*.chs`,
+  `*.cpphs`, `*.gc`, `*.hs`, `*.hsc`, `*.lhs`, `*.ly`, `*.x`, or `*.y`,
