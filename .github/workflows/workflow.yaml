@@ -161,9 +161,9 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "uses": "haskell-actions/run-ormolu@v14",
+          "uses": "haskell-actions/run-ormolu@v15",
           "with": {
-            "version": "0.7.3.0"
+            "version": "0.7.4.0"
           }
         }
       ]
