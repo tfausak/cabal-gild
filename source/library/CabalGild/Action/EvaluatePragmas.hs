@@ -6,9 +6,9 @@ import qualified CabalGild.Extra.Name as Name
 import qualified CabalGild.Extra.String as String
 import qualified CabalGild.Type.Comment as Comment
 import qualified CabalGild.Type.Pragma as Pragma
-import qualified Control.Monad as Monad
 import qualified Control.Monad.Trans.Class as Trans
 import qualified Control.Monad.Trans.Maybe as MaybeT
+import qualified Data.Map as Map
 import qualified Data.Maybe as Maybe
 import qualified Data.Set as Set
 import qualified Distribution.Fields as Fields
@@ -46,7 +46,7 @@ field ::
   m (Fields.Field [Comment.Comment a])
 field p f = case f of
   Fields.Field n _ -> fmap (Maybe.fromMaybe f) . MaybeT.runMaybeT $ do
-    Monad.guard $ Set.member (Name.value n) relevantFieldNames
+    es <- hoistMaybe . Map.lookup (Name.value n) $ extensions
     c <- hoistMaybe . Utils.safeLast $ Name.annotation n
     x <- hoistMaybe . Parsec.simpleParsecBS $ Comment.value c
     y <- case x of
@@ -57,19 +57,27 @@ field p f = case f of
       . Fields.Field n
       . fmap (ModuleName.toFieldLine [])
       . Maybe.mapMaybe (ModuleName.fromFilePath . FilePath.makeRelative d)
-      $ Maybe.mapMaybe (FilePath.stripExtension "hs") fs
+      $ Maybe.mapMaybe (stripAnyExtension es) fs
   Fields.Section n sas fs -> Fields.Section n sas <$> fields p fs
 
--- | These are the names of the fields that can have this action applied to
--- them.
-relevantFieldNames :: Set.Set Fields.FieldName
-relevantFieldNames =
-  Set.fromList $
-    fmap
-      String.toUtf8
-      [ "exposed-modules",
-        "other-modules"
-      ]
+-- | Attempts to strip any of the given extensions from the file path. If any
+-- of them succeed, the result is returned. Otherwise 'Nothing' is returned.
+stripAnyExtension :: Set.Set String -> FilePath -> Maybe String
+stripAnyExtension es p =
+  Maybe.listToMaybe
+    . Maybe.mapMaybe (`FilePath.stripExtension` p)
+    $ Set.toList es
+
+-- | A map from field names to the set of extensions that should be discovered
+-- for that field.
+extensions :: Map.Map Fields.FieldName (Set.Set String)
+extensions =
+  let (=:) :: String -> [String] -> (Fields.FieldName, Set.Set String)
+      k =: v = (String.toUtf8 k, Set.fromList v)
+   in Map.fromList
+        [ "exposed-modules" =: ["hs", "lhs"],
+          "other-modules" =: ["hs", "lhs"]
+        ]
 
 -- | This was added in @transformers-0.6.0.0@. See
 -- <https://hub.darcs.net/ross/transformers/issue/49>.

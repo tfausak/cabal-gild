@@ -751,52 +751,34 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "custom-setup\n  setup-depends:\n    a,\n    b\n"
 
   Hspec.it "discovers an exposed module" $ do
-    let (a, s, w) =
-          runTest
-            (Gild.mainWith "" [])
-            ( Map.singleton Nothing (String.toUtf8 "library\n -- cabal-gild: discover .\n exposed-modules:"),
-              Map.singleton (FilePath.combine "." ".") ["M.hs"]
-            )
-            Map.empty
-    a `Hspec.shouldBe` Right ()
-    w `Hspec.shouldBe` []
-    s `Hspec.shouldBe` Map.singleton Nothing (String.toUtf8 "library\n  -- cabal-gild: discover .\n  exposed-modules: M\n")
+    expectDiscover
+      ["M.hs"]
+      "library\n -- cabal-gild: discover .\n exposed-modules:"
+      "library\n  -- cabal-gild: discover .\n  exposed-modules: M\n"
 
   Hspec.it "discovers an other module" $ do
-    let (a, s, w) =
-          runTest
-            (Gild.mainWith "" [])
-            ( Map.singleton Nothing (String.toUtf8 "library\n -- cabal-gild: discover .\n other-modules:"),
-              Map.singleton (FilePath.combine "." ".") ["M.hs"]
-            )
-            Map.empty
-    a `Hspec.shouldBe` Right ()
-    w `Hspec.shouldBe` []
-    s `Hspec.shouldBe` Map.singleton Nothing (String.toUtf8 "library\n  -- cabal-gild: discover .\n  other-modules: M\n")
+    expectDiscover
+      ["M.hs"]
+      "library\n -- cabal-gild: discover .\n other-modules:"
+      "library\n  -- cabal-gild: discover .\n  other-modules: M\n"
 
   Hspec.it "discovers a nested module" $ do
-    let (a, s, w) =
-          runTest
-            (Gild.mainWith "" [])
-            ( Map.singleton Nothing (String.toUtf8 "library\n -- cabal-gild: discover .\n exposed-modules:"),
-              Map.singleton (FilePath.combine "." ".") [FilePath.combine "N" "O.hs"]
-            )
-            Map.empty
-    a `Hspec.shouldBe` Right ()
-    w `Hspec.shouldBe` []
-    s `Hspec.shouldBe` Map.singleton Nothing (String.toUtf8 "library\n  -- cabal-gild: discover .\n  exposed-modules: N.O\n")
+    expectDiscover
+      [FilePath.combine "N" "O.hs"]
+      "library\n -- cabal-gild: discover .\n exposed-modules:"
+      "library\n  -- cabal-gild: discover .\n  exposed-modules: N.O\n"
 
   Hspec.it "discovers multiple modules" $ do
-    let (a, s, w) =
-          runTest
-            (Gild.mainWith "" [])
-            ( Map.singleton Nothing (String.toUtf8 "library\n -- cabal-gild: discover .\n exposed-modules:"),
-              Map.singleton (FilePath.combine "." ".") ["M.hs", "N.hs"]
-            )
-            Map.empty
-    a `Hspec.shouldBe` Right ()
-    w `Hspec.shouldBe` []
-    s `Hspec.shouldBe` Map.singleton Nothing (String.toUtf8 "library\n  -- cabal-gild: discover .\n  exposed-modules:\n    M\n    N\n")
+    expectDiscover
+      ["M.hs", "N.hs"]
+      "library\n -- cabal-gild: discover .\n exposed-modules:"
+      "library\n  -- cabal-gild: discover .\n  exposed-modules:\n    M\n    N\n"
+
+  Hspec.it "discovers a literate haskell module" $ do
+    expectDiscover
+      ["M.lhs"]
+      "library\n -- cabal-gild: discover .\n exposed-modules:"
+      "library\n  -- cabal-gild: discover .\n  exposed-modules: M\n"
 
   Hspec.it "ignores discover pragma separated by comment" $ do
     expectGilded
@@ -842,6 +824,22 @@ expectStable input = do
     [(Nothing, x)] -> pure x
     _ -> fail $ "impossible: " <> show s
   output `Hspec.shouldBe` input
+
+expectDiscover :: [FilePath] -> String -> String -> Hspec.Expectation
+expectDiscover files input expected = do
+  let (a, s, w) =
+        runTest
+          (Gild.mainWith "" [])
+          ( Map.singleton Nothing (String.toUtf8 input),
+            Map.singleton (FilePath.combine "." ".") files
+          )
+          Map.empty
+  a `Hspec.shouldBe` Right ()
+  w `Hspec.shouldBe` []
+  actual <- case Map.toList s of
+    [(Nothing, x)] -> pure x
+    _ -> fail $ "impossible: " <> show s
+  actual `Hspec.shouldBe` String.toUtf8 expected
 
 newtype Problem = Problem
   { unProblem :: Exception.SomeException
