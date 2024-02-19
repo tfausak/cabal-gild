@@ -84,6 +84,10 @@ for how to use it.
   validate input or provide any checks or lints. However some quality of life
   features, like automatic module discovery, are desireable.
 
+- Formatting should be as regular as possible. Special cases for particular
+  fields or sections should be avoided unless it improves quality of life. For
+  example, interpreting the `build-depends` field to pretty print it is okay.
+
 - The command line utility should be fast enough to run on every save. It
   should not need network access.
 
