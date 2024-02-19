@@ -74,9 +74,10 @@ extensions :: Map.Map Fields.FieldName (Set.Set String)
 extensions =
   let (=:) :: String -> [String] -> (Fields.FieldName, Set.Set String)
       k =: v = (String.toUtf8 k, Set.fromList v)
+      hs = ["hs", "lhs"]
    in Map.fromList
-        [ "exposed-modules" =: ["hs", "lhs"],
-          "other-modules" =: ["hs", "lhs"]
+        [ "exposed-modules" =: hs,
+          "other-modules" =: hs
         ]
 
 -- | This was added in @transformers-0.6.0.0@. See
