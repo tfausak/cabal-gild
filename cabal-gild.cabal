@@ -76,6 +76,7 @@ library
     CabalGild.Action.ReflowText
     CabalGild.Action.RemovePositions
     CabalGild.Action.Render
+    CabalGild.Action.StripBlanks
     CabalGild.Class.MonadLog
     CabalGild.Class.MonadRead
     CabalGild.Class.MonadWalk

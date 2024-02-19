@@ -18,22 +18,14 @@ import qualified Distribution.Parsec as Parsec
 import qualified Distribution.Utils.Generic as Utils
 import qualified System.FilePath as FilePath
 
--- | High level wrapper around 'fields' that makes this action easier to
--- compose with other actions.
+-- | High level wrapper around 'field' that makes this action easier to compose
+-- with other actions.
 run ::
   (MonadWalk.MonadWalk m) =>
   FilePath ->
   ([Fields.Field [Comment.Comment a]], cs) ->
   m ([Fields.Field [Comment.Comment a]], cs)
-run p (fs, cs) = (,) <$> fields p fs <*> pure cs
-
--- | Evaluates pragmas modules within the given fields.
-fields ::
-  (MonadWalk.MonadWalk m) =>
-  FilePath ->
-  [Fields.Field [Comment.Comment a]] ->
-  m [Fields.Field [Comment.Comment a]]
-fields = traverse . field
+run p (fs, cs) = (,) <$> traverse (field p) fs <*> pure cs
 
 -- | Evaluates pragmas within the given field. Or, if the field is a section,
 -- evaluates pragmas recursively within the fields of the section.
@@ -65,7 +57,7 @@ field p f = case f of
           . fmap (ModuleName.toFieldLine [])
           . Maybe.mapMaybe (toModuleName directories)
           $ Maybe.mapMaybe (stripAnyExtension extensions) files
-  Fields.Section n sas fs -> Fields.Section n sas <$> fields p fs
+  Fields.Section n sas fs -> Fields.Section n sas <$> traverse (field p) fs
 
 -- | These are the names of the fields that can have this action applied to
 -- them.

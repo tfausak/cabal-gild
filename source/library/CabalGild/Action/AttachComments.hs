@@ -4,26 +4,19 @@ import qualified CabalGild.Type.Comment as Comment
 import qualified Control.Monad.Trans.State as StateT
 import qualified Distribution.Fields as Fields
 
--- | High level wrapper around 'fields' that makes this action easier to
--- compose with other actions.
+-- | High level wrapper around 'field' that makes this action easier to compose
+-- with other actions.
 run ::
   (Applicative m, Ord p) =>
   ([Fields.Field p], [Comment.Comment p]) ->
   m ([Fields.Field (p, [Comment.Comment p])], [Comment.Comment p])
-run (fs, cs) = pure $ StateT.runState (fields fs) cs
+run (fs, cs) = pure $ StateT.runState (traverse field fs) cs
 
--- | Given a bunch of fields and comments, attaches each comment to the field
--- that it belongs to. It is assumed that both the fields and comments are
--- already sorted by their position @p@. This precondition is not checked.
-fields ::
-  (Ord p) =>
-  [Fields.Field p] ->
-  StateT.State [Comment.Comment p] [Fields.Field (p, [Comment.Comment p])]
-fields = traverse field
-
--- | Attaches comments to a single field. Note that comments actually end up
--- attached to the field's name. That's because the 'Field.Field' type doesn't
--- have any annotations directly on it.
+-- | Attaches comments to a single field. It is assumed that both the fields
+-- and comments are already sorted by their position @p@. This precondition is
+-- not checked. Note that comments actually end up attached to the field's
+-- name. That's because the 'Field.Field' type doesn't have any annotations
+-- directly on it.
 field ::
   (Ord p) =>
   Fields.Field p ->
