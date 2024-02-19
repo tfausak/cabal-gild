@@ -19,4 +19,6 @@ instance Parsec.Parsec Pragma where
     CharParsing.spaces
     Monad.void $ CharParsing.string "discover"
     CharParsing.skipSpaces1
-    Discover . pure . Newtypes.getFilePathNT <$> Parsec.parsec
+    Discover
+      . fmap Newtypes.getFilePathNT
+      <$> CharParsing.sepByNonEmpty Parsec.parsec CharParsing.skipSpaces1

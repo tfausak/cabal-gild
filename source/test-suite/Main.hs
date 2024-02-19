@@ -855,6 +855,24 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "-- cabal-gild: unknown"
       "-- cabal-gild: unknown\n"
 
+  Hspec.it "discovers from multiple directories" $ do
+    let (a, s, w) =
+          runTest
+            (Gild.mainWith "" [])
+            ( Map.singleton Nothing (String.toUtf8 "library\n -- cabal-gild: discover d e\n exposed-modules:"),
+              Map.fromList
+                [ (FilePath.combine "." "d", ["M.hs"]),
+                  (FilePath.combine "." "e", ["N.hs"])
+                ]
+            )
+            Map.empty
+    a `Hspec.shouldBe` Right ()
+    w `Hspec.shouldBe` []
+    actual <- case Map.toList s of
+      [(Nothing, x)] -> pure x
+      _ -> fail $ "impossible: " <> show s
+    actual `Hspec.shouldBe` String.toUtf8 "library\n  -- cabal-gild: discover d e\n  exposed-modules:\n    M\n    N\n"
+
 expectGilded :: (Stack.HasCallStack) => String -> String -> Hspec.Expectation
 expectGilded input expected = do
   let (a, s, w) =
