@@ -70,11 +70,23 @@ stripAnyExtension es p =
 
 -- | A map from field names to the set of extensions that should be discovered
 -- for that field.
+--
+-- <https://cabal.readthedocs.io/en/3.10/cabal-package.html#modules-and-preprocessors>
 extensions :: Map.Map Fields.FieldName (Set.Set String)
 extensions =
   let (=:) :: String -> [String] -> (Fields.FieldName, Set.Set String)
       k =: v = (String.toUtf8 k, Set.fromList v)
-      hs = ["hs", "lhs"]
+      hs =
+        [ "chs",
+          "cpphs",
+          "gc",
+          "hs",
+          "hsc",
+          "lhs",
+          "ly",
+          "x",
+          "y"
+        ]
    in Map.fromList
         [ "exposed-modules" =: hs,
           "other-modules" =: hs
