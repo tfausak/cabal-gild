@@ -774,6 +774,12 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "library\n -- cabal-gild: discover .\n exposed-modules:"
       "library\n  -- cabal-gild: discover .\n  exposed-modules:\n    M\n    N\n"
 
+  Hspec.it "discovers a literate haskell module" $ do
+    expectDiscover
+      ["M.lhs"]
+      "library\n -- cabal-gild: discover .\n exposed-modules:"
+      "library\n  -- cabal-gild: discover .\n  exposed-modules: M\n"
+
   Hspec.it "ignores discover pragma separated by comment" $ do
     expectGilded
       "library\n -- cabal-gild: discover .\n -- foo\n exposed-modules: M"
