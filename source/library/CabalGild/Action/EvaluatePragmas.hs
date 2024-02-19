@@ -65,7 +65,7 @@ field p f = case f of
 stripAnyExtension :: Set.Set String -> FilePath -> Maybe String
 stripAnyExtension es p =
   Maybe.listToMaybe
-    . Maybe.mapMaybe (flip FilePath.stripExtension p)
+    . Maybe.mapMaybe (`FilePath.stripExtension` p)
     $ Set.toList es
 
 -- | A map from field names to the set of extensions that should be discovered
