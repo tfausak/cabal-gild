@@ -3,20 +3,12 @@ module CabalGild.Action.RemovePositions where
 import qualified CabalGild.Type.Comment as Comment
 import qualified Distribution.Fields as Fields
 
--- | A wrapper around 'fields' to allow this to be composed with other actions.
+-- | A wrapper around 'field' to allow this to be composed with other actions.
 run ::
   (Applicative m) =>
   ([Fields.Field (p, [Comment.Comment p])], [Comment.Comment p]) ->
   m ([Fields.Field [Comment.Comment ()]], [Comment.Comment ()])
-run (fs, cs) = pure (fields fs, comments cs)
-
--- | Removes the positions from some fields and their comments. This is useful
--- for two reasons: the annotations become simpler, and it's clear that the
--- positions won't be used for anything else.
-fields ::
-  [Fields.Field (p, [Comment.Comment p])] ->
-  [Fields.Field [Comment.Comment ()]]
-fields = fmap field
+run (fs, cs) = pure (fmap field fs, comments cs)
 
 -- | Removes the positions from a field and its comments.
 field ::
@@ -24,7 +16,7 @@ field ::
   Fields.Field [Comment.Comment ()]
 field f = case f of
   Fields.Field n fls -> Fields.Field (name n) $ fieldLines fls
-  Fields.Section n sas fs -> Fields.Section (name n) (sectionArgs sas) $ fields fs
+  Fields.Section n sas fs -> Fields.Section (name n) (sectionArgs sas) $ fmap field fs
 
 -- | Removes the positions from a name and its comments.
 name ::

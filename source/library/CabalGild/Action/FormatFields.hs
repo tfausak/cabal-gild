@@ -24,21 +24,13 @@ import qualified Distribution.Types.PkgconfigDependency as PkgconfigDependency
 import qualified Language.Haskell.Extension as Extension
 import qualified Text.PrettyPrint as PrettyPrint
 
--- | A wrapper around 'fields' to allow this to be composed with other actions.
+-- | A wrapper around 'field' to allow this to be composed with other actions.
 run ::
   (Applicative m, Monoid cs) =>
   CabalSpecVersion.CabalSpecVersion ->
   ([Fields.Field cs], cs) ->
   m ([Fields.Field cs], cs)
-run csv (fs, cs) = pure (fields csv fs, cs)
-
--- | A wrapper around 'field'.
-fields ::
-  (Monoid cs) =>
-  CabalSpecVersion.CabalSpecVersion ->
-  [Fields.Field cs] ->
-  [Fields.Field cs]
-fields = fmap . field
+run csv (fs, cs) = pure (fmap (field csv) fs, cs)
 
 -- | Formats the given field, if applicable. Otherwise returns the field as is.
 -- If the field is a section, the fields within the section will be recursively
@@ -52,7 +44,7 @@ field csv f = case f of
   Fields.Field n fls -> case Map.lookup (Name.value n) parsers of
     Nothing -> f
     Just spp -> Fields.Field n $ fieldLines csv fls spp
-  Fields.Section n sas fs -> Fields.Section n sas $ fields csv fs
+  Fields.Section n sas fs -> Fields.Section n sas $ fmap (field csv) fs
 
 -- | Attempts to parse the given field lines using the given parser. If parsing
 -- fails, the field lines will be returned as is. Comments within the field
