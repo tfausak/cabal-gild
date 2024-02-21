@@ -63,6 +63,9 @@
           "run": "cp $( cabal list-bin cabal-gild ) artifact"
         },
         {
+          "run": "tar -cvf artifact.tar artifact"
+        },
+        {
           "uses": "actions/upload-artifact@v4",
           "with": {
             "name": "cabal-gild-${{ github.sha }}-${{ matrix.platform }}-${{ matrix.version }}-${{ matrix.ghc }}",
