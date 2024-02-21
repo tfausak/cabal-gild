@@ -63,12 +63,6 @@
           "run": "cp $( cabal list-bin cabal-gild ) artifact"
         },
         {
-          "uses": "svenstaro/upx-action@v2",
-          "with": {
-            "files": "artifact/cabal-gild${{ matrix.extension }}"
-          }
-        },
-        {
           "uses": "actions/upload-artifact@v4",
           "with": {
             "name": "cabal-gild-${{ github.sha }}-${{ matrix.platform }}-${{ matrix.version }}-${{ matrix.ghc }}",
