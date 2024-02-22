@@ -178,19 +178,25 @@
           "uses": "actions/download-artifact@v4"
         },
         {
-          "run": "chmod -v -v +x cabal-gild && tar --auto-compress --create --file ../${{ env.PREFIX }}-darwin-x64.tgz --verbose cabal-gild",
+          "run": "chmod +x cabal-gild && tar --auto-compress --create --file ../${{ env.PREFIX }}-darwin-x64.tgz cabal-gild",
           "working-directory": "cabal-gild-${{ github.sha }}-macos-13-9.8.1"
         },
         {
-          "run": "ls -l"
+          "run": "chmod +x cabal-gild && tar --auto-compress --create --file ../${{ env.PREFIX }}-darwin-arm64.tgz cabal-gild",
+          "working-directory": "cabal-gild-${{ github.sha }}-macos-14-9.8.1"
         },
         {
-          "run": "ls -l cabal-gild-${{ github.sha }}-macos-13-9.8.1"
+          "run": "chmod +x cabal-gild && tar --auto-compress --create --file ../${{ env.PREFIX }}-linux-x64.tgz cabal-gild",
+          "working-directory": "cabal-gild-${{ github.sha }}-ubuntu-22.04-9.8.1"
+        },
+        {
+          "run": "chmod +x cabal-gild.exe && tar --auto-compress --create --file ../${{ env.PREFIX }}-windows-x64.tgz cabal-gild.exe",
+          "working-directory": "cabal-gild-${{ github.sha }}-windows-2022-9.8.1"
         },
         {
           "uses": "actions/upload-artifact@v4",
           "with": {
-            "path": "${{ env.PREFIX }}-darwin-x64.tar.gz"
+            "path": "${{ env.PREFIX }}-*-*.tgz"
           }
         }
       ]
