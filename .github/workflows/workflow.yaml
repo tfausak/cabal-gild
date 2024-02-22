@@ -168,7 +168,7 @@
     },
     "release-todo": {
       "env": {
-        "GILD": "cabal-gild-${{ github.event.release.tag_name }}"
+        "PREFIX": "cabal-gild-${{ github.event.release.tag_name }}"
       },
       "name": "Release TODO",
       "needs": "build",
@@ -178,13 +178,19 @@
           "uses": "actions/download-artifact@v4"
         },
         {
-          "run": "chmod +x cabal-gild && tar --auto-compress --create --file ../$GILD-darwin-x64.tgz cabal-gild",
+          "run": "chmod -v -v +x cabal-gild && tar --auto-compress --create --file ../${{ env.PREFIX }}-darwin-x64.tgz --verbose cabal-gild",
           "working-directory": "cabal-gild-${{ github.sha }}-macos-13-9.8.1"
+        },
+        {
+          "run": "ls -l"
+        },
+        {
+          "run": "ls -l cabal-gild-${{ github.sha }}-macos-13-9.8.1"
         },
         {
           "uses": "actions/upload-artifact@v4",
           "with": {
-            "path": "${{ env.GILD }}-darwin-x64.tar.gz"
+            "path": "${{ env.PREFIX }}-darwin-x64.tar.gz"
           }
         }
       ]
