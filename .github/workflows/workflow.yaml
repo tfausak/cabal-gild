@@ -67,9 +67,6 @@
           "run": "codesign --sign - artifact/cabal-gild"
         },
         {
-          "run": "tar -cvf artifact.tar artifact"
-        },
-        {
           "uses": "actions/upload-artifact@v4",
           "with": {
             "name": "cabal-gild-${{ github.sha }}-${{ matrix.platform }}-${{ matrix.version }}-${{ matrix.ghc }}",
@@ -166,6 +163,19 @@
           "with": {
             "version": "0.7.4.0"
           }
+        }
+      ]
+    },
+    "release-todo": {
+      "name": "Release TODO",
+      "needs": "build",
+      "runs-on": "ubuntu-22.04",
+      "steps": [
+        {
+          "uses": "actions/download-artifact@v4"
+        },
+        {
+          "run": "ls -l"
         }
       ]
     },
