@@ -194,7 +194,7 @@
           "working-directory": "cabal-gild-${{ github.sha }}-ubuntu-22.04-9.8.1"
         },
         {
-          "run": "chmod +x cabal-gild.exe && tar --auto-compress --create --file ../${{ env.PREFIX }}-windows-x64.tar.gz cabal-gild.exe",
+          "run": "chmod +x cabal-gild.exe && tar --auto-compress --create --file ../${{ env.PREFIX }}-win32-x64.tar.gz cabal-gild.exe",
           "working-directory": "cabal-gild-${{ github.sha }}-windows-2022-9.8.1"
         },
         {
