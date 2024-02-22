@@ -63,6 +63,10 @@
           "run": "cp $( cabal list-bin cabal-gild ) artifact"
         },
         {
+          "if": "matrix.platform == 'macos'",
+          "run": "codesign --sign - artifact/cabal-gild"
+        },
+        {
           "run": "tar -cvf artifact.tar artifact"
         },
         {
