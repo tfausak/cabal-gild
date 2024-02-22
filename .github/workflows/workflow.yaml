@@ -166,11 +166,12 @@
         }
       ]
     },
-    "release-todo": {
+    "release": {
       "env": {
         "PREFIX": "cabal-gild-${{ github.event.release.tag_name }}"
       },
-      "name": "Release TODO",
+      "if": "github.event_name == 'release'",
+      "name": "Release",
       "needs": "build",
       "runs-on": "ubuntu-22.04",
       "steps": [
@@ -178,100 +179,32 @@
           "uses": "actions/download-artifact@v4"
         },
         {
-          "run": "chmod +x cabal-gild && tar --auto-compress --create --file ../${{ env.PREFIX }}-darwin-x64.tgz cabal-gild",
+          "run": "cp cabal-gild-${{ github.sha }}-ubuntu-22.04-9.8.1/${{ env.PREFIX }}.tar.gz ."
+        },
+        {
+          "run": "chmod +x cabal-gild && tar --auto-compress --create --file ../${{ env.PREFIX }}-darwin-x64.tar.gz cabal-gild",
           "working-directory": "cabal-gild-${{ github.sha }}-macos-13-9.8.1"
         },
         {
-          "run": "chmod +x cabal-gild && tar --auto-compress --create --file ../${{ env.PREFIX }}-darwin-arm64.tgz cabal-gild",
+          "run": "chmod +x cabal-gild && tar --auto-compress --create --file ../${{ env.PREFIX }}-darwin-arm64.tar.gz cabal-gild",
           "working-directory": "cabal-gild-${{ github.sha }}-macos-14-9.8.1"
         },
         {
-          "run": "chmod +x cabal-gild && tar --auto-compress --create --file ../${{ env.PREFIX }}-linux-x64.tgz cabal-gild",
+          "run": "chmod +x cabal-gild && tar --auto-compress --create --file ../${{ env.PREFIX }}-linux-x64.tar.gz cabal-gild",
           "working-directory": "cabal-gild-${{ github.sha }}-ubuntu-22.04-9.8.1"
         },
         {
-          "run": "chmod +x cabal-gild.exe && tar --auto-compress --create --file ../${{ env.PREFIX }}-windows-x64.tgz cabal-gild.exe",
+          "run": "chmod +x cabal-gild.exe && tar --auto-compress --create --file ../${{ env.PREFIX }}-windows-x64.tar.gz cabal-gild.exe",
           "working-directory": "cabal-gild-${{ github.sha }}-windows-2022-9.8.1"
         },
         {
-          "uses": "actions/upload-artifact@v4",
+          "uses": "softprops/action-gh-release@v1",
           "with": {
-            "path": "${{ env.PREFIX }}-*-*.tgz"
-          }
-        }
-      ]
-    },
-    "release": {
-      "if": "github.event_name == 'release'",
-      "name": "Release",
-      "needs": "build",
-      "runs-on": "ubuntu-22.04",
-      "steps": [
-        {
-          "uses": "actions/download-artifact@v4",
-          "with": {
-            "name": "cabal-gild-${{ github.sha }}-ubuntu-22.04-9.8.1",
-            "path": "artifact-ubuntu-22.04"
+            "files": "${{ env.PREFIX }}*.tar.gz"
           }
         },
         {
-          "uses": "svenstaro/upload-release-action@v2",
-          "with": {
-            "asset_name": "cabal-gild-${{ github.event.release.tag_name }}.tar.gz",
-            "file": "artifact-ubuntu-22.04/cabal-gild-${{ github.event.release.tag_name }}.tar.gz"
-          }
-        },
-        {
-          "uses": "svenstaro/upload-release-action@v2",
-          "with": {
-            "asset_name": "cabal-gild-${{ github.event.release.tag_name }}-linux-x64",
-            "file": "artifact-ubuntu-22.04/cabal-gild"
-          }
-        },
-        {
-          "uses": "actions/download-artifact@v4",
-          "with": {
-            "name": "cabal-gild-${{ github.sha }}-macos-13-9.8.1",
-            "path": "artifact-macos-13"
-          }
-        },
-        {
-          "uses": "svenstaro/upload-release-action@v2",
-          "with": {
-            "asset_name": "cabal-gild-${{ github.event.release.tag_name }}-darwin-x64",
-            "file": "artifact-macos-13/cabal-gild"
-          }
-        },
-        {
-          "uses": "actions/download-artifact@v4",
-          "with": {
-            "name": "cabal-gild-${{ github.sha }}-macos-14-9.8.1",
-            "path": "artifact-macos-14"
-          }
-        },
-        {
-          "uses": "svenstaro/upload-release-action@v2",
-          "with": {
-            "asset_name": "cabal-gild-${{ github.event.release.tag_name }}-darwin-arm64",
-            "file": "artifact-macos-14/cabal-gild"
-          }
-        },
-        {
-          "uses": "actions/download-artifact@v4",
-          "with": {
-            "name": "cabal-gild-${{ github.sha }}-windows-2022-9.8.1",
-            "path": "artifact-windows-2022"
-          }
-        },
-        {
-          "uses": "svenstaro/upload-release-action@v2",
-          "with": {
-            "asset_name": "cabal-gild-${{ github.event.release.tag_name }}-win32-x64.exe",
-            "file": "artifact-windows-2022/cabal-gild.exe"
-          }
-        },
-        {
-          "run": "cabal upload --publish --username '${{ secrets.HACKAGE_USERNAME }}' --password '${{ secrets.HACKAGE_PASSWORD }}' artifact-ubuntu-22.04/cabal-gild-${{ github.event.release.tag_name }}.tar.gz"
+          "run": "cabal upload --publish --username '${{ secrets.HACKAGE_USERNAME }}' --password '${{ secrets.HACKAGE_PASSWORD }}' ${{ env.PREFIX }}.tar.gz"
         }
       ]
     }
