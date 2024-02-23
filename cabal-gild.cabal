@@ -102,6 +102,7 @@ library
     CabalGild.Type.Config
     CabalGild.Type.Dependency
     CabalGild.Type.ExeDependency
+    CabalGild.Type.Extension
     CabalGild.Type.Flag
     CabalGild.Type.ForeignLibOption
     CabalGild.Type.Language
