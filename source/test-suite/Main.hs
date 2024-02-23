@@ -563,6 +563,31 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "library\n default-extensions: b a"
       "library\n  default-extensions:\n    a\n    b\n"
 
+  Hspec.it "sorts known extensions by name" $ do
+    expectGilded
+      "library\n default-extensions: DerivingVia BlockArguments"
+      "library\n  default-extensions:\n    BlockArguments\n    DerivingVia\n"
+
+  Hspec.it "sorts disabling extensions after enabling ones" $ do
+    expectGilded
+      "library\n default-extensions: NoStrictData StrictData"
+      "library\n  default-extensions:\n    StrictData\n    NoStrictData\n"
+
+  Hspec.it "sorts unknown extensions with known ones" $ do
+    expectGilded
+      "library\n default-extensions: LambdaCase Imaginary"
+      "library\n  default-extensions:\n    Imaginary\n    LambdaCase\n"
+
+  Hspec.it "sorts unknown disabling extensions with known ones" $ do
+    expectGilded
+      "library\n default-extensions: NoLambdaCase NoImaginary"
+      "library\n  default-extensions:\n    NoImaginary\n    NoLambdaCase\n"
+
+  Hspec.it "sorts extensions (issue 29)" $ do
+    expectGilded
+      "library\n default-extensions: Arrows Imaginary1 NoCPP NoImaginary2 NoUnboxedTuples UnicodeSyntax"
+      "library\n  default-extensions:\n    Arrows\n    Imaginary1\n    UnicodeSyntax\n    NoCPP\n    NoImaginary2\n    NoUnboxedTuples\n"
+
   Hspec.it "sorts other-extensions" $ do
     expectGilded
       "library\n other-extensions: b a"

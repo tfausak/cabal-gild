@@ -7,6 +7,7 @@ import qualified CabalGild.Extra.Name as Name
 import qualified CabalGild.Extra.String as String
 import qualified CabalGild.Type.Dependency as Dependency
 import qualified CabalGild.Type.ExeDependency as ExeDependency
+import qualified CabalGild.Type.Extension as Extension
 import qualified CabalGild.Type.ForeignLibOption as ForeignLibOption
 import qualified CabalGild.Type.Language as Language
 import qualified CabalGild.Type.LegacyExeDependency as LegacyExeDependency
@@ -22,7 +23,6 @@ import qualified Distribution.Fields as Fields
 import qualified Distribution.ModuleName as ModuleName
 import qualified Distribution.Parsec as Parsec
 import qualified Distribution.Types.Mixin as Mixin
-import qualified Language.Haskell.Extension as Extension
 import qualified Text.PrettyPrint as PrettyPrint
 
 -- | A wrapper around 'field' to allow this to be composed with other actions.
