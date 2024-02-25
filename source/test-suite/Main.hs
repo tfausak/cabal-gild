@@ -799,6 +799,12 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "library\n -- cabal-gild: discover .\n exposed-modules:"
       "library\n  -- cabal-gild: discover .\n  exposed-modules:\n    M\n    N\n"
 
+  Hspec.it "discovers no modules" $ do
+    expectDiscover
+      [(".", [])]
+      "library\n -- cabal-gild: discover .\n exposed-modules:"
+      "library\n  -- cabal-gild: discover .\n  exposed-modules:\n"
+
   Hspec.it "discovers a .lhs file" $ do
     expectDiscover
       [(".", ["M.lhs"])]
@@ -885,6 +891,24 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       [("d", ["M.hs"]), ("e", ["N.hs"])]
       "library\n -- cabal-gild: discover d e\n exposed-modules:"
       "library\n  -- cabal-gild: discover d e\n  exposed-modules:\n    M\n    N\n"
+
+  Hspec.it "retains comments when discovering" $ do
+    expectDiscover
+      [(".", ["M.hs"])]
+      "library\n -- cabal-gild: discover .\n exposed-modules:\n  -- c\n  N"
+      "library\n  -- cabal-gild: discover .\n  exposed-modules:\n    -- c\n    M\n"
+
+  Hspec.it "concatenates comments when discovering" $ do
+    expectDiscover
+      [(".", ["M.hs"])]
+      "library\n -- cabal-gild: discover .\n exposed-modules:\n  -- c\n  N\n  -- d\n  O"
+      "library\n  -- cabal-gild: discover .\n  exposed-modules:\n    -- c\n    -- d\n    M\n"
+
+  Hspec.it "retains comments even when no modules are discovered" $ do
+    expectDiscover
+      [(".", [])]
+      "library\n -- cabal-gild: discover .\n exposed-modules:\n  -- c\n  N"
+      "library\n  -- c\n  -- cabal-gild: discover .\n  exposed-modules:\n"
 
   Hspec.it "parses an empty brace section" $ do
     expectGilded
