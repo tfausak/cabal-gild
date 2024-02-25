@@ -188,8 +188,8 @@ before a field.
   `signatures` fields. It will be ignored on all other fields.
 
   Any existing modules or signatures in the list will be ignored. The entire
-  field (including comments) will be replaced. This means adding, removing, and
-  renaming modules or signatures should be handled automatically.
+  field will be replaced. This means adding, removing, and renaming modules or
+  signatures should be handled automatically.
 
   This pragma searches for files with any of the following extensions: `*.chs`,
   `*.cpphs`, `*.gc`, `*.hs`, `*.hsc`, `*.hsig`, `*.lhs`, `*.lhsig`, `*.ly`,
