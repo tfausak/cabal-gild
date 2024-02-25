@@ -1,6 +1,7 @@
 module CabalGild.Action.EvaluatePragmas where
 
 import qualified CabalGild.Class.MonadWalk as MonadWalk
+import qualified CabalGild.Extra.FieldLine as FieldLine
 import qualified CabalGild.Extra.ModuleName as ModuleName
 import qualified CabalGild.Extra.Name as Name
 import qualified CabalGild.Extra.String as String
@@ -12,6 +13,7 @@ import qualified Control.Monad.Trans.Maybe as MaybeT
 import qualified Data.List.NonEmpty as NonEmpty
 import qualified Data.Maybe as Maybe
 import qualified Data.Set as Set
+import qualified Distribution.Compat.Lens as Lens
 import qualified Distribution.Fields as Fields
 import qualified Distribution.ModuleName as ModuleName
 import qualified Distribution.Parsec as Parsec
@@ -39,7 +41,7 @@ field ::
   Fields.Field [Comment.Comment a] ->
   m (Fields.Field [Comment.Comment a])
 field p f = case f of
-  Fields.Field n _ -> fmap (Maybe.fromMaybe f) . MaybeT.runMaybeT $ do
+  Fields.Field n fls -> fmap (Maybe.fromMaybe f) . MaybeT.runMaybeT $ do
     Monad.guard $ Set.member (Name.value n) relevantFieldNames
     comment <- hoistMaybe . Utils.safeLast $ Name.annotation n
     pragma <- hoistMaybe . Parsec.simpleParsecBS $ Comment.value comment
@@ -52,11 +54,17 @@ field p f = case f of
                 . FilePath.combine root
                 <$> NonEmpty.toList ds
         files <- Trans.lift . fmap mconcat $ traverse MonadWalk.walk directories
-        pure
-          . Fields.Field n
-          . fmap (ModuleName.toFieldLine [])
-          . Maybe.mapMaybe (toModuleName directories)
-          $ Maybe.mapMaybe (stripAnyExtension extensions) files
+        let comments = concatMap FieldLine.annotation fls
+            fieldLines =
+              zipWith ModuleName.toFieldLine (comments : repeat [])
+                . Maybe.mapMaybe (toModuleName directories)
+                $ Maybe.mapMaybe (stripAnyExtension extensions) files
+            -- This isn't great, but the comments have to go /somewhere/.
+            name =
+              if null fieldLines
+                then Lens.over Name.annotationLens (comments <>) n
+                else n
+        pure $ Fields.Field name fieldLines
   Fields.Section n sas fs -> Fields.Section n sas <$> traverse (field p) fs
 
 -- | These are the names of the fields that can have this action applied to
