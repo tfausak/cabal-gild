@@ -11,7 +11,7 @@ license-file: LICENSE.txt
 maintainer: Taylor Fausak
 name: cabal-gild
 synopsis: Formats package descriptions.
-version: 1.0.2.2
+version: 1.0.2.3
 
 source-repository head
   type: git
