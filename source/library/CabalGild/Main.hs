@@ -19,6 +19,7 @@ import qualified CabalGild.Exception.ParseError as ParseError
 import qualified CabalGild.Type.Config as Config
 import qualified CabalGild.Type.Flag as Flag
 import qualified CabalGild.Type.Mode as Mode
+import qualified CabalGild.Type.Optional as Optional
 import qualified Control.Monad as Monad
 import qualified Control.Monad.Catch as Exception
 import qualified Data.ByteString as ByteString
@@ -72,7 +73,7 @@ mainWith name arguments = do
   config <- Config.fromFlags flags
   let version = Version.showVersion This.version
 
-  Monad.when (Config.help config) $ do
+  Monad.when (Optional.withDefault False $ Config.help config) $ do
     let header =
           unlines
             [ name <> " version " <> version,
@@ -84,28 +85,30 @@ mainWith name arguments = do
       $ GetOpt.usageInfo header Flag.options
     Exception.throwM Exit.ExitSuccess
 
-  Monad.when (Config.version config) $ do
+  Monad.when (Optional.withDefault False $ Config.version config) $ do
     MonadLog.logLn version
     Exception.throwM Exit.ExitSuccess
 
-  input <- MonadRead.read $ Config.input config
+  let source = Optional.withDefault Nothing $ Config.input config
+  input <- MonadRead.read source
   fields <-
     either (Exception.throwM . ParseError.ParseError) pure $
       Fields.readFields input
   let csv = GetCabalVersion.fromFields fields
       comments = ExtractComments.fromByteString input
+      path = Maybe.fromMaybe (Optional.withDefault "." $ Config.stdin config) source
   output <-
     ( StripBlanks.run
         Monad.>=> AttachComments.run
         Monad.>=> ReflowText.run csv
         Monad.>=> RemovePositions.run
-        Monad.>=> EvaluatePragmas.run (Maybe.fromMaybe (Config.stdin config) $ Config.input config)
+        Monad.>=> EvaluatePragmas.run path
         Monad.>=> FormatFields.run csv
         Monad.>=> Render.run
       )
       (fields, comments)
 
-  case Config.mode config of
+  case Optional.withDefault Mode.Format $ Config.mode config of
     Mode.Check -> do
       -- The input might have CRLF ("\r\n", 0x0d 0x0a) line endings, but the
       -- output will always have LF line endings. For the purposes of the check
@@ -118,4 +121,6 @@ mainWith name arguments = do
           inputLines = stripCR <$> Latin1.lines input
       Monad.when (outputLines /= inputLines) $
         Exception.throwM CheckFailure.CheckFailure
-    Mode.Format -> MonadWrite.write (Config.output config) output
+    Mode.Format -> do
+      let target = Optional.withDefault Nothing $ Config.output config
+      MonadWrite.write target output
