@@ -37,15 +37,11 @@ initial =
 applyFlag :: (Exception.MonadThrow m) => Config -> Flag.Flag -> m Config
 applyFlag config flag = case flag of
   Flag.Help b -> pure config {help = Optional.Specific b}
-  Flag.Input s -> case s of
-    "-" -> pure config {input = Optional.Specific Input.Stdin}
-    _ -> pure config {input = Optional.Specific $ Input.File s}
+  Flag.Input s -> pure config {input = Optional.Specific $ Input.fromString s}
   Flag.Mode s -> do
     m <- Mode.fromString s
     pure config {mode = Optional.Specific m}
-  Flag.Output s -> case s of
-    "-" -> pure config {output = Optional.Specific Output.Stdout}
-    _ -> pure config {output = Optional.Specific $ Output.File s}
+  Flag.Output s -> pure config {output = Optional.Specific $ Output.fromString s}
   Flag.Stdin s -> pure config {stdin = Optional.Specific s}
   Flag.Version b -> pure config {version = Optional.Specific b}
 
