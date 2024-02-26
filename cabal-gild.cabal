@@ -105,6 +105,7 @@ library
     CabalGild.Type.Extension
     CabalGild.Type.Flag
     CabalGild.Type.ForeignLibOption
+    CabalGild.Type.Input
     CabalGild.Type.Language
     CabalGild.Type.LegacyExeDependency
     CabalGild.Type.Line
