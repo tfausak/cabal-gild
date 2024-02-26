@@ -79,13 +79,13 @@ mainWith name arguments = do
               "",
               "<https://github.com/tfausak/cabal-gild>"
             ]
-    MonadLog.logLn
+    MonadLog.info
       . List.dropWhileEnd Char.isSpace
       $ GetOpt.usageInfo header Flag.options
     Exception.throwM Exit.ExitSuccess
 
   Monad.when (Config.version config) $ do
-    MonadLog.logLn version
+    MonadLog.info version
     Exception.throwM Exit.ExitSuccess
 
   input <- MonadRead.read $ Config.input config

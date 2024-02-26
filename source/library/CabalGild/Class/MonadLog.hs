@@ -8,3 +8,7 @@ class (Monad m) => MonadLog m where
 -- | Uses 'putStrLn'.
 instance MonadLog IO where
   logLn = putStrLn
+
+-- | Alias for 'logLn'.
+info :: (MonadLog m) => String -> m ()
+info = logLn
