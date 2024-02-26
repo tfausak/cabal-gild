@@ -6,6 +6,7 @@ import qualified CabalGild.Class.MonadWalk as MonadWalk
 import qualified CabalGild.Class.MonadWrite as MonadWrite
 import qualified CabalGild.Extra.String as String
 import qualified CabalGild.Main as Gild
+import qualified CabalGild.Type.Severity as Severity
 import qualified Control.Monad.Catch as Exception
 import qualified Control.Monad.Trans.Class as Trans
 import qualified Control.Monad.Trans.Except as ExceptT
@@ -1010,7 +1011,7 @@ type R = (S, Map.Map FilePath [FilePath])
 
 type S = Map.Map (Maybe FilePath) ByteString.ByteString
 
-type W = [String]
+type W = [(Severity.Severity, String)]
 
 newtype TestT m a = TestT
   { runTestT :: ExceptT.ExceptT E (RWST.RWST R W S m) a
@@ -1018,7 +1019,7 @@ newtype TestT m a = TestT
   deriving (Applicative, Functor, Monad)
 
 instance (Monad m) => MonadLog.MonadLog (TestT m) where
-  logLn = TestT . Trans.lift . RWST.tell . pure
+  logLn sev str = TestT . Trans.lift $ RWST.tell [(sev, str)]
 
 instance (Monad m) => MonadRead.MonadRead (TestT m) where
   read k = do

@@ -115,6 +115,7 @@ library
     CabalGild.Type.PkgconfigVersionRange
     CabalGild.Type.Pragma
     CabalGild.Type.Set
+    CabalGild.Type.Severity
     CabalGild.Type.SomeParsecParser
     CabalGild.Type.TestedWith
     CabalGild.Type.VersionRange
