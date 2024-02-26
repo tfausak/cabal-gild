@@ -111,6 +111,7 @@ library
     CabalGild.Type.List
     CabalGild.Type.Mode
     CabalGild.Type.ModuleReexport
+    CabalGild.Type.Optional
     CabalGild.Type.PkgconfigDependency
     CabalGild.Type.PkgconfigVersionRange
     CabalGild.Type.Pragma
