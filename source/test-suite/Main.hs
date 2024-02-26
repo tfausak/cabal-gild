@@ -7,6 +7,7 @@ import qualified CabalGild.Class.MonadWrite as MonadWrite
 import qualified CabalGild.Extra.String as String
 import qualified CabalGild.Main as Gild
 import qualified CabalGild.Type.Input as Input
+import qualified CabalGild.Type.Output as Output
 import qualified Control.Monad.Catch as Exception
 import qualified Control.Monad.Trans.Class as Trans
 import qualified Control.Monad.Trans.Except as ExceptT
@@ -50,7 +51,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             Map.empty
     a `Hspec.shouldBe` Right ()
     w `Hspec.shouldBe` []
-    s `Hspec.shouldSatisfy` Map.member Nothing
+    s `Hspec.shouldSatisfy` Map.member Output.Stdout
 
   Hspec.it "writes to an output file" $ do
     let (a, s, w) =
@@ -60,7 +61,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             Map.empty
     a `Hspec.shouldBe` Right ()
     w `Hspec.shouldBe` []
-    s `Hspec.shouldSatisfy` Map.member (Just "output.cabal")
+    s `Hspec.shouldSatisfy` Map.member (Output.File "output.cabal")
 
   Hspec.it "succeeds when checking formatted input" $ do
     let (a, s, w) =
@@ -956,7 +957,7 @@ expectGilded input expected = do
   a `Hspec.shouldBe` Right ()
   w `Hspec.shouldBe` []
   actual <- case Map.toList s of
-    [(Nothing, x)] -> pure x
+    [(Output.Stdout, x)] -> pure x
     _ -> fail $ "impossible: " <> show s
   actual `Hspec.shouldBe` String.toUtf8 expected
   -- After formatting, the output should not change if we format it again.
@@ -972,7 +973,7 @@ expectStable input = do
   a `Hspec.shouldBe` Right ()
   w `Hspec.shouldBe` []
   output <- case Map.toList s of
-    [(Nothing, x)] -> pure x
+    [(Output.Stdout, x)] -> pure x
     _ -> fail $ "impossible: " <> show s
   output `Hspec.shouldBe` input
 
@@ -988,7 +989,7 @@ expectDiscover files input expected = do
   a `Hspec.shouldBe` Right ()
   w `Hspec.shouldBe` []
   actual <- case Map.toList s of
-    [(Nothing, x)] -> pure x
+    [(Output.Stdout, x)] -> pure x
     _ -> fail $ "impossible: " <> show s
   actual `Hspec.shouldBe` String.toUtf8 expected
 
@@ -1009,7 +1010,7 @@ type E = Problem
 
 type R = (Map.Map Input.Input ByteString.ByteString, Map.Map FilePath [FilePath])
 
-type S = Map.Map (Maybe FilePath) ByteString.ByteString
+type S = Map.Map Output.Output ByteString.ByteString
 
 type W = [String]
 

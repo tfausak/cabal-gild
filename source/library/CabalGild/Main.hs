@@ -21,6 +21,7 @@ import qualified CabalGild.Type.Flag as Flag
 import qualified CabalGild.Type.Input as Input
 import qualified CabalGild.Type.Mode as Mode
 import qualified CabalGild.Type.Optional as Optional
+import qualified CabalGild.Type.Output as Output
 import qualified Control.Monad as Monad
 import qualified Control.Monad.Catch as Exception
 import qualified Data.ByteString as ByteString
@@ -124,5 +125,5 @@ mainWith name arguments = do
       Monad.when (outputLines /= inputLines) $
         Exception.throwM CheckFailure.CheckFailure
     Mode.Format -> do
-      let target = Optional.withDefault Nothing $ Config.output config
+      let target = Optional.withDefault Output.Stdout $ Config.output config
       MonadWrite.write target output

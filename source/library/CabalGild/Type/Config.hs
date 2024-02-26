@@ -5,6 +5,7 @@ import qualified CabalGild.Type.Flag as Flag
 import qualified CabalGild.Type.Input as Input
 import qualified CabalGild.Type.Mode as Mode
 import qualified CabalGild.Type.Optional as Optional
+import qualified CabalGild.Type.Output as Output
 import qualified Control.Monad as Monad
 import qualified Control.Monad.Catch as Exception
 
@@ -14,7 +15,7 @@ data Config = Config
   { help :: Optional.Optional Bool,
     input :: Optional.Optional Input.Input,
     mode :: Optional.Optional Mode.Mode,
-    output :: Optional.Optional (Maybe FilePath),
+    output :: Optional.Optional Output.Output,
     stdin :: Optional.Optional FilePath,
     version :: Optional.Optional Bool
   }
@@ -43,8 +44,8 @@ applyFlag config flag = case flag of
     m <- Mode.fromString s
     pure config {mode = Optional.Specific m}
   Flag.Output s -> case s of
-    "-" -> pure config {output = Optional.Specific Nothing}
-    _ -> pure config {output = Optional.Specific $ Just s}
+    "-" -> pure config {output = Optional.Specific Output.Stdout}
+    _ -> pure config {output = Optional.Specific $ Output.File s}
   Flag.Stdin s -> pure config {stdin = Optional.Specific s}
   Flag.Version b -> pure config {version = Optional.Specific b}
 
