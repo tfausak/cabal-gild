@@ -6,6 +6,7 @@ import qualified CabalGild.Class.MonadWalk as MonadWalk
 import qualified CabalGild.Class.MonadWrite as MonadWrite
 import qualified CabalGild.Extra.String as String
 import qualified CabalGild.Main as Gild
+import qualified CabalGild.Type.Input as Input
 import qualified CabalGild.Type.Severity as Severity
 import qualified Control.Monad.Catch as Exception
 import qualified Control.Monad.Trans.Class as Trans
@@ -46,7 +47,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     let (a, s, w) =
           runTest
             (Gild.mainWith "" ["--input", "input.cabal"])
-            (Map.singleton (Just "input.cabal") (String.toUtf8 ""), Map.empty)
+            (Map.singleton (Input.File "input.cabal") (String.toUtf8 ""), Map.empty)
             Map.empty
     a `Hspec.shouldBe` Right ()
     w `Hspec.shouldBe` []
@@ -56,7 +57,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     let (a, s, w) =
           runTest
             (Gild.mainWith "" ["--output", "output.cabal"])
-            (Map.singleton Nothing (String.toUtf8 ""), Map.empty)
+            (Map.singleton Input.Stdin (String.toUtf8 ""), Map.empty)
             Map.empty
     a `Hspec.shouldBe` Right ()
     w `Hspec.shouldBe` []
@@ -66,7 +67,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     let (a, s, w) =
           runTest
             (Gild.mainWith "" ["--mode", "check"])
-            (Map.singleton Nothing (String.toUtf8 ""), Map.empty)
+            (Map.singleton Input.Stdin (String.toUtf8 ""), Map.empty)
             Map.empty
     a `Hspec.shouldBe` Right ()
     w `Hspec.shouldBe` []
@@ -76,7 +77,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     let (a, s, w) =
           runTest
             (Gild.mainWith "" ["--mode", "check"])
-            (Map.singleton Nothing (String.toUtf8 "fail:yes"), Map.empty)
+            (Map.singleton Input.Stdin (String.toUtf8 "fail:yes"), Map.empty)
             Map.empty
     a `Hspec.shouldSatisfy` Either.isLeft
     w `Hspec.shouldBe` []
@@ -86,7 +87,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     let (a, s, w) =
           runTest
             (Gild.mainWith "" ["--mode", "check"])
-            (Map.singleton Nothing (String.toUtf8 "pass: yes\r\n"), Map.empty)
+            (Map.singleton Input.Stdin (String.toUtf8 "pass: yes\r\n"), Map.empty)
             Map.empty
     a `Hspec.shouldBe` Right ()
     w `Hspec.shouldBe` []
@@ -951,7 +952,7 @@ expectGilded input expected = do
   let (a, s, w) =
         runTest
           (Gild.mainWith "" [])
-          (Map.singleton Nothing $ String.toUtf8 input, Map.empty)
+          (Map.singleton Input.Stdin $ String.toUtf8 input, Map.empty)
           Map.empty
   a `Hspec.shouldBe` Right ()
   w `Hspec.shouldBe` []
@@ -967,7 +968,7 @@ expectStable input = do
   let (a, s, w) =
         runTest
           (Gild.mainWith "" [])
-          (Map.singleton Nothing input, Map.empty)
+          (Map.singleton Input.Stdin input, Map.empty)
           Map.empty
   a `Hspec.shouldBe` Right ()
   w `Hspec.shouldBe` []
@@ -981,7 +982,7 @@ expectDiscover files input expected = do
   let (a, s, w) =
         runTest
           (Gild.mainWith "" [])
-          ( Map.singleton Nothing $ String.toUtf8 input,
+          ( Map.singleton Input.Stdin $ String.toUtf8 input,
             Map.fromList $ fmap (\(d, fs) -> (d, FilePath.combine d <$> fs)) files
           )
           Map.empty
@@ -1007,7 +1008,7 @@ runTest t r = Identity.runIdentity . RWST.runRWST (ExceptT.runExceptT $ runTestT
 
 type E = Problem
 
-type R = (S, Map.Map FilePath [FilePath])
+type R = (Map.Map Input.Input ByteString.ByteString, Map.Map FilePath [FilePath])
 
 type S = Map.Map (Maybe FilePath) ByteString.ByteString
 

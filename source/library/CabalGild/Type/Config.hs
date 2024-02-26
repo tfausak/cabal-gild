@@ -2,6 +2,7 @@
 module CabalGild.Type.Config where
 
 import qualified CabalGild.Type.Flag as Flag
+import qualified CabalGild.Type.Input as Input
 import qualified CabalGild.Type.Mode as Mode
 import qualified CabalGild.Type.Optional as Optional
 import qualified Control.Monad as Monad
@@ -11,7 +12,7 @@ import qualified Control.Monad.Catch as Exception
 -- Each field typically corresponds to a flag.
 data Config = Config
   { help :: Optional.Optional Bool,
-    input :: Optional.Optional (Maybe FilePath),
+    input :: Optional.Optional Input.Input,
     mode :: Optional.Optional Mode.Mode,
     output :: Optional.Optional (Maybe FilePath),
     stdin :: Optional.Optional FilePath,
@@ -36,8 +37,8 @@ applyFlag :: (Exception.MonadThrow m) => Config -> Flag.Flag -> m Config
 applyFlag config flag = case flag of
   Flag.Help b -> pure config {help = Optional.Specific b}
   Flag.Input s -> case s of
-    "-" -> pure config {input = Optional.Specific Nothing}
-    _ -> pure config {input = Optional.Specific $ Just s}
+    "-" -> pure config {input = Optional.Specific Input.Stdin}
+    _ -> pure config {input = Optional.Specific $ Input.File s}
   Flag.Mode s -> do
     m <- Mode.fromString s
     pure config {mode = Optional.Specific m}

@@ -1,14 +1,16 @@
 module CabalGild.Class.MonadRead where
 
+import qualified CabalGild.Type.Input as Input
 import qualified Data.ByteString as ByteString
 
 -- | A 'Monad' that can also read input, either from standard input (STDIN) or
 -- from a file.
 class (Monad m) => MonadRead m where
-  -- | Reads input from the given file, or from STDIN if the given file is
-  -- 'Nothing'.
-  read :: Maybe FilePath -> m ByteString.ByteString
+  -- | Reads input from the given 'Input.Input'.
+  read :: Input.Input -> m ByteString.ByteString
 
 -- | Uses 'ByteString.getContents' or 'ByteString.readFile'.
 instance MonadRead IO where
-  read = maybe ByteString.getContents ByteString.readFile
+  read i = case i of
+    Input.Stdin -> ByteString.getContents
+    Input.File f -> ByteString.readFile f

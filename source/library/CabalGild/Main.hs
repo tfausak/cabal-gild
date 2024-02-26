@@ -18,6 +18,7 @@ import qualified CabalGild.Exception.CheckFailure as CheckFailure
 import qualified CabalGild.Exception.ParseError as ParseError
 import qualified CabalGild.Type.Config as Config
 import qualified CabalGild.Type.Flag as Flag
+import qualified CabalGild.Type.Input as Input
 import qualified CabalGild.Type.Mode as Mode
 import qualified CabalGild.Type.Optional as Optional
 import qualified Control.Monad as Monad
@@ -26,7 +27,6 @@ import qualified Data.ByteString as ByteString
 import qualified Data.ByteString.Char8 as Latin1
 import qualified Data.Char as Char
 import qualified Data.List as List
-import qualified Data.Maybe as Maybe
 import qualified Data.Version as Version
 import qualified Distribution.Fields as Fields
 import qualified Paths_cabal_gild as This
@@ -89,14 +89,16 @@ mainWith name arguments = do
     MonadLog.info version
     Exception.throwM Exit.ExitSuccess
 
-  let source = Optional.withDefault Nothing $ Config.input config
+  let source = Optional.withDefault Input.Stdin $ Config.input config
   input <- MonadRead.read source
   fields <-
     either (Exception.throwM . ParseError.ParseError) pure $
       Fields.readFields input
   let csv = GetCabalVersion.fromFields fields
       comments = ExtractComments.fromByteString input
-      path = Maybe.fromMaybe (Optional.withDefault "." $ Config.stdin config) source
+      path = case source of
+        Input.Stdin -> Optional.withDefault "." $ Config.stdin config
+        Input.File f -> f
   output <-
     ( StripBlanks.run
         Monad.>=> AttachComments.run
