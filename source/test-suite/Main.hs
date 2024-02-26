@@ -1018,7 +1018,7 @@ newtype TestT m a = TestT
   deriving (Applicative, Functor, Monad)
 
 instance (Monad m) => MonadLog.MonadLog (TestT m) where
-  log = TestT . Trans.lift . RWST.tell . pure
+  logLn = TestT . Trans.lift . RWST.tell . pure
 
 instance (Monad m) => MonadRead.MonadRead (TestT m) where
   read k = do
