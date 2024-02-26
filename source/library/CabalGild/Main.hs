@@ -23,6 +23,8 @@ import qualified Control.Monad as Monad
 import qualified Control.Monad.Catch as Exception
 import qualified Data.ByteString as ByteString
 import qualified Data.ByteString.Char8 as Latin1
+import qualified Data.Char as Char
+import qualified Data.List as List
 import qualified Data.Maybe as Maybe
 import qualified Data.Version as Version
 import qualified Distribution.Fields as Fields
@@ -77,7 +79,9 @@ mainWith name arguments = do
               "",
               "<https://github.com/tfausak/cabal-gild>"
             ]
-    MonadLog.log $ GetOpt.usageInfo header Flag.options
+    MonadLog.logLn
+      . List.dropWhileEnd Char.isSpace
+      $ GetOpt.usageInfo header Flag.options
     Exception.throwM Exit.ExitSuccess
 
   Monad.when (Config.version config) $ do
