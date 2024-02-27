@@ -26,7 +26,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
   Hspec.it "shows the help" $ do
     let (a, s, w) =
           runTest
-            (Gild.mainWith "" ["--help"])
+            (Gild.mainWith ["--help"])
             (Map.empty, Map.empty)
             Map.empty
     a `Hspec.shouldSatisfy` Either.isLeft
@@ -36,7 +36,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
   Hspec.it "shows the version" $ do
     let (a, s, w) =
           runTest
-            (Gild.mainWith "" ["--version"])
+            (Gild.mainWith ["--version"])
             (Map.empty, Map.empty)
             Map.empty
     a `Hspec.shouldSatisfy` Either.isLeft
@@ -46,7 +46,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
   Hspec.it "reads from an input file" $ do
     let (a, s, w) =
           runTest
-            (Gild.mainWith "" ["--input", "input.cabal"])
+            (Gild.mainWith ["--input", "input.cabal"])
             (Map.singleton (Input.File "input.cabal") (String.toUtf8 ""), Map.empty)
             Map.empty
     a `Hspec.shouldBe` Right ()
@@ -56,7 +56,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
   Hspec.it "writes to an output file" $ do
     let (a, s, w) =
           runTest
-            (Gild.mainWith "" ["--output", "output.cabal"])
+            (Gild.mainWith ["--output", "output.cabal"])
             (Map.singleton Input.Stdin (String.toUtf8 ""), Map.empty)
             Map.empty
     a `Hspec.shouldBe` Right ()
@@ -66,7 +66,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
   Hspec.it "succeeds when checking formatted input" $ do
     let (a, s, w) =
           runTest
-            (Gild.mainWith "" ["--mode", "check"])
+            (Gild.mainWith ["--mode", "check"])
             (Map.singleton Input.Stdin (String.toUtf8 ""), Map.empty)
             Map.empty
     a `Hspec.shouldBe` Right ()
@@ -76,7 +76,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
   Hspec.it "fails when checking unformatted input" $ do
     let (a, s, w) =
           runTest
-            (Gild.mainWith "" ["--mode", "check"])
+            (Gild.mainWith ["--mode", "check"])
             (Map.singleton Input.Stdin (String.toUtf8 "fail:yes"), Map.empty)
             Map.empty
     a `Hspec.shouldSatisfy` Either.isLeft
@@ -86,7 +86,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
   Hspec.it "succeeds when checking CRLF input" $ do
     let (a, s, w) =
           runTest
-            (Gild.mainWith "" ["--mode", "check"])
+            (Gild.mainWith ["--mode", "check"])
             (Map.singleton Input.Stdin (String.toUtf8 "pass: yes\r\n"), Map.empty)
             Map.empty
     a `Hspec.shouldBe` Right ()
@@ -951,7 +951,7 @@ expectGilded :: (Stack.HasCallStack) => String -> String -> Hspec.Expectation
 expectGilded input expected = do
   let (a, s, w) =
         runTest
-          (Gild.mainWith "" [])
+          (Gild.mainWith [])
           (Map.singleton Input.Stdin $ String.toUtf8 input, Map.empty)
           Map.empty
   a `Hspec.shouldBe` Right ()
@@ -967,7 +967,7 @@ expectStable :: (Stack.HasCallStack) => ByteString.ByteString -> Hspec.Expectati
 expectStable input = do
   let (a, s, w) =
         runTest
-          (Gild.mainWith "" [])
+          (Gild.mainWith [])
           (Map.singleton Input.Stdin input, Map.empty)
           Map.empty
   a `Hspec.shouldBe` Right ()
@@ -981,7 +981,7 @@ expectDiscover :: [(FilePath, [FilePath])] -> String -> String -> Hspec.Expectat
 expectDiscover files input expected = do
   let (a, s, w) =
         runTest
-          (Gild.mainWith "" [])
+          (Gild.mainWith [])
           ( Map.singleton Input.Stdin $ String.toUtf8 input,
             Map.fromList $ fmap (\(d, fs) -> (d, FilePath.combine d <$> fs)) files
           )

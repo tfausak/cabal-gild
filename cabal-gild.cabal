@@ -100,6 +100,7 @@ library
     CabalGild.Type.Chunk
     CabalGild.Type.Comment
     CabalGild.Type.Config
+    CabalGild.Type.Context
     CabalGild.Type.Dependency
     CabalGild.Type.ExeDependency
     CabalGild.Type.Extension
