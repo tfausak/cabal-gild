@@ -82,10 +82,11 @@ library
     CabalGild.Class.MonadWalk
     CabalGild.Class.MonadWrite
     CabalGild.Exception.CheckFailure
-    CabalGild.Exception.InvalidConfig
     CabalGild.Exception.InvalidMode
     CabalGild.Exception.InvalidOption
     CabalGild.Exception.ParseError
+    CabalGild.Exception.SpecifiedOutputWithCheckMode
+    CabalGild.Exception.SpecifiedStdinWithFileInput
     CabalGild.Exception.UnexpectedArgument
     CabalGild.Exception.UnknownOption
     CabalGild.Extra.Either

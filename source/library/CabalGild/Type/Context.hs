@@ -1,7 +1,8 @@
 module CabalGild.Type.Context where
 
 import qualified CabalGild.Class.MonadLog as MonadLog
-import qualified CabalGild.Exception.InvalidConfig as InvalidConfig
+import qualified CabalGild.Exception.SpecifiedOutputWithCheckMode as SpecifiedOutputWithCheckMode
+import qualified CabalGild.Exception.SpecifiedStdinWithFileInput as SpecifiedStdinWithFileInput
 import qualified CabalGild.Type.Config as Config
 import qualified CabalGild.Type.Flag as Flag
 import qualified CabalGild.Type.Input as Input
@@ -17,6 +18,8 @@ import qualified Paths_cabal_gild as This
 import qualified System.Console.GetOpt as GetOpt
 import qualified System.Exit as Exit
 
+-- | Represents the context necessary to run the program. This is essentially a
+-- simplified 'Config.Config'.
 data Context = Context
   { input :: Input.Input,
     mode :: Mode.Mode,
@@ -25,6 +28,9 @@ data Context = Context
   }
   deriving (Eq, Show)
 
+-- | Creates a 'Context' from a 'Config.Config'. If the help or version was
+-- requested, then this will throw an 'Exit.ExitSuccess'. Otherwise this makes
+-- sure the config is valid before returning the context.
 fromConfig ::
   (MonadLog.MonadLog m, Exception.MonadThrow m) =>
   Config.Config ->
@@ -50,12 +56,12 @@ fromConfig config = do
 
   case (Config.input config, Config.stdin config) of
     (Optional.Specific (Input.File _), Optional.Specific _) ->
-      Exception.throwM InvalidConfig.FileInputWithStdin
+      Exception.throwM SpecifiedStdinWithFileInput.SpecifiedStdinWithFileInput
     _ -> pure ()
 
   case (Config.mode config, Config.output config) of
     (Optional.Specific Mode.Check, Optional.Specific _) ->
-      Exception.throwM InvalidConfig.CheckModeWithOutput
+      Exception.throwM SpecifiedOutputWithCheckMode.SpecifiedOutputWithCheckMode
     _ -> pure ()
 
   pure
