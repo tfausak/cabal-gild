@@ -28,6 +28,7 @@ import qualified Data.ByteString as ByteString
 import qualified Data.ByteString.Char8 as Latin1
 import qualified Data.Char as Char
 import qualified Data.List as List
+import qualified Data.Maybe as Maybe
 import qualified Data.Version as Version
 import qualified Distribution.Fields as Fields
 import qualified Paths_cabal_gild as This
@@ -90,6 +91,8 @@ mainWith name arguments = do
     MonadLog.info version
     Exception.throwM Exit.ExitSuccess
 
+  mapM_ (MonadLog.warn . mappend "-- WARNING: ") $ getWarnings config
+
   let source = Optional.withDefault Input.Stdin $ Config.input config
   input <- MonadRead.read source
   fields <-
@@ -127,3 +130,16 @@ mainWith name arguments = do
     Mode.Format -> do
       let target = Optional.withDefault Output.Stdout $ Config.output config
       MonadWrite.write target output
+
+getWarnings :: Config.Config -> [String]
+getWarnings config =
+  Maybe.catMaybes
+    [ case (Config.input config, Config.stdin config) of
+        (Optional.Specific (Input.File _), Optional.Specific _) ->
+          Just "Ignoring --stdin because --input is a file."
+        _ -> Nothing,
+      case (Config.output config, Config.mode config) of
+        (Optional.Specific _, Optional.Specific Mode.Check) ->
+          Just "Ignoring --output because --mode is check."
+        _ -> Nothing
+    ]
