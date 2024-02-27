@@ -62,7 +62,7 @@
           "run": "cp $( cabal list-bin cabal-gild ) artifact"
         },
         {
-          "if": "matrix.platform == 'macos'",
+          "if": "${{ matrix.platform == 'macos' }}",
           "run": "codesign --sign - artifact/cabal-gild"
         },
         {
@@ -169,7 +169,7 @@
       "env": {
         "PREFIX": "cabal-gild-${{ github.event.release.tag_name }}"
       },
-      "if": "github.event_name == 'release'",
+      "if": "${{ github.event_name == 'release' }}",
       "name": "Release",
       "needs": "build",
       "runs-on": "ubuntu-22.04",
