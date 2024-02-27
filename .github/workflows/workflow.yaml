@@ -83,33 +83,32 @@
         "matrix": {
           "include": [
             {
-              "ghc": "9.8.1",
+              "ghc": "9.8",
               "platform": "macos",
               "version": 13
             },
             {
-              "ghc": "9.8.1",
+              "ghc": "9.8",
               "platform": "macos",
               "version": 14
             },
             {
-              "ghc": "9.4.8",
+              "ghc": "9.4",
               "platform": "ubuntu",
               "version": 22.04
             },
             {
-              "ghc": "9.6.4",
+              "ghc": "9.6",
               "platform": "ubuntu",
               "version": 22.04
             },
             {
-              "ghc": "9.8.1",
+              "ghc": "9.8",
               "platform": "ubuntu",
               "version": 22.04
             },
             {
-              "extension": ".exe",
-              "ghc": "9.8.1",
+              "ghc": "9.8",
               "platform": "windows",
               "version": 2022
             }
