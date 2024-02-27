@@ -87,9 +87,29 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     let (a, s, w) =
           runTest
             (Gild.mainWith ["--mode", "check"])
-            (Map.singleton Input.Stdin (String.toUtf8 "pass: yes\r\n"), Map.empty)
+            (Map.singleton Input.Stdin (String.toUtf8 "fail:yes"), Map.empty)
             Map.empty
-    a `Hspec.shouldBe` Right ()
+    a `Hspec.shouldSatisfy` Either.isLeft
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.empty
+
+  Hspec.it "fails when --stdin is given with an input file" $ do
+    let (a, s, w) =
+          runTest
+            (Gild.mainWith ["--input", "f", "--stdin", "g"])
+            (Map.empty, Map.empty)
+            Map.empty
+    a `Hspec.shouldSatisfy` Either.isLeft
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.empty
+
+  Hspec.it "fails when --output is given with check mode" $ do
+    let (a, s, w) =
+          runTest
+            (Gild.mainWith ["--mode", "check", "--output", "-"])
+            (Map.empty, Map.empty)
+            Map.empty
+    a `Hspec.shouldSatisfy` Either.isLeft
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
 

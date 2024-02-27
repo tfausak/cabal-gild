@@ -1,6 +1,7 @@
 module CabalGild.Type.Context where
 
 import qualified CabalGild.Class.MonadLog as MonadLog
+import qualified CabalGild.Exception.InvalidConfig as InvalidConfig
 import qualified CabalGild.Type.Config as Config
 import qualified CabalGild.Type.Flag as Flag
 import qualified CabalGild.Type.Input as Input
@@ -46,6 +47,16 @@ fromConfig config = do
   Monad.when (Optional.withDefault False $ Config.version config) $ do
     MonadLog.logLn version
     Exception.throwM Exit.ExitSuccess
+
+  case (Config.input config, Config.stdin config) of
+    (Optional.Specific (Input.File _), Optional.Specific _) ->
+      Exception.throwM InvalidConfig.FileInputWithStdin
+    _ -> pure ()
+
+  case (Config.mode config, Config.output config) of
+    (Optional.Specific Mode.Check, Optional.Specific _) ->
+      Exception.throwM InvalidConfig.CheckModeWithOutput
+    _ -> pure ()
 
   pure
     Context
