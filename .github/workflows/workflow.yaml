@@ -182,7 +182,7 @@
           "run": "ls -l"
         },
         {
-          "run": "tar --extract --verbose --file cabal-gild-${{ github.sha }}-ubuntu-22.04-9.8"
+          "run": "ls -l *"
         },
         {
           "run": "cp cabal-gild-${{ github.sha }}-ubuntu-22.04-9.8/${{ env.PREFIX }}.tar.gz ."
