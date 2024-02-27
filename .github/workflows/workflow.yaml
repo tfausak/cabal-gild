@@ -66,10 +66,13 @@
           "run": "codesign --sign - artifact/cabal-gild"
         },
         {
+          "run": "tar --create --file artifact.tar artifact"
+        },
+        {
           "uses": "actions/upload-artifact@v4",
           "with": {
             "name": "cabal-gild-${{ github.sha }}-${{ matrix.platform }}-${{ matrix.version }}-${{ matrix.ghc }}",
-            "path": "artifact"
+            "path": "artifact.tar"
           }
         },
         {
