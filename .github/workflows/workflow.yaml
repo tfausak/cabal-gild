@@ -179,10 +179,7 @@
           "uses": "actions/download-artifact@v4"
         },
         {
-          "run": "ls -l"
-        },
-        {
-          "run": "ls -l *"
+          "run": "sh -exc 'for f in */artifact.tar; do tar --extract --verbose --file $f; done'"
         },
         {
           "run": "cp cabal-gild-${{ github.sha }}-ubuntu-22.04-9.8/${{ env.PREFIX }}.tar.gz ."
