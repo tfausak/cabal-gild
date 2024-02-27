@@ -85,21 +85,21 @@
       "strategy": {
         "matrix": {
           "include": [
-            {
-              "ghc": "9.8",
-              "platform": "macos",
-              "version": 13
-            },
-            {
-              "ghc": "9.8",
-              "platform": "macos",
-              "version": 14
-            },
-            {
-              "ghc": "9.4",
-              "platform": "ubuntu",
-              "version": 22.04
-            },
+            # {
+            #   "ghc": "9.8",
+            #   "platform": "macos",
+            #   "version": 13
+            # },
+            # {
+            #   "ghc": "9.8",
+            #   "platform": "macos",
+            #   "version": 14
+            # },
+            # {
+            #   "ghc": "9.4",
+            #   "platform": "ubuntu",
+            #   "version": 22.04
+            # },
             {
               "ghc": "9.6",
               "platform": "ubuntu",
@@ -110,11 +110,11 @@
               "platform": "ubuntu",
               "version": 22.04
             },
-            {
-              "ghc": "9.8",
-              "platform": "windows",
-              "version": 2022
-            }
+            # {
+            #   "ghc": "9.8",
+            #   "platform": "windows",
+            #   "version": 2022
+            # }
           ]
         }
       }
