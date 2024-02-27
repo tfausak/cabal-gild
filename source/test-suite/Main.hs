@@ -4,6 +4,9 @@ import qualified CabalGild.Class.MonadLog as MonadLog
 import qualified CabalGild.Class.MonadRead as MonadRead
 import qualified CabalGild.Class.MonadWalk as MonadWalk
 import qualified CabalGild.Class.MonadWrite as MonadWrite
+import qualified CabalGild.Exception.CheckFailure as CheckFailure
+import qualified CabalGild.Exception.SpecifiedOutputWithCheckMode as SpecifiedOutputWithCheckMode
+import qualified CabalGild.Exception.SpecifiedStdinWithFileInput as SpecifiedStdinWithFileInput
 import qualified CabalGild.Extra.String as String
 import qualified CabalGild.Main as Gild
 import qualified CabalGild.Type.Input as Input
@@ -13,11 +16,11 @@ import qualified Control.Monad.Trans.Class as Trans
 import qualified Control.Monad.Trans.Except as ExceptT
 import qualified Control.Monad.Trans.RWS as RWST
 import qualified Data.ByteString as ByteString
-import qualified Data.Either as Either
 import qualified Data.Function as Function
 import qualified Data.Functor.Identity as Identity
 import qualified Data.Map as Map
 import qualified GHC.Stack as Stack
+import qualified System.Exit as Exit
 import qualified System.FilePath as FilePath
 import qualified Test.Hspec as Hspec
 
@@ -29,7 +32,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             (Gild.mainWith ["--help"])
             (Map.empty, Map.empty)
             Map.empty
-    a `Hspec.shouldSatisfy` Either.isLeft
+    a `Hspec.shouldBe` Left (Problem $ Exception.toException Exit.ExitSuccess)
     w `Hspec.shouldNotSatisfy` null
     s `Hspec.shouldBe` Map.empty
 
@@ -39,7 +42,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             (Gild.mainWith ["--version"])
             (Map.empty, Map.empty)
             Map.empty
-    a `Hspec.shouldSatisfy` Either.isLeft
+    a `Hspec.shouldBe` Left (Problem $ Exception.toException Exit.ExitSuccess)
     w `Hspec.shouldNotSatisfy` null
     s `Hspec.shouldBe` Map.empty
 
@@ -79,7 +82,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             (Gild.mainWith ["--mode", "check"])
             (Map.singleton Input.Stdin (String.toUtf8 "fail:yes"), Map.empty)
             Map.empty
-    a `Hspec.shouldSatisfy` Either.isLeft
+    a `Hspec.shouldBe` Left (Problem $ Exception.toException CheckFailure.CheckFailure)
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
 
@@ -87,9 +90,9 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     let (a, s, w) =
           runTest
             (Gild.mainWith ["--mode", "check"])
-            (Map.singleton Input.Stdin (String.toUtf8 "fail:yes"), Map.empty)
+            (Map.singleton Input.Stdin (String.toUtf8 "pass: yes\r\n"), Map.empty)
             Map.empty
-    a `Hspec.shouldSatisfy` Either.isLeft
+    a `Hspec.shouldBe` Right ()
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
 
@@ -99,7 +102,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             (Gild.mainWith ["--input", "f", "--stdin", "g"])
             (Map.empty, Map.empty)
             Map.empty
-    a `Hspec.shouldSatisfy` Either.isLeft
+    a `Hspec.shouldBe` Left (Problem $ Exception.toException SpecifiedStdinWithFileInput.SpecifiedStdinWithFileInput)
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
 
@@ -109,7 +112,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             (Gild.mainWith ["--mode", "check", "--output", "-"])
             (Map.empty, Map.empty)
             Map.empty
-    a `Hspec.shouldSatisfy` Either.isLeft
+    a `Hspec.shouldBe` Left (Problem $ Exception.toException SpecifiedOutputWithCheckMode.SpecifiedOutputWithCheckMode)
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
 
