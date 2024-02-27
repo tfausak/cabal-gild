@@ -180,23 +180,23 @@
           "uses": "actions/download-artifact@v4"
         },
         {
-          "run": "cp cabal-gild-${{ github.sha }}-ubuntu-22.04-9.8.1/${{ env.PREFIX }}.tar.gz ."
+          "run": "cp cabal-gild-${{ github.sha }}-ubuntu-22.04-9.8/${{ env.PREFIX }}.tar.gz ."
         },
         {
           "run": "chmod +x cabal-gild && tar --auto-compress --create --file ../${{ env.PREFIX }}-darwin-x64.tar.gz cabal-gild",
-          "working-directory": "cabal-gild-${{ github.sha }}-macos-13-9.8.1"
+          "working-directory": "cabal-gild-${{ github.sha }}-macos-13-9.8"
         },
         {
           "run": "chmod +x cabal-gild && tar --auto-compress --create --file ../${{ env.PREFIX }}-darwin-arm64.tar.gz cabal-gild",
-          "working-directory": "cabal-gild-${{ github.sha }}-macos-14-9.8.1"
+          "working-directory": "cabal-gild-${{ github.sha }}-macos-14-9.8"
         },
         {
           "run": "chmod +x cabal-gild && tar --auto-compress --create --file ../${{ env.PREFIX }}-linux-x64.tar.gz cabal-gild",
-          "working-directory": "cabal-gild-${{ github.sha }}-ubuntu-22.04-9.8.1"
+          "working-directory": "cabal-gild-${{ github.sha }}-ubuntu-22.04-9.8"
         },
         {
           "run": "chmod +x cabal-gild.exe && tar --auto-compress --create --file ../${{ env.PREFIX }}-win32-x64.tar.gz cabal-gild.exe",
-          "working-directory": "cabal-gild-${{ github.sha }}-windows-2022-9.8.1"
+          "working-directory": "cabal-gild-${{ github.sha }}-windows-2022-9.8"
         },
         {
           "uses": "softprops/action-gh-release@v1",
