@@ -17,17 +17,15 @@ import qualified CabalGild.Class.MonadWrite as MonadWrite
 import qualified CabalGild.Exception.CheckFailure as CheckFailure
 import qualified CabalGild.Exception.ParseError as ParseError
 import qualified CabalGild.Type.Config as Config
+import qualified CabalGild.Type.Context as Context
 import qualified CabalGild.Type.Flag as Flag
+import qualified CabalGild.Type.Input as Input
 import qualified CabalGild.Type.Mode as Mode
 import qualified Control.Monad as Monad
 import qualified Control.Monad.Catch as Exception
 import qualified Data.ByteString as ByteString
 import qualified Data.ByteString.Char8 as Latin1
-import qualified Data.Maybe as Maybe
-import qualified Data.Version as Version
 import qualified Distribution.Fields as Fields
-import qualified Paths_cabal_gild as This
-import qualified System.Console.GetOpt as GetOpt
 import qualified System.Environment as Environment
 import qualified System.Exit as Exit
 import qualified System.IO as IO
@@ -37,9 +35,8 @@ import qualified System.IO as IO
 -- thrown, they will be handled by 'onException'.
 defaultMain :: IO ()
 defaultMain = Exception.handle onException $ do
-  name <- Environment.getProgName
   arguments <- Environment.getArgs
-  mainWith name arguments
+  mainWith arguments
 
 -- | If the exception was an 'Exit.ExitCode', simply exit with that code.
 -- Otherwise handle exceptions by printing them to STDERR using
@@ -62,46 +59,35 @@ mainWith ::
     MonadWalk.MonadWalk m,
     MonadWrite.MonadWrite m
   ) =>
-  String ->
   [String] ->
   m ()
-mainWith name arguments = do
+mainWith arguments = do
   flags <- Flag.fromArguments arguments
   config <- Config.fromFlags flags
-  let version = Version.showVersion This.version
+  context <- Context.fromConfig config
 
-  Monad.when (Config.help config) $ do
-    let header =
-          unlines
-            [ name <> " version " <> version,
-              "",
-              "<https://github.com/tfausak/cabal-gild>"
-            ]
-    MonadLog.log $ GetOpt.usageInfo header Flag.options
-    Exception.throwM Exit.ExitSuccess
-
-  Monad.when (Config.version config) $ do
-    MonadLog.logLn version
-    Exception.throwM Exit.ExitSuccess
-
-  input <- MonadRead.read $ Config.input config
+  let source = Context.input context
+  input <- MonadRead.read source
   fields <-
     either (Exception.throwM . ParseError.ParseError) pure $
       Fields.readFields input
   let csv = GetCabalVersion.fromFields fields
       comments = ExtractComments.fromByteString input
+      path = case source of
+        Input.Stdin -> Context.stdin context
+        Input.File f -> f
   output <-
     ( StripBlanks.run
         Monad.>=> AttachComments.run
         Monad.>=> ReflowText.run csv
         Monad.>=> RemovePositions.run
-        Monad.>=> EvaluatePragmas.run (Maybe.fromMaybe (Config.stdin config) $ Config.input config)
+        Monad.>=> EvaluatePragmas.run path
         Monad.>=> FormatFields.run csv
         Monad.>=> Render.run
       )
       (fields, comments)
 
-  case Config.mode config of
+  case Context.mode context of
     Mode.Check -> do
       -- The input might have CRLF ("\r\n", 0x0d 0x0a) line endings, but the
       -- output will always have LF line endings. For the purposes of the check
@@ -114,4 +100,6 @@ mainWith name arguments = do
           inputLines = stripCR <$> Latin1.lines input
       Monad.when (outputLines /= inputLines) $
         Exception.throwM CheckFailure.CheckFailure
-    Mode.Format -> MonadWrite.write (Config.output config) output
+    Mode.Format -> do
+      let target = Context.output context
+      MonadWrite.write target output

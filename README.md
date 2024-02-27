@@ -147,7 +147,7 @@ Run `cabal-gild --help` to see the options that Gild supports. They are:
   $ cabal-gild --input p.cabal --output p.cabal
   ```
 
-  This option is ignored when the mode is `check`.
+  It is an error to provide a value for this option when the mode is `check`.
 
 - `--stdin=FILE`: When reading input from STDIN, use `FILE` as the effective
   input file. This is useful when a file's contents are already available, like
@@ -157,7 +157,7 @@ Run `cabal-gild --help` to see the options that Gild supports. They are:
   $ cabal-gild --stdin p.cabal < p.cabal
   ```
 
-  This option is ignored when the input is not `-`.
+  It is an error to provide a value for this option unless the input is `-`.
 
 ### Pragmas
 

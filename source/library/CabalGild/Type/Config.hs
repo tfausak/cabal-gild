@@ -2,19 +2,22 @@
 module CabalGild.Type.Config where
 
 import qualified CabalGild.Type.Flag as Flag
+import qualified CabalGild.Type.Input as Input
 import qualified CabalGild.Type.Mode as Mode
+import qualified CabalGild.Type.Optional as Optional
+import qualified CabalGild.Type.Output as Output
 import qualified Control.Monad as Monad
 import qualified Control.Monad.Catch as Exception
 
 -- | This data type represents the configuration for the command line utility.
 -- Each field typically corresponds to a flag.
 data Config = Config
-  { help :: Bool,
-    input :: Maybe FilePath,
-    mode :: Mode.Mode,
-    output :: Maybe FilePath,
-    stdin :: FilePath,
-    version :: Bool
+  { help :: Optional.Optional Bool,
+    input :: Optional.Optional Input.Input,
+    mode :: Optional.Optional Mode.Mode,
+    output :: Optional.Optional Output.Output,
+    stdin :: Optional.Optional FilePath,
+    version :: Optional.Optional Bool
   }
   deriving (Eq, Show)
 
@@ -22,29 +25,25 @@ data Config = Config
 initial :: Config
 initial =
   Config
-    { help = False,
-      input = Nothing,
-      mode = Mode.Format,
-      output = Nothing,
-      stdin = ".",
-      version = False
+    { help = Optional.Default,
+      input = Optional.Default,
+      mode = Optional.Default,
+      output = Optional.Default,
+      stdin = Optional.Default,
+      version = Optional.Default
     }
 
 -- | Applies a flag to the config, returning the new config.
 applyFlag :: (Exception.MonadThrow m) => Config -> Flag.Flag -> m Config
 applyFlag config flag = case flag of
-  Flag.Help b -> pure config {help = b}
-  Flag.Input s -> case s of
-    "-" -> pure config {input = Nothing}
-    _ -> pure config {input = Just s}
+  Flag.Help b -> pure config {help = Optional.Specific b}
+  Flag.Input s -> pure config {input = Optional.Specific $ Input.fromString s}
   Flag.Mode s -> do
     m <- Mode.fromString s
-    pure config {mode = m}
-  Flag.Output s -> case s of
-    "-" -> pure config {output = Nothing}
-    _ -> pure config {output = Just s}
-  Flag.Stdin s -> pure config {stdin = s}
-  Flag.Version b -> pure config {version = b}
+    pure config {mode = Optional.Specific m}
+  Flag.Output s -> pure config {output = Optional.Specific $ Output.fromString s}
+  Flag.Stdin s -> pure config {stdin = Optional.Specific s}
+  Flag.Version b -> pure config {version = Optional.Specific b}
 
 -- | Converts a list of flags into a config by starting with 'initial' and
 -- repeatedly calling 'applyFlag'.

@@ -4,18 +4,23 @@ import qualified CabalGild.Class.MonadLog as MonadLog
 import qualified CabalGild.Class.MonadRead as MonadRead
 import qualified CabalGild.Class.MonadWalk as MonadWalk
 import qualified CabalGild.Class.MonadWrite as MonadWrite
+import qualified CabalGild.Exception.CheckFailure as CheckFailure
+import qualified CabalGild.Exception.SpecifiedOutputWithCheckMode as SpecifiedOutputWithCheckMode
+import qualified CabalGild.Exception.SpecifiedStdinWithFileInput as SpecifiedStdinWithFileInput
 import qualified CabalGild.Extra.String as String
 import qualified CabalGild.Main as Gild
+import qualified CabalGild.Type.Input as Input
+import qualified CabalGild.Type.Output as Output
 import qualified Control.Monad.Catch as Exception
 import qualified Control.Monad.Trans.Class as Trans
 import qualified Control.Monad.Trans.Except as ExceptT
 import qualified Control.Monad.Trans.RWS as RWST
 import qualified Data.ByteString as ByteString
-import qualified Data.Either as Either
 import qualified Data.Function as Function
 import qualified Data.Functor.Identity as Identity
 import qualified Data.Map as Map
 import qualified GHC.Stack as Stack
+import qualified System.Exit as Exit
 import qualified System.FilePath as FilePath
 import qualified Test.Hspec as Hspec
 
@@ -24,48 +29,48 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
   Hspec.it "shows the help" $ do
     let (a, s, w) =
           runTest
-            (Gild.mainWith "" ["--help"])
+            (Gild.mainWith ["--help"])
             (Map.empty, Map.empty)
             Map.empty
-    a `Hspec.shouldSatisfy` Either.isLeft
+    a `Hspec.shouldBe` Left (Problem $ Exception.toException Exit.ExitSuccess)
     w `Hspec.shouldNotSatisfy` null
     s `Hspec.shouldBe` Map.empty
 
   Hspec.it "shows the version" $ do
     let (a, s, w) =
           runTest
-            (Gild.mainWith "" ["--version"])
+            (Gild.mainWith ["--version"])
             (Map.empty, Map.empty)
             Map.empty
-    a `Hspec.shouldSatisfy` Either.isLeft
+    a `Hspec.shouldBe` Left (Problem $ Exception.toException Exit.ExitSuccess)
     w `Hspec.shouldNotSatisfy` null
     s `Hspec.shouldBe` Map.empty
 
   Hspec.it "reads from an input file" $ do
     let (a, s, w) =
           runTest
-            (Gild.mainWith "" ["--input", "input.cabal"])
-            (Map.singleton (Just "input.cabal") (String.toUtf8 ""), Map.empty)
+            (Gild.mainWith ["--input", "input.cabal"])
+            (Map.singleton (Input.File "input.cabal") (String.toUtf8 ""), Map.empty)
             Map.empty
     a `Hspec.shouldBe` Right ()
     w `Hspec.shouldBe` []
-    s `Hspec.shouldSatisfy` Map.member Nothing
+    s `Hspec.shouldSatisfy` Map.member Output.Stdout
 
   Hspec.it "writes to an output file" $ do
     let (a, s, w) =
           runTest
-            (Gild.mainWith "" ["--output", "output.cabal"])
-            (Map.singleton Nothing (String.toUtf8 ""), Map.empty)
+            (Gild.mainWith ["--output", "output.cabal"])
+            (Map.singleton Input.Stdin (String.toUtf8 ""), Map.empty)
             Map.empty
     a `Hspec.shouldBe` Right ()
     w `Hspec.shouldBe` []
-    s `Hspec.shouldSatisfy` Map.member (Just "output.cabal")
+    s `Hspec.shouldSatisfy` Map.member (Output.File "output.cabal")
 
   Hspec.it "succeeds when checking formatted input" $ do
     let (a, s, w) =
           runTest
-            (Gild.mainWith "" ["--mode", "check"])
-            (Map.singleton Nothing (String.toUtf8 ""), Map.empty)
+            (Gild.mainWith ["--mode", "check"])
+            (Map.singleton Input.Stdin (String.toUtf8 ""), Map.empty)
             Map.empty
     a `Hspec.shouldBe` Right ()
     w `Hspec.shouldBe` []
@@ -74,20 +79,40 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
   Hspec.it "fails when checking unformatted input" $ do
     let (a, s, w) =
           runTest
-            (Gild.mainWith "" ["--mode", "check"])
-            (Map.singleton Nothing (String.toUtf8 "fail:yes"), Map.empty)
+            (Gild.mainWith ["--mode", "check"])
+            (Map.singleton Input.Stdin (String.toUtf8 "fail:yes"), Map.empty)
             Map.empty
-    a `Hspec.shouldSatisfy` Either.isLeft
+    a `Hspec.shouldBe` Left (Problem $ Exception.toException CheckFailure.CheckFailure)
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
 
   Hspec.it "succeeds when checking CRLF input" $ do
     let (a, s, w) =
           runTest
-            (Gild.mainWith "" ["--mode", "check"])
-            (Map.singleton Nothing (String.toUtf8 "pass: yes\r\n"), Map.empty)
+            (Gild.mainWith ["--mode", "check"])
+            (Map.singleton Input.Stdin (String.toUtf8 "pass: yes\r\n"), Map.empty)
             Map.empty
     a `Hspec.shouldBe` Right ()
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.empty
+
+  Hspec.it "fails when --stdin is given with an input file" $ do
+    let (a, s, w) =
+          runTest
+            (Gild.mainWith ["--input", "f", "--stdin", "g"])
+            (Map.empty, Map.empty)
+            Map.empty
+    a `Hspec.shouldBe` Left (Problem $ Exception.toException SpecifiedStdinWithFileInput.SpecifiedStdinWithFileInput)
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.empty
+
+  Hspec.it "fails when --output is given with check mode" $ do
+    let (a, s, w) =
+          runTest
+            (Gild.mainWith ["--mode", "check", "--output", "-"])
+            (Map.empty, Map.empty)
+            Map.empty
+    a `Hspec.shouldBe` Left (Problem $ Exception.toException SpecifiedOutputWithCheckMode.SpecifiedOutputWithCheckMode)
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
 
@@ -949,13 +974,13 @@ expectGilded :: (Stack.HasCallStack) => String -> String -> Hspec.Expectation
 expectGilded input expected = do
   let (a, s, w) =
         runTest
-          (Gild.mainWith "" [])
-          (Map.singleton Nothing $ String.toUtf8 input, Map.empty)
+          (Gild.mainWith [])
+          (Map.singleton Input.Stdin $ String.toUtf8 input, Map.empty)
           Map.empty
   a `Hspec.shouldBe` Right ()
   w `Hspec.shouldBe` []
   actual <- case Map.toList s of
-    [(Nothing, x)] -> pure x
+    [(Output.Stdout, x)] -> pure x
     _ -> fail $ "impossible: " <> show s
   actual `Hspec.shouldBe` String.toUtf8 expected
   -- After formatting, the output should not change if we format it again.
@@ -965,13 +990,13 @@ expectStable :: (Stack.HasCallStack) => ByteString.ByteString -> Hspec.Expectati
 expectStable input = do
   let (a, s, w) =
         runTest
-          (Gild.mainWith "" [])
-          (Map.singleton Nothing input, Map.empty)
+          (Gild.mainWith [])
+          (Map.singleton Input.Stdin input, Map.empty)
           Map.empty
   a `Hspec.shouldBe` Right ()
   w `Hspec.shouldBe` []
   output <- case Map.toList s of
-    [(Nothing, x)] -> pure x
+    [(Output.Stdout, x)] -> pure x
     _ -> fail $ "impossible: " <> show s
   output `Hspec.shouldBe` input
 
@@ -979,15 +1004,15 @@ expectDiscover :: [(FilePath, [FilePath])] -> String -> String -> Hspec.Expectat
 expectDiscover files input expected = do
   let (a, s, w) =
         runTest
-          (Gild.mainWith "" [])
-          ( Map.singleton Nothing $ String.toUtf8 input,
+          (Gild.mainWith [])
+          ( Map.singleton Input.Stdin $ String.toUtf8 input,
             Map.fromList $ fmap (\(d, fs) -> (d, FilePath.combine d <$> fs)) files
           )
           Map.empty
   a `Hspec.shouldBe` Right ()
   w `Hspec.shouldBe` []
   actual <- case Map.toList s of
-    [(Nothing, x)] -> pure x
+    [(Output.Stdout, x)] -> pure x
     _ -> fail $ "impossible: " <> show s
   actual `Hspec.shouldBe` String.toUtf8 expected
 
@@ -1006,9 +1031,9 @@ runTest t r = Identity.runIdentity . RWST.runRWST (ExceptT.runExceptT $ runTestT
 
 type E = Problem
 
-type R = (S, Map.Map FilePath [FilePath])
+type R = (Map.Map Input.Input ByteString.ByteString, Map.Map FilePath [FilePath])
 
-type S = Map.Map (Maybe FilePath) ByteString.ByteString
+type S = Map.Map Output.Output ByteString.ByteString
 
 type W = [String]
 
@@ -1018,7 +1043,7 @@ newtype TestT m a = TestT
   deriving (Applicative, Functor, Monad)
 
 instance (Monad m) => MonadLog.MonadLog (TestT m) where
-  log = TestT . Trans.lift . RWST.tell . pure
+  logLn = TestT . Trans.lift . RWST.tell . pure
 
 instance (Monad m) => MonadRead.MonadRead (TestT m) where
   read k = do

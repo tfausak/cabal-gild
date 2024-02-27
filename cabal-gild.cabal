@@ -85,6 +85,8 @@ library
     CabalGild.Exception.InvalidMode
     CabalGild.Exception.InvalidOption
     CabalGild.Exception.ParseError
+    CabalGild.Exception.SpecifiedOutputWithCheckMode
+    CabalGild.Exception.SpecifiedStdinWithFileInput
     CabalGild.Exception.UnexpectedArgument
     CabalGild.Exception.UnknownOption
     CabalGild.Extra.Either
@@ -100,17 +102,21 @@ library
     CabalGild.Type.Chunk
     CabalGild.Type.Comment
     CabalGild.Type.Config
+    CabalGild.Type.Context
     CabalGild.Type.Dependency
     CabalGild.Type.ExeDependency
     CabalGild.Type.Extension
     CabalGild.Type.Flag
     CabalGild.Type.ForeignLibOption
+    CabalGild.Type.Input
     CabalGild.Type.Language
     CabalGild.Type.LegacyExeDependency
     CabalGild.Type.Line
     CabalGild.Type.List
     CabalGild.Type.Mode
     CabalGild.Type.ModuleReexport
+    CabalGild.Type.Optional
+    CabalGild.Type.Output
     CabalGild.Type.PkgconfigDependency
     CabalGild.Type.PkgconfigVersionRange
     CabalGild.Type.Pragma
