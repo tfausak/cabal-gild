@@ -179,6 +179,9 @@
           "uses": "actions/download-artifact@v4"
         },
         {
+          "run": "ls -l"
+        },
+        {
           "run": "cp cabal-gild-${{ github.sha }}-ubuntu-22.04-9.8/${{ env.PREFIX }}.tar.gz ."
         },
         {
