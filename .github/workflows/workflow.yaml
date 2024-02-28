@@ -66,7 +66,7 @@
           "run": "codesign --sign - artifact/cabal-gild"
         },
         {
-          "run": "tar --create --file artifact.tar artifact"
+          "run": "tar --create --file artifact.tar --verbose artifact"
         },
         {
           "uses": "actions/upload-artifact@v4",
@@ -179,10 +179,10 @@
           "uses": "actions/download-artifact@v4"
         },
         {
-          "run": "sh -exc 'for f in */artifact.tar; do tar --extract --verbose --file $f; done'"
+          "run": "sh -exc 'for f in */artifact.tar; do tar --extract --file $f --verbose; done'"
         },
         {
-          "run": "cp cabal-gild-${{ github.sha }}-ubuntu-22.04-9.8/${{ env.PREFIX }}.tar.gz ."
+          "run": "cp cabal-gild-${{ github.sha }}-ubuntu-22.04-9.8/artifact/${{ env.PREFIX }}.tar.gz ."
         },
         # {
         #   "run": "chmod +x cabal-gild && tar --auto-compress --create --file ../${{ env.PREFIX }}-darwin-x64.tar.gz cabal-gild",
@@ -193,8 +193,8 @@
         #   "working-directory": "cabal-gild-${{ github.sha }}-macos-14-9.8"
         # },
         {
-          "run": "chmod +x cabal-gild && tar --auto-compress --create --file ../${{ env.PREFIX }}-linux-x64.tar.gz cabal-gild",
-          "working-directory": "cabal-gild-${{ github.sha }}-ubuntu-22.04-9.8"
+          "run": "tar --auto-compress --create --file ../../${{ env.PREFIX }}-linux-x64.tar.gz --verbose cabal-gild",
+          "working-directory": "cabal-gild-${{ github.sha }}-ubuntu-22.04-9.8/artifact"
         },
         # {
         #   "run": "chmod +x cabal-gild.exe && tar --auto-compress --create --file ../${{ env.PREFIX }}-win32-x64.tar.gz cabal-gild.exe",
