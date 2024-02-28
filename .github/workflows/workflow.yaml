@@ -14,7 +14,6 @@
           "id": "haskell",
           "uses": "haskell-actions/setup@v2",
           "with": {
-            "cabal-version": "3.10.2.1",
             "ghc-version": "${{ matrix.ghc }}"
           }
         },
@@ -63,14 +62,13 @@
           "run": "cp $( cabal list-bin cabal-gild ) artifact"
         },
         {
-          "if": "matrix.platform == 'macos'",
-          "run": "codesign --sign - artifact/cabal-gild"
+          "run": "tar --create --file artifact.tar --verbose artifact"
         },
         {
           "uses": "actions/upload-artifact@v4",
           "with": {
             "name": "cabal-gild-${{ github.sha }}-${{ matrix.platform }}-${{ matrix.version }}-${{ matrix.ghc }}",
-            "path": "artifact"
+            "path": "artifact.tar"
           }
         },
         {
@@ -84,33 +82,32 @@
         "matrix": {
           "include": [
             {
-              "ghc": "9.8.1",
+              "ghc": "9.8",
               "platform": "macos",
               "version": 13
             },
             {
-              "ghc": "9.8.1",
+              "ghc": "9.8",
               "platform": "macos",
               "version": 14
             },
             {
-              "ghc": "9.4.8",
+              "ghc": "9.4",
               "platform": "ubuntu",
               "version": 22.04
             },
             {
-              "ghc": "9.6.4",
+              "ghc": "9.6",
               "platform": "ubuntu",
               "version": 22.04
             },
             {
-              "ghc": "9.8.1",
+              "ghc": "9.8",
               "platform": "ubuntu",
               "version": 22.04
             },
             {
-              "extension": ".exe",
-              "ghc": "9.8.1",
+              "ghc": "9.8",
               "platform": "windows",
               "version": 2022
             }
@@ -170,7 +167,7 @@
       "env": {
         "PREFIX": "cabal-gild-${{ github.event.release.tag_name }}"
       },
-      "if": "github.event_name == 'release'",
+      "if": "${{ github.event_name == 'release' }}",
       "name": "Release",
       "needs": "build",
       "runs-on": "ubuntu-22.04",
@@ -179,23 +176,26 @@
           "uses": "actions/download-artifact@v4"
         },
         {
-          "run": "cp cabal-gild-${{ github.sha }}-ubuntu-22.04-9.8.1/${{ env.PREFIX }}.tar.gz ."
+          "run": "sh -exc 'for d in *; do cd $d; tar --extract --file artifact.tar --verbose; cd ..; done'"
         },
         {
-          "run": "chmod +x cabal-gild && tar --auto-compress --create --file ../${{ env.PREFIX }}-darwin-x64.tar.gz cabal-gild",
-          "working-directory": "cabal-gild-${{ github.sha }}-macos-13-9.8.1"
+          "run": "cp cabal-gild-${{ github.sha }}-ubuntu-22.04-9.8/artifact/${{ env.PREFIX }}.tar.gz ."
         },
         {
-          "run": "chmod +x cabal-gild && tar --auto-compress --create --file ../${{ env.PREFIX }}-darwin-arm64.tar.gz cabal-gild",
-          "working-directory": "cabal-gild-${{ github.sha }}-macos-14-9.8.1"
+          "run": "tar --auto-compress --create --file ../../${{ env.PREFIX }}-darwin-x64.tar.gz --verbose cabal-gild",
+          "working-directory": "cabal-gild-${{ github.sha }}-macos-13-9.8/artifact"
         },
         {
-          "run": "chmod +x cabal-gild && tar --auto-compress --create --file ../${{ env.PREFIX }}-linux-x64.tar.gz cabal-gild",
-          "working-directory": "cabal-gild-${{ github.sha }}-ubuntu-22.04-9.8.1"
+          "run": "tar --auto-compress --create --file ../../${{ env.PREFIX }}-darwin-arm64.tar.gz --verbose cabal-gild",
+          "working-directory": "cabal-gild-${{ github.sha }}-macos-14-9.8/artifact"
         },
         {
-          "run": "chmod +x cabal-gild.exe && tar --auto-compress --create --file ../${{ env.PREFIX }}-win32-x64.tar.gz cabal-gild.exe",
-          "working-directory": "cabal-gild-${{ github.sha }}-windows-2022-9.8.1"
+          "run": "tar --auto-compress --create --file ../../${{ env.PREFIX }}-linux-x64.tar.gz --verbose cabal-gild",
+          "working-directory": "cabal-gild-${{ github.sha }}-ubuntu-22.04-9.8/artifact"
+        },
+        {
+          "run": "tar --auto-compress --create --file ../../${{ env.PREFIX }}-win32-x64.tar.gz --verbose cabal-gild.exe",
+          "working-directory": "cabal-gild-${{ github.sha }}-windows-2022-9.8/artifact"
         },
         {
           "uses": "softprops/action-gh-release@v1",
