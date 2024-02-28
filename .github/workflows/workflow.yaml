@@ -169,9 +169,9 @@
     },
     "release": {
       "env": {
-        # "PREFIX": "cabal-gild-${{ github.event.release.tag_name }}"
-        "PREFIX": "cabal-gild-1.1.0.0"
+        "PREFIX": "cabal-gild-${{ github.event.release.tag_name }}"
       },
+      "if": "${{ github.event_name == 'release' }}",
       "name": "Release",
       "needs": "build",
       "runs-on": "ubuntu-22.04",
@@ -202,14 +202,12 @@
           "working-directory": "cabal-gild-${{ github.sha }}-windows-2022-9.8/artifact"
         },
         {
-          "if": "${{ github.event_name == 'release' }}",
           "uses": "softprops/action-gh-release@v1",
           "with": {
             "files": "${{ env.PREFIX }}*.tar.gz"
           }
         },
         {
-          "if": "${{ github.event_name == 'release' }}",
           "run": "cabal upload --publish --username '${{ secrets.HACKAGE_USERNAME }}' --password '${{ secrets.HACKAGE_PASSWORD }}' ${{ env.PREFIX }}.tar.gz"
         }
       ]
