@@ -970,6 +970,31 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "s{t{}}"
       "s\n  t\n"
 
+  Hspec.it "groups 'else' with 'if'" $ do
+    expectGilded
+      "if p\n a\nelse\n b"
+      "if p\n  a\nelse\n  b\n"
+
+  Hspec.it "groups 'elif' with 'if'" $ do
+    expectGilded
+      "if p\n a\nelif q\n b"
+      "if p\n  a\nelif q\n  b\n"
+
+  Hspec.it "groups 'else' with 'elif'" $ do
+    expectGilded
+      "if p\n a\nelif q\n b\nelse\n c"
+      "if p\n  a\nelif q\n  b\nelse\n  c\n"
+
+  Hspec.it "does not group 'else' with anything else" $ do
+    expectGilded
+      "library\nelse p\n a"
+      "library\n\nelse p\n  a\n"
+
+  Hspec.it "does not group 'elif' with anything else" $ do
+    expectGilded
+      "library\nelif p\n a"
+      "library\n\nelif p\n  a\n"
+
 expectGilded :: (Stack.HasCallStack) => String -> String -> Hspec.Expectation
 expectGilded input expected = do
   let (a, s, w) =

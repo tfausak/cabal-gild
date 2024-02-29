@@ -59,8 +59,8 @@ field i f = case f of
               }
           <> fieldLines (i + 1) fls
   Fields.Section n sas fs ->
-    Lens.set Block.lineBeforeLens True
-      . Lens.set Block.lineAfterLens True
+    Lens.set Block.lineBeforeLens (not $ Name.isElif n || Name.isElse n)
+      . Lens.set Block.lineAfterLens (not $ Name.isIf n || Name.isElif n)
       $ comments i (Name.annotation n)
         <> comments i (concatMap SectionArg.annotation sas)
         <> Block.fromLine
