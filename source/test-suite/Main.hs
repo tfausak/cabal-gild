@@ -116,6 +116,16 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
 
+  Hspec.it "sets input and output simultaneously" $ do
+    let (a, s, w) =
+          runTest
+            (Gild.mainWith ["--io", "io.cabal"])
+            (Map.singleton (Input.File "io.cabal") (String.toUtf8 ""), Map.empty)
+            Map.empty
+    a `Hspec.shouldBe` Right ()
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldSatisfy` Map.member (Output.File "io.cabal")
+
   Hspec.it "succeeds with empty input" $ do
     expectGilded
       ""
