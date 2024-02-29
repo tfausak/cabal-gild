@@ -101,7 +101,7 @@ To run Gild in a GitHub Actions workflow, consider using [cabal-gild-setup-actio
 
 In general you should prefer downloading the appropriate binary for you
 platform. However it is possible to build Gild from source. It supports Linux,
-macOS, and Windows along with the three most recent versions of GHC. Any other
+macOS, and Windows along with the four most recent versions of GHC. Any other
 configurations are unsupported.
 
 With Cabal:
