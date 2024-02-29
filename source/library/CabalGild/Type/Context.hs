@@ -6,6 +6,7 @@ import qualified CabalGild.Exception.SpecifiedStdinWithFileInput as SpecifiedStd
 import qualified CabalGild.Type.Config as Config
 import qualified CabalGild.Type.Flag as Flag
 import qualified CabalGild.Type.Input as Input
+import qualified CabalGild.Type.Leniency as Leniency
 import qualified CabalGild.Type.Mode as Mode
 import qualified CabalGild.Type.Optional as Optional
 import qualified CabalGild.Type.Output as Output
@@ -21,7 +22,8 @@ import qualified System.Exit as Exit
 -- | Represents the context necessary to run the program. This is essentially a
 -- simplified 'Config.Config'.
 data Context = Context
-  { input :: Input.Input,
+  { crlf :: Leniency.Leniency,
+    input :: Input.Input,
     mode :: Mode.Mode,
     output :: Output.Output,
     stdin :: FilePath
@@ -66,7 +68,8 @@ fromConfig config = do
 
   pure
     Context
-      { input = Optional.withDefault Input.Stdin $ Config.input config,
+      { crlf = Optional.withDefault Leniency.Lenient $ Config.crlf config,
+        input = Optional.withDefault Input.Stdin $ Config.input config,
         mode = Optional.withDefault Mode.Format $ Config.mode config,
         output = Optional.withDefault Output.Stdout $ Config.output config,
         stdin = Optional.withDefault "." $ Config.stdin config

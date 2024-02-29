@@ -130,6 +130,8 @@ Run `cabal-gild --help` to see the options that Gild supports. They are:
 
 - `--version`: Prints the version number to STDOUT then exits successfully.
 
+- `--crlf=LENIENCY`: TODO
+
 - `--input=FILE`: Uses `FILE` as the input. If this is `-` (which is the
   default), then the input will be read from STDIN.
 

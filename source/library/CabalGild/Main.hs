@@ -20,6 +20,7 @@ import qualified CabalGild.Type.Config as Config
 import qualified CabalGild.Type.Context as Context
 import qualified CabalGild.Type.Flag as Flag
 import qualified CabalGild.Type.Input as Input
+import qualified CabalGild.Type.Leniency as Leniency
 import qualified CabalGild.Type.Mode as Mode
 import qualified Control.Monad as Monad
 import qualified Control.Monad.Catch as Exception
@@ -97,7 +98,9 @@ mainWith arguments = do
           stripCR x = case ByteString.unsnoc x of
             Just (y, 0x0d) -> y
             _ -> x
-          inputLines = stripCR <$> Latin1.lines input
+          inputLines = case Context.crlf context of
+            Leniency.Lenient -> stripCR <$> Latin1.lines input
+            Leniency.Strict -> Latin1.lines input
       Monad.when (outputLines /= inputLines) $
         Exception.throwM CheckFailure.CheckFailure
     Mode.Format -> do

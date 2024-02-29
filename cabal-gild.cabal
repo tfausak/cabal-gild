@@ -86,6 +86,7 @@ library
     CabalGild.Class.MonadWalk
     CabalGild.Class.MonadWrite
     CabalGild.Exception.CheckFailure
+    CabalGild.Exception.InvalidLeniency
     CabalGild.Exception.InvalidMode
     CabalGild.Exception.InvalidOption
     CabalGild.Exception.ParseError
@@ -115,6 +116,7 @@ library
     CabalGild.Type.Input
     CabalGild.Type.Language
     CabalGild.Type.LegacyExeDependency
+    CabalGild.Type.Leniency
     CabalGild.Type.Line
     CabalGild.Type.List
     CabalGild.Type.Mode

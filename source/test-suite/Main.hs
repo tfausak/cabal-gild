@@ -96,6 +96,16 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
 
+  Hspec.it "TODO" $ do
+    let (a, s, w) =
+          runTest
+            (Gild.mainWith ["--crlf", "strict", "--mode", "check"])
+            (Map.singleton Input.Stdin (String.toUtf8 "pass: no\r\n"), Map.empty)
+            Map.empty
+    a `Hspec.shouldBe` Left (Problem $ Exception.toException CheckFailure.CheckFailure)
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.empty
+
   Hspec.it "fails when --stdin is given with an input file" $ do
     let (a, s, w) =
           runTest
