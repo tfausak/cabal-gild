@@ -67,7 +67,6 @@ library
 
   if impl(ghc >= 9.4)
     build-depends: Cabal-syntax ^>=3.8.1.0 || ^>=3.10.1.0
-
   else
     build-depends: Cabal ^>=3.6.0.0
 
