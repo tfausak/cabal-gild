@@ -11,7 +11,8 @@ import qualified System.Console.GetOpt as GetOpt
 -- the flags are typically not parsed. These just handle the structure of
 -- command line options.
 data Flag
-  = Help Bool
+  = CRLF String
+  | Help Bool
   | Input String
   | IO String
   | Mode String
@@ -43,6 +44,11 @@ options =
       ["no-version"]
       (GetOpt.NoArg $ Version False)
       "",
+    GetOpt.Option
+      []
+      ["crlf"]
+      (GetOpt.ReqArg CRLF "LENIENCY")
+      "Sets the CRLF handling mode. Must be either 'lenient' or 'strict'.\nDefault: 'lenient'",
     GetOpt.Option
       ['i']
       ["input"]

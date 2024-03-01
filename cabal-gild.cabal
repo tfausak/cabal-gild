@@ -86,13 +86,16 @@ library
     CabalGild.Class.MonadWalk
     CabalGild.Class.MonadWrite
     CabalGild.Exception.CheckFailure
+    CabalGild.Exception.InvalidLeniency
     CabalGild.Exception.InvalidMode
     CabalGild.Exception.InvalidOption
     CabalGild.Exception.ParseError
+    CabalGild.Exception.SpecifiedCrlfWithFormatMode
     CabalGild.Exception.SpecifiedOutputWithCheckMode
     CabalGild.Exception.SpecifiedStdinWithFileInput
     CabalGild.Exception.UnexpectedArgument
     CabalGild.Exception.UnknownOption
+    CabalGild.Extra.ByteString
     CabalGild.Extra.Either
     CabalGild.Extra.Field
     CabalGild.Extra.FieldLine
@@ -115,6 +118,7 @@ library
     CabalGild.Type.Input
     CabalGild.Type.Language
     CabalGild.Type.LegacyExeDependency
+    CabalGild.Type.Leniency
     CabalGild.Type.Line
     CabalGild.Type.List
     CabalGild.Type.Mode

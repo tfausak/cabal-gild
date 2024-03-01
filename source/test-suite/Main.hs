@@ -5,6 +5,7 @@ import qualified CabalGild.Class.MonadRead as MonadRead
 import qualified CabalGild.Class.MonadWalk as MonadWalk
 import qualified CabalGild.Class.MonadWrite as MonadWrite
 import qualified CabalGild.Exception.CheckFailure as CheckFailure
+import qualified CabalGild.Exception.SpecifiedCrlfWithFormatMode as SpecifiedCrlfWithFormatMode
 import qualified CabalGild.Exception.SpecifiedOutputWithCheckMode as SpecifiedOutputWithCheckMode
 import qualified CabalGild.Exception.SpecifiedStdinWithFileInput as SpecifiedStdinWithFileInput
 import qualified CabalGild.Extra.String as String
@@ -70,7 +71,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     let (a, s, w) =
           runTest
             (Gild.mainWith ["--mode", "check"])
-            (Map.singleton Input.Stdin (String.toUtf8 ""), Map.empty)
+            (Map.singleton Input.Stdin (String.toUtf8 "pass: yes\n"), Map.empty)
             Map.empty
     a `Hspec.shouldBe` Right ()
     w `Hspec.shouldBe` []
@@ -80,19 +81,29 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     let (a, s, w) =
           runTest
             (Gild.mainWith ["--mode", "check"])
-            (Map.singleton Input.Stdin (String.toUtf8 "fail:yes"), Map.empty)
+            (Map.singleton Input.Stdin (String.toUtf8 "pass: no"), Map.empty)
             Map.empty
     a `Hspec.shouldBe` Left (Problem $ Exception.toException CheckFailure.CheckFailure)
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
 
-  Hspec.it "succeeds when checking CRLF input" $ do
+  Hspec.it "succeeds when checking CRLF input leniently" $ do
     let (a, s, w) =
           runTest
             (Gild.mainWith ["--mode", "check"])
             (Map.singleton Input.Stdin (String.toUtf8 "pass: yes\r\n"), Map.empty)
             Map.empty
     a `Hspec.shouldBe` Right ()
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.empty
+
+  Hspec.it "fails when checking CRLF input strictly" $ do
+    let (a, s, w) =
+          runTest
+            (Gild.mainWith ["--crlf", "strict", "--mode", "check"])
+            (Map.singleton Input.Stdin (String.toUtf8 "pass: no\r\n"), Map.empty)
+            Map.empty
+    a `Hspec.shouldBe` Left (Problem $ Exception.toException CheckFailure.CheckFailure)
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
 
@@ -125,6 +136,16 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     a `Hspec.shouldBe` Right ()
     w `Hspec.shouldBe` []
     s `Hspec.shouldSatisfy` Map.member (Output.File "io.cabal")
+
+  Hspec.it "fails when --crlf is given with format mode" $ do
+    let (a, s, w) =
+          runTest
+            (Gild.mainWith ["--crlf", "strict"])
+            (Map.empty, Map.empty)
+            Map.empty
+    a `Hspec.shouldBe` Left (Problem $ Exception.toException SpecifiedCrlfWithFormatMode.SpecifiedCrlfWithFormatMode)
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.empty
 
   Hspec.it "succeeds with empty input" $ do
     expectGilded
