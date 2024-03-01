@@ -1,7 +1,7 @@
 module CabalGild.Type.ExeDependency where
 
 import qualified CabalGild.Type.VersionRange as VersionRange
-import qualified Data.Function as Function
+import qualified Data.Ord as Ord
 import qualified Distribution.Parsec as Parsec
 import qualified Distribution.Pretty as Pretty
 import qualified Distribution.Types.ExeDependency as ExeDependency
@@ -15,7 +15,7 @@ newtype ExeDependency = ExeDependency
 
 instance Ord ExeDependency where
   compare =
-    Function.on compare $
+    Ord.comparing $
       (\(ExeDependency.ExeDependency pn ucn vr) -> (pn, ucn, VersionRange.fromVersionRange vr))
         . unwrap
 

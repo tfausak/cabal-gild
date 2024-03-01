@@ -1,7 +1,7 @@
 module CabalGild.Type.PkgconfigDependency where
 
 import qualified CabalGild.Type.PkgconfigVersionRange as PkgconfigVersionRange
-import qualified Data.Function as Function
+import qualified Data.Ord as Ord
 import qualified Distribution.Parsec as Parsec
 import qualified Distribution.Pretty as Pretty
 import qualified Distribution.Types.PkgconfigDependency as PkgconfigDependency
@@ -16,7 +16,7 @@ newtype PkgconfigDependency = PkgconfigDependency
 
 instance Ord PkgconfigDependency where
   compare =
-    Function.on compare $
+    Ord.comparing $
       (\(PkgconfigDependency.PkgconfigDependency pn pvr) -> (pn, PkgconfigVersionRange.PkgconfigVersionRange pvr))
         . unwrap
 
