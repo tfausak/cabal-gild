@@ -16,14 +16,15 @@ import qualified CabalGild.Class.MonadWalk as MonadWalk
 import qualified CabalGild.Class.MonadWrite as MonadWrite
 import qualified CabalGild.Exception.CheckFailure as CheckFailure
 import qualified CabalGild.Exception.ParseError as ParseError
+import qualified CabalGild.Extra.ByteString as ByteString
 import qualified CabalGild.Type.Config as Config
 import qualified CabalGild.Type.Context as Context
 import qualified CabalGild.Type.Flag as Flag
+import qualified CabalGild.Type.Leniency as Leniency
 import qualified CabalGild.Type.Mode as Mode
 import qualified Control.Monad as Monad
 import qualified Control.Monad.Catch as Exception
 import qualified Data.ByteString as ByteString
-import qualified Data.ByteString.Char8 as Latin1
 import qualified Distribution.Fields as Fields
 import qualified System.Environment as Environment
 import qualified System.Exit as Exit
@@ -70,17 +71,13 @@ mainWith arguments = do
 
   case Context.mode context of
     Mode.Check -> do
-      -- The input might have CRLF ("\r\n", 0x0d 0x0a) line endings, but the
-      -- output will always have LF line endings. For the purposes of the check
-      -- command, we'll consider the input formatted if it only differs from
-      -- the output in line endings.
-      let outputLines = Latin1.lines output
-          stripCR x = case ByteString.unsnoc x of
-            Just (y, 0x0d) -> y
-            _ -> x
-          inputLines = stripCR <$> Latin1.lines input
-      Monad.when (outputLines /= inputLines) $
-        Exception.throwM CheckFailure.CheckFailure
+      let formatted = case Context.crlf context of
+            Leniency.Lenient ->
+              let lf = ByteString.singleton 0x0a
+                  crlf = ByteString.cons 0x0d lf
+               in output == ByteString.replace crlf lf input
+            Leniency.Strict -> output == input
+      Monad.unless formatted $ Exception.throwM CheckFailure.CheckFailure
     Mode.Format -> MonadWrite.write (Context.output context) output
 
 -- | TODO

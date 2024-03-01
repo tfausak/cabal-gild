@@ -1,7 +1,7 @@
 module CabalGild.Type.Dependency where
 
 import qualified CabalGild.Type.VersionRange as VersionRange
-import qualified Data.Function as Function
+import qualified Data.Ord as Ord
 import qualified Distribution.Parsec as Parsec
 import qualified Distribution.Pretty as Pretty
 import qualified Distribution.Types.Dependency as Dependency
@@ -15,7 +15,7 @@ newtype Dependency = Dependency
 
 instance Ord Dependency where
   compare =
-    Function.on compare $
+    Ord.comparing $
       (\(Dependency.Dependency pn vr lns) -> (pn, VersionRange.fromVersionRange vr, lns))
         . unwrap
 

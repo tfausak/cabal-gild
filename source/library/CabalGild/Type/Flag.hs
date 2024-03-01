@@ -11,8 +11,10 @@ import qualified System.Console.GetOpt as GetOpt
 -- the flags are typically not parsed. These just handle the structure of
 -- command line options.
 data Flag
-  = Help Bool
+  = CRLF String
+  | Help Bool
   | Input String
+  | IO String
   | Mode String
   | Output String
   | Stdin String
@@ -43,10 +45,20 @@ options =
       (GetOpt.NoArg $ Version False)
       "",
     GetOpt.Option
+      []
+      ["crlf"]
+      (GetOpt.ReqArg CRLF "LENIENCY")
+      "Sets the CRLF handling mode. Must be either 'lenient' or 'strict'.\nDefault: 'lenient'",
+    GetOpt.Option
       ['i']
       ["input"]
       (GetOpt.ReqArg Input "FILE")
       "Sets the input file. Use '-' for standard input (STDIN).\nDefault: '-'",
+    GetOpt.Option
+      []
+      ["io"]
+      (GetOpt.ReqArg IO "FILE")
+      "Shortcut for setting both the input and output files.",
     GetOpt.Option
       ['m']
       ["mode"]

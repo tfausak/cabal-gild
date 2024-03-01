@@ -1,7 +1,7 @@
 module CabalGild.Type.TestedWith where
 
 import qualified CabalGild.Type.VersionRange as VersionRange
-import qualified Data.Function as Function
+import qualified Data.Ord as Ord
 import qualified Distribution.FieldGrammar.Newtypes as Newtypes
 import qualified Distribution.Parsec as Parsec
 import qualified Distribution.Pretty as Pretty
@@ -13,15 +13,11 @@ newtype TestedWith = TestedWith
   }
 
 instance Eq TestedWith where
-  (==) =
-    Function.on (==) $
-      fmap VersionRange.fromVersionRange
-        . Newtypes.getTestedWith
-        . unwrap
+  x == y = compare x y == EQ
 
 instance Ord TestedWith where
   compare =
-    Function.on compare $
+    Ord.comparing $
       fmap VersionRange.fromVersionRange
         . Newtypes.getTestedWith
         . unwrap
