@@ -1,3 +1,9 @@
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+
+import qualified CabalGild.Class.MonadLog as MonadLog
+import qualified CabalGild.Class.MonadRead as MonadRead
+import qualified CabalGild.Class.MonadWalk as MonadWalk
+import qualified CabalGild.Class.MonadWrite as MonadWrite
 import qualified CabalGild.Exception.CheckFailure as CheckFailure
 import qualified CabalGild.Exception.SpecifiedCrlfWithFormatMode as SpecifiedCrlfWithFormatMode
 import qualified CabalGild.Exception.SpecifiedOutputWithCheckMode as SpecifiedOutputWithCheckMode
@@ -6,11 +12,13 @@ import qualified CabalGild.Extra.String as String
 import qualified CabalGild.Main as Gild
 import qualified CabalGild.Type.Input as Input
 import qualified CabalGild.Type.Output as Output
-import qualified CabalGild.Type.PureT as PureT
 import qualified Control.Monad.Catch as Exception
-import qualified Data.Bifunctor as Bifunctor
+import qualified Control.Monad.Trans.Class as Trans
+import qualified Control.Monad.Trans.Except as ExceptT
+import qualified Control.Monad.Trans.RWS as RWST
 import qualified Data.ByteString as ByteString
 import qualified Data.Function as Function
+import qualified Data.Functor.Identity as Identity
 import qualified Data.Map as Map
 import qualified GHC.Stack as Stack
 import qualified System.Exit as Exit
@@ -24,6 +32,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
           runTest
             (Gild.mainWith ["--help"])
             (Map.empty, Map.empty)
+            Map.empty
     a `Hspec.shouldBe` Left (Problem $ Exception.toException Exit.ExitSuccess)
     w `Hspec.shouldNotSatisfy` null
     s `Hspec.shouldBe` Map.empty
@@ -33,6 +42,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
           runTest
             (Gild.mainWith ["--version"])
             (Map.empty, Map.empty)
+            Map.empty
     a `Hspec.shouldBe` Left (Problem $ Exception.toException Exit.ExitSuccess)
     w `Hspec.shouldNotSatisfy` null
     s `Hspec.shouldBe` Map.empty
@@ -42,6 +52,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
           runTest
             (Gild.mainWith ["--input", "input.cabal"])
             (Map.singleton (Input.File "input.cabal") (String.toUtf8 ""), Map.empty)
+            Map.empty
     a `Hspec.shouldBe` Right ()
     w `Hspec.shouldBe` []
     s `Hspec.shouldSatisfy` Map.member Output.Stdout
@@ -51,6 +62,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
           runTest
             (Gild.mainWith ["--output", "output.cabal"])
             (Map.singleton Input.Stdin (String.toUtf8 ""), Map.empty)
+            Map.empty
     a `Hspec.shouldBe` Right ()
     w `Hspec.shouldBe` []
     s `Hspec.shouldSatisfy` Map.member (Output.File "output.cabal")
@@ -60,6 +72,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
           runTest
             (Gild.mainWith ["--mode", "check"])
             (Map.singleton Input.Stdin (String.toUtf8 "pass: yes\n"), Map.empty)
+            Map.empty
     a `Hspec.shouldBe` Right ()
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
@@ -69,6 +82,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
           runTest
             (Gild.mainWith ["--mode", "check"])
             (Map.singleton Input.Stdin (String.toUtf8 "pass: no"), Map.empty)
+            Map.empty
     a `Hspec.shouldBe` Left (Problem $ Exception.toException CheckFailure.CheckFailure)
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
@@ -78,6 +92,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
           runTest
             (Gild.mainWith ["--mode", "check"])
             (Map.singleton Input.Stdin (String.toUtf8 "pass: yes\r\n"), Map.empty)
+            Map.empty
     a `Hspec.shouldBe` Right ()
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
@@ -87,6 +102,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
           runTest
             (Gild.mainWith ["--crlf", "strict", "--mode", "check"])
             (Map.singleton Input.Stdin (String.toUtf8 "pass: no\r\n"), Map.empty)
+            Map.empty
     a `Hspec.shouldBe` Left (Problem $ Exception.toException CheckFailure.CheckFailure)
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
@@ -96,6 +112,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
           runTest
             (Gild.mainWith ["--input", "f", "--stdin", "g"])
             (Map.empty, Map.empty)
+            Map.empty
     a `Hspec.shouldBe` Left (Problem $ Exception.toException SpecifiedStdinWithFileInput.SpecifiedStdinWithFileInput)
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
@@ -105,6 +122,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
           runTest
             (Gild.mainWith ["--mode", "check", "--output", "-"])
             (Map.empty, Map.empty)
+            Map.empty
     a `Hspec.shouldBe` Left (Problem $ Exception.toException SpecifiedOutputWithCheckMode.SpecifiedOutputWithCheckMode)
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
@@ -114,6 +132,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
           runTest
             (Gild.mainWith ["--io", "io.cabal"])
             (Map.singleton (Input.File "io.cabal") (String.toUtf8 ""), Map.empty)
+            Map.empty
     a `Hspec.shouldBe` Right ()
     w `Hspec.shouldBe` []
     s `Hspec.shouldSatisfy` Map.member (Output.File "io.cabal")
@@ -123,6 +142,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
           runTest
             (Gild.mainWith ["--crlf", "strict"])
             (Map.empty, Map.empty)
+            Map.empty
     a `Hspec.shouldBe` Left (Problem $ Exception.toException SpecifiedCrlfWithFormatMode.SpecifiedCrlfWithFormatMode)
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
@@ -1012,6 +1032,7 @@ expectGilded input expected = do
         runTest
           (Gild.mainWith [])
           (Map.singleton Input.Stdin $ String.toUtf8 input, Map.empty)
+          Map.empty
   a `Hspec.shouldBe` Right ()
   w `Hspec.shouldBe` []
   actual <- case Map.toList s of
@@ -1027,6 +1048,7 @@ expectStable input = do
         runTest
           (Gild.mainWith [])
           (Map.singleton Input.Stdin input, Map.empty)
+          Map.empty
   a `Hspec.shouldBe` Right ()
   w `Hspec.shouldBe` []
   output <- case Map.toList s of
@@ -1042,6 +1064,7 @@ expectDiscover files input expected = do
           ( Map.singleton Input.Stdin $ String.toUtf8 input,
             Map.fromList $ fmap (\(d, fs) -> (d, FilePath.combine d <$> fs)) files
           )
+          Map.empty
   a `Hspec.shouldBe` Right ()
   w `Hspec.shouldBe` []
   actual <- case Map.toList s of
@@ -1057,10 +1080,10 @@ newtype Problem = Problem
 instance Eq Problem where
   (==) = Function.on (==) show
 
-runTest :: PureT.Pure a -> R -> (Either E a, S, W)
-runTest p r =
-  case PureT.runPure p (Bifunctor.bimap (flip Map.lookup) (flip Map.lookup) r) Map.empty of
-    (e, t, w) -> (Bifunctor.first Problem e, t, w)
+type Test = TestT Identity.Identity
+
+runTest :: Test a -> R -> S -> (Either E a, S, W)
+runTest t r = Identity.runIdentity . RWST.runRWST (ExceptT.runExceptT $ runTestT t) r
 
 type E = Problem
 
@@ -1069,3 +1092,31 @@ type R = (Map.Map Input.Input ByteString.ByteString, Map.Map FilePath [FilePath]
 type S = Map.Map Output.Output ByteString.ByteString
 
 type W = [String]
+
+newtype TestT m a = TestT
+  { runTestT :: ExceptT.ExceptT E (RWST.RWST R W S m) a
+  }
+  deriving (Applicative, Functor, Monad)
+
+instance (Monad m) => MonadLog.MonadLog (TestT m) where
+  logLn = TestT . Trans.lift . RWST.tell . pure
+
+instance (Monad m) => MonadRead.MonadRead (TestT m) where
+  read k = do
+    m <- TestT . Trans.lift . RWST.asks $ Map.lookup k . fst
+    case m of
+      Nothing -> Exception.throwM . userError $ "read " <> show k
+      Just x -> pure x
+
+instance (Monad m) => Exception.MonadThrow (TestT m) where
+  throwM = TestT . ExceptT.throwE . Problem . Exception.toException
+
+instance (Monad m) => MonadWalk.MonadWalk (TestT m) where
+  walk p = do
+    m <- TestT . Trans.lift . RWST.asks $ Map.lookup p . snd
+    case m of
+      Nothing -> Exception.throwM . userError $ "walk " <> show p
+      Just x -> pure x
+
+instance (Monad m) => MonadWrite.MonadWrite (TestT m) where
+  write k = TestT . Trans.lift . RWST.modify . Map.insert k
