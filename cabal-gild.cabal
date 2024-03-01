@@ -90,6 +90,7 @@ library
     CabalGild.Exception.InvalidMode
     CabalGild.Exception.InvalidOption
     CabalGild.Exception.ParseError
+    CabalGild.Exception.SpecifiedCrlfWithFormatMode
     CabalGild.Exception.SpecifiedOutputWithCheckMode
     CabalGild.Exception.SpecifiedStdinWithFileInput
     CabalGild.Exception.UnexpectedArgument

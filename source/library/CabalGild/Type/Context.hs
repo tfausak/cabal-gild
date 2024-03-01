@@ -1,6 +1,7 @@
 module CabalGild.Type.Context where
 
 import qualified CabalGild.Class.MonadLog as MonadLog
+import qualified CabalGild.Exception.SpecifiedCrlfWithFormatMode as SpecifiedCrlfWithFormatMode
 import qualified CabalGild.Exception.SpecifiedOutputWithCheckMode as SpecifiedOutputWithCheckMode
 import qualified CabalGild.Exception.SpecifiedStdinWithFileInput as SpecifiedStdinWithFileInput
 import qualified CabalGild.Type.Config as Config
@@ -64,6 +65,12 @@ fromConfig config = do
   case (Config.mode config, Config.output config) of
     (Optional.Specific Mode.Check, Optional.Specific _) ->
       Exception.throwM SpecifiedOutputWithCheckMode.SpecifiedOutputWithCheckMode
+    _ -> pure ()
+
+  case Config.crlf config of
+    Optional.Specific _
+      | Config.mode config /= Optional.Specific Mode.Check ->
+          Exception.throwM SpecifiedCrlfWithFormatMode.SpecifiedCrlfWithFormatMode
     _ -> pure ()
 
   pure
