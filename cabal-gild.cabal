@@ -94,6 +94,7 @@ library
     CabalGild.Exception.SpecifiedStdinWithFileInput
     CabalGild.Exception.UnexpectedArgument
     CabalGild.Exception.UnknownOption
+    CabalGild.Extra.ByteString
     CabalGild.Extra.Either
     CabalGild.Extra.Field
     CabalGild.Extra.FieldLine

@@ -70,7 +70,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     let (a, s, w) =
           runTest
             (Gild.mainWith ["--mode", "check"])
-            (Map.singleton Input.Stdin (String.toUtf8 ""), Map.empty)
+            (Map.singleton Input.Stdin (String.toUtf8 "pass: yes\n"), Map.empty)
             Map.empty
     a `Hspec.shouldBe` Right ()
     w `Hspec.shouldBe` []
@@ -80,13 +80,13 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     let (a, s, w) =
           runTest
             (Gild.mainWith ["--mode", "check"])
-            (Map.singleton Input.Stdin (String.toUtf8 "fail:yes"), Map.empty)
+            (Map.singleton Input.Stdin (String.toUtf8 "pass: no"), Map.empty)
             Map.empty
     a `Hspec.shouldBe` Left (Problem $ Exception.toException CheckFailure.CheckFailure)
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
 
-  Hspec.it "succeeds when checking CRLF input" $ do
+  Hspec.it "succeeds when checking CRLF input leniently" $ do
     let (a, s, w) =
           runTest
             (Gild.mainWith ["--mode", "check"])
@@ -96,7 +96,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
 
-  Hspec.it "TODO" $ do
+  Hspec.it "fails when checking CRLF input strictly" $ do
     let (a, s, w) =
           runTest
             (Gild.mainWith ["--crlf", "strict", "--mode", "check"])

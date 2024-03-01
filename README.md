@@ -130,7 +130,14 @@ Run `cabal-gild --help` to see the options that Gild supports. They are:
 
 - `--version`: Prints the version number to STDOUT then exits successfully.
 
-- `--crlf=LENIENCY`: TODO
+- `--crlf=LENIENCY`: Sets the CRLF handling mode, which must be either
+  `lenient` (the default) or `strict`. When checking if the input is formatted,
+  setting this to `lenient` will treat CRLF line endings the same as LF.
+  Setting this to `strict` will require the input to be byte-for-byte identical
+  to the expected output. (Note that Gild will never produce CRLF line endings
+  when formatting.)
+
+  It is an error to provide a value for this option unless the mode is `check`.
 
 - `--input=FILE`: Uses `FILE` as the input. If this is `-` (which is the
   default), then the input will be read from STDIN.
