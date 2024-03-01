@@ -80,7 +80,10 @@ mainWith arguments = do
       Monad.unless formatted $ Exception.throwM CheckFailure.CheckFailure
     Mode.Format -> MonadWrite.write (Context.output context) output
 
--- | TODO
+-- | Formats the given input using the provided file path as the apparent
+-- source file (see 'Context.stdin'). An exception will be thrown if the input
+-- is invalid. The 'MonadWalk.MonadWalk' constraint is used to discover modules
+-- on the file system. Typically @m@ will be 'IO'.
 format ::
   (Exception.MonadThrow m, MonadWalk.MonadWalk m) =>
   FilePath ->
