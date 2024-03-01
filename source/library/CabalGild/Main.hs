@@ -92,8 +92,8 @@ mainWith arguments = do
     Mode.Check -> do
       let formatted = case Context.crlf context of
             Leniency.Lenient ->
-              let crlf = ByteString.pack [0x0d, 0x0a]
-                  lf = ByteString.singleton 0x0a
+              let lf = ByteString.singleton 0x0a
+                  crlf = ByteString.cons 0x0d lf
                in output == ByteString.replace crlf lf input
             Leniency.Strict -> output == input
       Monad.unless formatted $ Exception.throwM CheckFailure.CheckFailure
