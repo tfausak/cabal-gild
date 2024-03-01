@@ -1,5 +1,6 @@
 module CabalGild.Type.ForeignLibOption where
 
+import qualified Data.Ord as Ord
 import qualified Distribution.Parsec as Parsec
 import qualified Distribution.Pretty as Pretty
 import qualified Distribution.Types.ForeignLibOption as ForeignLibOption
@@ -13,8 +14,7 @@ newtype ForeignLibOption = ForeignLibOption
   deriving (Eq, Show)
 
 instance Ord ForeignLibOption where
-  compare x y = case (unwrap x, unwrap y) of
-    (ForeignLibOption.ForeignLibStandalone, ForeignLibOption.ForeignLibStandalone) -> EQ
+  compare = Ord.comparing Pretty.prettyShow
 
 instance Parsec.Parsec ForeignLibOption where
   parsec = ForeignLibOption <$> Parsec.parsec

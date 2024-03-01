@@ -1,6 +1,6 @@
 module CabalGild.Type.ModuleReexport where
 
-import qualified Data.Function as Function
+import qualified Data.Ord as Ord
 import qualified Distribution.Parsec as Parsec
 import qualified Distribution.Pretty as Pretty
 import qualified Distribution.Types.ModuleReexport as ModuleReexport
@@ -14,7 +14,7 @@ newtype ModuleReexport = ModuleReexport
 
 instance Ord ModuleReexport where
   compare =
-    Function.on compare $
+    Ord.comparing $
       (\(ModuleReexport.ModuleReexport mpn mn1 mn2) -> (mpn, mn1, mn2))
         . unwrap
 

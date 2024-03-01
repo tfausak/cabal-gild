@@ -1,5 +1,6 @@
 module CabalGild.Type.Language where
 
+import qualified Data.Ord as Ord
 import qualified Distribution.Parsec as Parsec
 import qualified Distribution.Pretty as Pretty
 import qualified Language.Haskell.Extension as Extension
@@ -12,17 +13,7 @@ newtype Language = Language
   deriving (Eq, Show)
 
 instance Ord Language where
-  compare x y = case (unwrap x, unwrap y) of
-    (Extension.Haskell98, Extension.Haskell98) -> EQ
-    (Extension.Haskell98, _) -> LT
-    (Extension.Haskell2010, Extension.Haskell2010) -> EQ
-    (Extension.Haskell2010, Extension.Haskell98) -> GT
-    (Extension.Haskell2010, _) -> LT
-    (Extension.GHC2021, Extension.GHC2021) -> EQ
-    (Extension.GHC2021, Extension.UnknownLanguage _) -> LT
-    (Extension.GHC2021, _) -> GT
-    (Extension.UnknownLanguage s, Extension.UnknownLanguage t) -> compare s t
-    (Extension.UnknownLanguage _, _) -> GT
+  compare = Ord.comparing Pretty.prettyShow
 
 instance Parsec.Parsec Language where
   parsec = Language <$> Parsec.parsec
