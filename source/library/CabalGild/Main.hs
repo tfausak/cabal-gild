@@ -19,7 +19,6 @@ import qualified CabalGild.Exception.ParseError as ParseError
 import qualified CabalGild.Type.Config as Config
 import qualified CabalGild.Type.Context as Context
 import qualified CabalGild.Type.Flag as Flag
-import qualified CabalGild.Type.Input as Input
 import qualified CabalGild.Type.Mode as Mode
 import qualified Control.Monad as Monad
 import qualified Control.Monad.Catch as Exception
@@ -66,26 +65,8 @@ mainWith arguments = do
   config <- Config.fromFlags flags
   context <- Context.fromConfig config
 
-  let source = Context.input context
-  input <- MonadRead.read source
-  fields <-
-    either (Exception.throwM . ParseError.ParseError) pure $
-      Fields.readFields input
-  let csv = GetCabalVersion.fromFields fields
-      comments = ExtractComments.fromByteString input
-      path = case source of
-        Input.Stdin -> Context.stdin context
-        Input.File f -> f
-  output <-
-    ( StripBlanks.run
-        Monad.>=> AttachComments.run
-        Monad.>=> ReflowText.run csv
-        Monad.>=> RemovePositions.run
-        Monad.>=> EvaluatePragmas.run path
-        Monad.>=> FormatFields.run csv
-        Monad.>=> Render.run
-      )
-      (fields, comments)
+  input <- MonadRead.read $ Context.input context
+  output <- format (Context.stdin context) input
 
   case Context.mode context of
     Mode.Check -> do
@@ -100,6 +81,26 @@ mainWith arguments = do
           inputLines = stripCR <$> Latin1.lines input
       Monad.when (outputLines /= inputLines) $
         Exception.throwM CheckFailure.CheckFailure
-    Mode.Format -> do
-      let target = Context.output context
-      MonadWrite.write target output
+    Mode.Format -> MonadWrite.write (Context.output context) output
+
+-- | TODO
+format ::
+  (Exception.MonadThrow m, MonadWalk.MonadWalk m) =>
+  FilePath ->
+  ByteString.ByteString ->
+  m ByteString.ByteString
+format filePath input = do
+  fields <-
+    either (Exception.throwM . ParseError.ParseError) pure $
+      Fields.readFields input
+  let csv = GetCabalVersion.fromFields fields
+      comments = ExtractComments.fromByteString input
+  ( StripBlanks.run
+      Monad.>=> AttachComments.run
+      Monad.>=> ReflowText.run csv
+      Monad.>=> RemovePositions.run
+      Monad.>=> EvaluatePragmas.run filePath
+      Monad.>=> FormatFields.run csv
+      Monad.>=> Render.run
+    )
+    (fields, comments)

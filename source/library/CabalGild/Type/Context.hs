@@ -64,10 +64,14 @@ fromConfig config = do
       Exception.throwM SpecifiedOutputWithCheckMode.SpecifiedOutputWithCheckMode
     _ -> pure ()
 
+  let theInput = Optional.withDefault Input.Stdin $ Config.input config
+      filePath = case theInput of
+        Input.Stdin -> "."
+        Input.File f -> f
   pure
     Context
-      { input = Optional.withDefault Input.Stdin $ Config.input config,
+      { input = theInput,
         mode = Optional.withDefault Mode.Format $ Config.mode config,
         output = Optional.withDefault Output.Stdout $ Config.output config,
-        stdin = Optional.withDefault "." $ Config.stdin config
+        stdin = Optional.withDefault filePath $ Config.stdin config
       }
