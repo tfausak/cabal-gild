@@ -14,6 +14,7 @@ data Flag
   = CRLF String
   | Help Bool
   | Input String
+  | IO String
   | Mode String
   | Output String
   | Stdin String
@@ -53,6 +54,11 @@ options =
       ["input"]
       (GetOpt.ReqArg Input "FILE")
       "Sets the input file. Use '-' for standard input (STDIN).\nDefault: '-'",
+    GetOpt.Option
+      []
+      ["io"]
+      (GetOpt.ReqArg IO "FILE")
+      "Shortcut for setting both the input and output files.",
     GetOpt.Option
       ['m']
       ["mode"]

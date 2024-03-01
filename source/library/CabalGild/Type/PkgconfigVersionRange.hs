@@ -1,7 +1,7 @@
 module CabalGild.Type.PkgconfigVersionRange where
 
 import qualified CabalGild.Type.VersionRange as VersionRange
-import qualified Data.Function as Function
+import qualified Data.Ord as Ord
 import qualified Distribution.Parsec as Parsec
 import qualified Distribution.Pretty as Pretty
 import qualified Distribution.Types.PkgconfigVersionRange as PkgconfigVersionRange
@@ -16,7 +16,7 @@ newtype PkgconfigVersionRange = PkgconfigVersionRange
 
 instance Ord PkgconfigVersionRange where
   compare =
-    Function.on compare $
+    Ord.comparing $
       VersionRange.fromPkgconfigVersionRange
         . unwrap
 

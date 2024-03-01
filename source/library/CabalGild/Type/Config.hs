@@ -44,6 +44,12 @@ applyFlag config flag = case flag of
     pure config {crlf = Optional.Specific l}
   Flag.Help b -> pure config {help = Optional.Specific b}
   Flag.Input s -> pure config {input = Optional.Specific $ Input.fromString s}
+  Flag.IO s ->
+    pure
+      config
+        { input = Optional.Specific $ Input.fromString s,
+          output = Optional.Specific $ Output.fromString s
+        }
   Flag.Mode s -> do
     m <- Mode.fromString s
     pure config {mode = Optional.Specific m}

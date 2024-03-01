@@ -1,7 +1,7 @@
 module CabalGild.Type.LegacyExeDependency where
 
 import qualified CabalGild.Type.VersionRange as VersionRange
-import qualified Data.Function as Function
+import qualified Data.Ord as Ord
 import qualified Distribution.Parsec as Parsec
 import qualified Distribution.Pretty as Pretty
 import qualified Distribution.Types.LegacyExeDependency as LegacyExeDependency
@@ -16,7 +16,7 @@ newtype LegacyExeDependency = LegacyExeDependency
 
 instance Ord LegacyExeDependency where
   compare =
-    Function.on compare $
+    Ord.comparing $
       (\(LegacyExeDependency.LegacyExeDependency s vr) -> (s, VersionRange.fromVersionRange vr))
         . unwrap
 
