@@ -128,6 +128,7 @@ library
     CabalGild.Type.PkgconfigDependency
     CabalGild.Type.PkgconfigVersionRange
     CabalGild.Type.Pragma
+    CabalGild.Type.PureT
     CabalGild.Type.Set
     CabalGild.Type.SomeParsecParser
     CabalGild.Type.TestedWith
@@ -149,7 +150,6 @@ test-suite cabal-gild-test-suite
     exceptions,
     filepath,
     hspec ^>=2.11.7,
-    transformers,
 
   hs-source-dirs: source/test-suite
   main-is: Main.hs
