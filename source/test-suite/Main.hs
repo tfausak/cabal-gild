@@ -1,17 +1,17 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
-import qualified CabalGild.Class.MonadLog as MonadLog
-import qualified CabalGild.Class.MonadRead as MonadRead
-import qualified CabalGild.Class.MonadWalk as MonadWalk
-import qualified CabalGild.Class.MonadWrite as MonadWrite
-import qualified CabalGild.Exception.CheckFailure as CheckFailure
-import qualified CabalGild.Exception.SpecifiedCrlfWithFormatMode as SpecifiedCrlfWithFormatMode
-import qualified CabalGild.Exception.SpecifiedOutputWithCheckMode as SpecifiedOutputWithCheckMode
-import qualified CabalGild.Exception.SpecifiedStdinWithFileInput as SpecifiedStdinWithFileInput
-import qualified CabalGild.Extra.String as String
-import qualified CabalGild.Main as Gild
-import qualified CabalGild.Type.Input as Input
-import qualified CabalGild.Type.Output as Output
+import qualified CabalGild.Unstable.Class.MonadLog as MonadLog
+import qualified CabalGild.Unstable.Class.MonadRead as MonadRead
+import qualified CabalGild.Unstable.Class.MonadWalk as MonadWalk
+import qualified CabalGild.Unstable.Class.MonadWrite as MonadWrite
+import qualified CabalGild.Unstable.Exception.CheckFailure as CheckFailure
+import qualified CabalGild.Unstable.Exception.SpecifiedCrlfWithFormatMode as SpecifiedCrlfWithFormatMode
+import qualified CabalGild.Unstable.Exception.SpecifiedOutputWithCheckMode as SpecifiedOutputWithCheckMode
+import qualified CabalGild.Unstable.Exception.SpecifiedStdinWithFileInput as SpecifiedStdinWithFileInput
+import qualified CabalGild.Unstable.Extra.String as String
+import qualified CabalGild.Unstable.Main as Gild
+import qualified CabalGild.Unstable.Type.Input as Input
+import qualified CabalGild.Unstable.Type.Output as Output
 import qualified Control.Monad.Catch as Exception
 import qualified Control.Monad.Trans.Class as Trans
 import qualified Control.Monad.Trans.Except as ExceptT
