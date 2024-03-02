@@ -121,6 +121,7 @@ library
     CabalGild.Type.Leniency
     CabalGild.Type.Line
     CabalGild.Type.List
+    CabalGild.Type.Mixin
     CabalGild.Type.Mode
     CabalGild.Type.ModuleReexport
     CabalGild.Type.Optional

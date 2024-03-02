@@ -11,6 +11,7 @@ import qualified CabalGild.Type.Extension as Extension
 import qualified CabalGild.Type.ForeignLibOption as ForeignLibOption
 import qualified CabalGild.Type.Language as Language
 import qualified CabalGild.Type.LegacyExeDependency as LegacyExeDependency
+import qualified CabalGild.Type.Mixin as Mixin
 import qualified CabalGild.Type.ModuleReexport as ModuleReexport
 import qualified CabalGild.Type.PkgconfigDependency as PkgconfigDependency
 import qualified CabalGild.Type.SomeParsecParser as SPP
@@ -22,7 +23,6 @@ import qualified Distribution.FieldGrammar.Newtypes as Newtypes
 import qualified Distribution.Fields as Fields
 import qualified Distribution.ModuleName as ModuleName
 import qualified Distribution.Parsec as Parsec
-import qualified Distribution.Types.Mixin as Mixin
 import qualified Text.PrettyPrint as PrettyPrint
 
 -- | A wrapper around 'field' to allow this to be composed with other actions.
