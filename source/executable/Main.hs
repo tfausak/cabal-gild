@@ -1,4 +1,4 @@
-import qualified CabalGild.Main
+import qualified CabalGild
 
 main :: IO ()
-main = CabalGild.Main.defaultMain
+main = CabalGild.defaultMain
