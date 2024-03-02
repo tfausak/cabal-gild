@@ -669,6 +669,11 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "cabal-version: 2.2\nlibrary\n build-depends: p"
       "cabal-version: 2.2\n\nlibrary\n  build-depends: p\n"
 
+  Hspec.it "sorts sub-libraries in build-depends" $ do
+    expectGilded
+      "cabal-version: 3.0\nlibrary\n build-depends: p:{b,a}"
+      "cabal-version: 3.0\n\nlibrary\n  build-depends: p:{a, b}\n"
+
   Hspec.it "removes duplicate options" $ do
     -- This is kind of silly because there's only one possible foreign library
     -- option.
@@ -796,6 +801,26 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "library\n mixins: q (M, N as O), p"
       "library\n  mixins:\n    p,\n    q (M, N as O)\n"
 
+  Hspec.it "sorts hiding in mixins" $ do
+    expectGilded
+      "library\n mixins: p hiding (N, M)"
+      "library\n  mixins: p hiding (M, N)\n"
+
+  Hspec.it "sorts modules in mixins" $ do
+    expectGilded
+      "library\n mixins: p (N, M)"
+      "library\n  mixins: p (M, N)\n"
+
+  Hspec.it "sorts hiding in mixins requires" $ do
+    expectGilded
+      "library\n mixins: p requires hiding (N, M)"
+      "library\n  mixins: p requires hiding (M, N)\n"
+
+  Hspec.it "sorts modules in mixins requires" $ do
+    expectGilded
+      "library\n mixins: p requires (N, M)"
+      "library\n  mixins: p requires (M, N)\n"
+
   Hspec.it "does not sort ghc-options" $ do
     expectGilded
       "library\n ghc-options: b a"
@@ -830,6 +855,11 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     expectGilded
       "custom-setup\n setup-depends: b, a"
       "custom-setup\n  setup-depends:\n    a,\n    b\n"
+
+  Hspec.it "sorts sub-libraries in setup-depends" $ do
+    expectGilded
+      "cabal-version: 3.0\ncustom-setup\n setup-depends: p:{b,a}"
+      "cabal-version: 3.0\n\ncustom-setup\n  setup-depends: p:{a, b}\n"
 
   Hspec.it "discovers an exposed module" $ do
     expectDiscover
