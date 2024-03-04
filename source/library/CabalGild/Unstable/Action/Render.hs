@@ -46,7 +46,7 @@ field i f = case f of
   Fields.Field n fls -> case fls of
     [fl]
       | null . snd $ FieldLine.annotation fl,
-        Function.on (==) (Position.positionRow . fst) (Name.annotation n) (FieldLine.annotation fl) ->
+        sameRow (Name.annotation n) (FieldLine.annotation fl) ->
           comments i (snd $ Name.annotation n)
             <> ( Block.fromLine
                    . Lens.over Line.chunkLens (mappend $ name n <> Chunk.colon)
@@ -73,17 +73,21 @@ field i f = case f of
             }
         <> Lens.set Block.lineBeforeLens False (fields (i + 1) fs)
 
+-- | Returns true if the two positions are on the same row.
+sameRow :: (Position.Position, cs) -> (Position.Position, cs) -> Bool
+sameRow = Function.on (==) $ Position.positionRow . fst
+
 -- | Renders the given name to a chunk.
 name :: Fields.Name a -> Chunk.Chunk
 name = Chunk.fromByteString . Name.value
 
 -- | Renders the given field lines to a block at the given indentation level.
-fieldLines :: Int -> [Fields.FieldLine (Position.Position, [Comment.Comment p])] -> Block.Block
+fieldLines :: Int -> [Fields.FieldLine (p, [Comment.Comment q])] -> Block.Block
 fieldLines = foldMap . fieldLineC
 
 -- | Renders the given field line and its comments to a block at the given
 -- indentation level.
-fieldLineC :: Int -> Fields.FieldLine (Position.Position, [Comment.Comment p]) -> Block.Block
+fieldLineC :: Int -> Fields.FieldLine (p, [Comment.Comment q]) -> Block.Block
 fieldLineC i fl =
   comments i (snd $ FieldLine.annotation fl)
     <> Block.fromLine (fieldLine i fl)

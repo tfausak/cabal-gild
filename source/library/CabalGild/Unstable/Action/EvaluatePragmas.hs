@@ -56,9 +56,8 @@ field p f = case f of
         files <- Trans.lift . fmap mconcat $ traverse MonadWalk.walk directories
         let comments = concatMap (snd . FieldLine.annotation) fls
             position =
-              Maybe.fromMaybe (fst $ Name.annotation n)
-                . Maybe.listToMaybe
-                $ fmap (fst . FieldLine.annotation) fls
+              maybe (fst $ Name.annotation n) (fst . FieldLine.annotation) $
+                Maybe.listToMaybe fls
             fieldLines =
               zipWith ModuleName.toFieldLine ((,) position <$> comments : repeat [])
                 . Maybe.mapMaybe (toModuleName directories)

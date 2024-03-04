@@ -44,7 +44,11 @@ field ::
 field csv f = case f of
   Fields.Field n fls -> case Map.lookup (Name.value n) parsers of
     Nothing -> f
-    Just spp -> Fields.Field n $ fieldLines csv (fst $ Name.annotation n) fls spp
+    Just spp ->
+      let position =
+            maybe (fst $ Name.annotation n) (fst . FieldLine.annotation) $
+              Maybe.listToMaybe fls
+       in Fields.Field n $ fieldLines csv position fls spp
   Fields.Section n sas fs -> Fields.Section n sas $ fmap (field csv) fs
 
 -- | Attempts to parse the given field lines using the given parser. If parsing
@@ -56,19 +60,15 @@ fieldLines ::
   [Fields.FieldLine (p, [c])] ->
   SPP.SomeParsecParser ->
   [Fields.FieldLine (p, [c])]
-fieldLines csv namePosition fls SPP.SomeParsecParser {SPP.parsec = parsec, SPP.pretty = pretty} =
+fieldLines csv position fls SPP.SomeParsecParser {SPP.parsec = parsec, SPP.pretty = pretty} =
   case Parsec.runParsecParser' csv parsec "" $ FieldLine.toFieldLineStream fls of
     Left _ -> fls
     Right r ->
-      let position =
-            Maybe.fromMaybe namePosition
-              . Maybe.listToMaybe
-              $ fmap (fst . FieldLine.annotation) fls
-       in fmap (\(c, l) -> Fields.FieldLine c $ String.toUtf8 l)
-            . zip ((,) position <$> concatMap (snd . FieldLine.annotation) fls : repeat [])
-            . lines
-            . PrettyPrint.renderStyle style
-            $ pretty csv r
+      fmap (\(c, l) -> Fields.FieldLine c $ String.toUtf8 l)
+        . zip ((,) position <$> concatMap (snd . FieldLine.annotation) fls : repeat [])
+        . lines
+        . PrettyPrint.renderStyle style
+        $ pretty csv r
 
 -- | This style attempts to force everything to be on its own line.
 style :: PrettyPrint.Style
