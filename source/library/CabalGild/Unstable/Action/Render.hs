@@ -8,21 +8,23 @@ import qualified CabalGild.Unstable.Type.Chunk as Chunk
 import qualified CabalGild.Unstable.Type.Comment as Comment
 import qualified CabalGild.Unstable.Type.Line as Line
 import qualified Data.ByteString as ByteString
+import qualified Data.Function as Function
 import qualified Distribution.Compat.Lens as Lens
 import qualified Distribution.Fields as Fields
+import qualified Distribution.Parsec.Position as Position
 
 -- | A wrapper around 'toByteString' to allow this to be composed with other
 -- actions.
 run ::
   (Applicative m) =>
-  ([Fields.Field [Comment.Comment a]], [Comment.Comment a]) ->
+  ([Fields.Field (Position.Position, [Comment.Comment p])], [Comment.Comment p]) ->
   m ByteString.ByteString
 run = pure . uncurry toByteString
 
 -- | Renders the given fields and comments to a byte string.
 toByteString ::
-  [Fields.Field [Comment.Comment a]] ->
-  [Comment.Comment a] ->
+  [Fields.Field (Position.Position, [Comment.Comment p])] ->
+  [Comment.Comment p] ->
   ByteString.ByteString
 toByteString fs cs =
   let i = 0 :: Int
@@ -32,26 +34,27 @@ toByteString fs cs =
         $ fields i fs <> comments i cs
 
 -- | Renders the given fields to a block at the given indentation level.
-fields :: Int -> [Fields.Field [Comment.Comment a]] -> Block.Block
+fields :: Int -> [Fields.Field (Position.Position, [Comment.Comment p])] -> Block.Block
 fields = foldMap . field
 
 -- | Renders the given field to a block at the given indentation level.
 --
 -- If a field only has one line and no comments, then it can be rendered all on
 -- one line.
-field :: Int -> Fields.Field [Comment.Comment a] -> Block.Block
+field :: Int -> Fields.Field (Position.Position, [Comment.Comment p]) -> Block.Block
 field i f = case f of
   Fields.Field n fls -> case fls of
     [fl]
-      | null $ FieldLine.annotation fl ->
-          comments i (Name.annotation n)
+      | null . snd $ FieldLine.annotation fl,
+        Function.on (==) (Position.positionRow . fst) (Name.annotation n) (FieldLine.annotation fl) ->
+          comments i (snd $ Name.annotation n)
             <> ( Block.fromLine
                    . Lens.over Line.chunkLens (mappend $ name n <> Chunk.colon)
                    $ fieldLine i fl
                )
     _ ->
       Lens.set Block.lineAfterLens True $
-        comments i (Name.annotation n)
+        comments i (snd $ Name.annotation n)
           <> Block.fromLine
             Line.Line
               { Line.indent = i,
@@ -61,8 +64,8 @@ field i f = case f of
   Fields.Section n sas fs ->
     Lens.set Block.lineBeforeLens (not $ Name.isElif n || Name.isElse n)
       . Lens.set Block.lineAfterLens (not $ Name.isIf n || Name.isElif n)
-      $ comments i (Name.annotation n)
-        <> comments i (concatMap SectionArg.annotation sas)
+      $ comments i (snd $ Name.annotation n)
+        <> comments i (concatMap (snd . SectionArg.annotation) sas)
         <> Block.fromLine
           Line.Line
             { Line.indent = i,
@@ -75,14 +78,14 @@ name :: Fields.Name a -> Chunk.Chunk
 name = Chunk.fromByteString . Name.value
 
 -- | Renders the given field lines to a block at the given indentation level.
-fieldLines :: Int -> [Fields.FieldLine [Comment.Comment a]] -> Block.Block
+fieldLines :: Int -> [Fields.FieldLine (Position.Position, [Comment.Comment p])] -> Block.Block
 fieldLines = foldMap . fieldLineC
 
 -- | Renders the given field line and its comments to a block at the given
 -- indentation level.
-fieldLineC :: Int -> Fields.FieldLine [Comment.Comment a] -> Block.Block
+fieldLineC :: Int -> Fields.FieldLine (Position.Position, [Comment.Comment p]) -> Block.Block
 fieldLineC i fl =
-  comments i (FieldLine.annotation fl)
+  comments i (snd $ FieldLine.annotation fl)
     <> Block.fromLine (fieldLine i fl)
 
 -- | Renders the given field line to a line at the given indentation level.

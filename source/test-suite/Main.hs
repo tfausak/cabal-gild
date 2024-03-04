@@ -350,7 +350,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
   Hspec.it "formats a comment after a field's value" $ do
     expectGilded
       "f:\n 1\n -- c"
-      "f: 1\n-- c\n"
+      "f:\n  1\n\n-- c\n"
 
   Hspec.it "formats a comment after a field with multiple values" $ do
     expectGilded
@@ -1058,6 +1058,22 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     expectGilded
       "library\nelif p\n a"
       "library\n\nelif p\n  a\n"
+
+  Hspec.it "keeps output on multiple lines" $ do
+    expectGilded
+      "f:\n a"
+      "f:\n  a\n"
+
+  Hspec.it "keeps output on multiple lines for formatted fields" $ do
+    expectGilded
+      "library\n build-depends:\n  base<5"
+      "library\n  build-depends:\n    base <5\n"
+
+  Hspec.it "keeps output on multiple lines for pragmas" $ do
+    expectDiscover
+      [(".", ["M.hs"])]
+      "library\n -- cabal-gild: discover .\n exposed-modules:\n  ..."
+      "library\n  -- cabal-gild: discover .\n  exposed-modules:\n    M\n"
 
 shouldBeFailure ::
   (Stack.HasCallStack, Eq e, Exception.Exception e, Show a) =>

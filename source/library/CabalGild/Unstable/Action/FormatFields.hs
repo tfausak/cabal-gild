@@ -18,6 +18,7 @@ import qualified CabalGild.Unstable.Type.SomeParsecParser as SPP
 import qualified CabalGild.Unstable.Type.TestedWith as TestedWith
 import qualified Data.Functor.Identity as Identity
 import qualified Data.Map as Map
+import qualified Data.Maybe as Maybe
 import qualified Distribution.CabalSpecVersion as CabalSpecVersion
 import qualified Distribution.FieldGrammar.Newtypes as Newtypes
 import qualified Distribution.Fields as Fields
@@ -27,44 +28,47 @@ import qualified Text.PrettyPrint as PrettyPrint
 
 -- | A wrapper around 'field' to allow this to be composed with other actions.
 run ::
-  (Applicative m, Monoid cs) =>
+  (Applicative m) =>
   CabalSpecVersion.CabalSpecVersion ->
-  ([Fields.Field cs], cs) ->
-  m ([Fields.Field cs], cs)
+  ([Fields.Field (p, [c])], [c]) ->
+  m ([Fields.Field (p, [c])], [c])
 run csv (fs, cs) = pure (fmap (field csv) fs, cs)
 
 -- | Formats the given field, if applicable. Otherwise returns the field as is.
 -- If the field is a section, the fields within the section will be recursively
 -- formatted.
 field ::
-  (Monoid cs) =>
   CabalSpecVersion.CabalSpecVersion ->
-  Fields.Field cs ->
-  Fields.Field cs
+  Fields.Field (p, [c]) ->
+  Fields.Field (p, [c])
 field csv f = case f of
   Fields.Field n fls -> case Map.lookup (Name.value n) parsers of
     Nothing -> f
-    Just spp -> Fields.Field n $ fieldLines csv fls spp
+    Just spp -> Fields.Field n $ fieldLines csv (fst $ Name.annotation n) fls spp
   Fields.Section n sas fs -> Fields.Section n sas $ fmap (field csv) fs
 
 -- | Attempts to parse the given field lines using the given parser. If parsing
 -- fails, the field lines will be returned as is. Comments within the field
 -- lines will be preserved but "float" up to the top.
 fieldLines ::
-  (Monoid cs) =>
   CabalSpecVersion.CabalSpecVersion ->
-  [Fields.FieldLine cs] ->
+  p ->
+  [Fields.FieldLine (p, [c])] ->
   SPP.SomeParsecParser ->
-  [Fields.FieldLine cs]
-fieldLines csv fls SPP.SomeParsecParser {SPP.parsec = parsec, SPP.pretty = pretty} =
+  [Fields.FieldLine (p, [c])]
+fieldLines csv namePosition fls SPP.SomeParsecParser {SPP.parsec = parsec, SPP.pretty = pretty} =
   case Parsec.runParsecParser' csv parsec "" $ FieldLine.toFieldLineStream fls of
     Left _ -> fls
     Right r ->
-      fmap (\(c, l) -> Fields.FieldLine c $ String.toUtf8 l)
-        . zip (foldMap FieldLine.annotation fls : repeat mempty)
-        . lines
-        . PrettyPrint.renderStyle style
-        $ pretty csv r
+      let position =
+            Maybe.fromMaybe namePosition
+              . Maybe.listToMaybe
+              $ fmap (fst . FieldLine.annotation) fls
+       in fmap (\(c, l) -> Fields.FieldLine c $ String.toUtf8 l)
+            . zip ((,) position <$> concatMap (snd . FieldLine.annotation) fls : repeat [])
+            . lines
+            . PrettyPrint.renderStyle style
+            $ pretty csv r
 
 -- | This style attempts to force everything to be on its own line.
 style :: PrettyPrint.Style
