@@ -19,8 +19,10 @@ import qualified CabalGild.Unstable.Extra.ByteString as ByteString
 import qualified CabalGild.Unstable.Type.Config as Config
 import qualified CabalGild.Unstable.Type.Context as Context
 import qualified CabalGild.Unstable.Type.Flag as Flag
+import qualified CabalGild.Unstable.Type.Input as Input
 import qualified CabalGild.Unstable.Type.Leniency as Leniency
 import qualified CabalGild.Unstable.Type.Mode as Mode
+import qualified CabalGild.Unstable.Type.Output as Output
 import qualified Control.Monad as Monad
 import qualified Control.Monad.Catch as Exception
 import qualified Data.ByteString as ByteString
@@ -68,16 +70,12 @@ mainWith arguments = do
   input <- MonadRead.read $ Context.input context
   output <- format (Context.stdin context) input
 
+  let formatted = check (Context.crlf context) input output
   case Context.mode context of
-    Mode.Check -> do
-      let formatted = case Context.crlf context of
-            Leniency.Lenient ->
-              let lf = ByteString.singleton 0x0a
-                  crlf = ByteString.cons 0x0d lf
-               in output == ByteString.replace crlf lf input
-            Leniency.Strict -> output == input
-      Monad.unless formatted $ Exception.throwM CheckFailure.CheckFailure
-    Mode.Format -> MonadWrite.write (Context.output context) output
+    Mode.Check -> Monad.unless formatted $ Exception.throwM CheckFailure.CheckFailure
+    Mode.Format -> case (Context.input context, Context.output context) of
+      (Input.File i, Output.File o) | formatted, i == o -> pure ()
+      (_, o) -> MonadWrite.write o output
 
 -- | Formats the given input using the provided file path as the apparent
 -- source file (see 'Context.stdin'). An exception will be thrown if the input
@@ -102,3 +100,16 @@ format filePath input = do
       Monad.>=> Render.run
     )
     (fields, comments)
+
+-- | Returns true if the output is formatted correctly, false otherwise.
+check ::
+  Leniency.Leniency ->
+  ByteString.ByteString ->
+  ByteString.ByteString ->
+  Bool
+check leniency input output = case leniency of
+  Leniency.Lenient ->
+    let lf = ByteString.singleton 0x0a
+        crlf = ByteString.cons 0x0d lf
+     in output == ByteString.replace crlf lf input
+  Leniency.Strict -> output == input

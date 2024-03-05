@@ -120,7 +120,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
 
-  Hspec.it "sets input and output simultaneously" $ do
+  Hspec.it "does not overwrite output when input is formatted" $ do
     let (a, s, w) =
           runGild
             ["--io", "io.cabal"]
@@ -128,7 +128,47 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             []
     a `Hspec.shouldSatisfy` Either.isRight
     w `Hspec.shouldBe` []
-    s `Hspec.shouldBe` Map.singleton (Output.File "io.cabal") (String.toUtf8 "")
+    s `Hspec.shouldBe` Map.empty
+
+  Hspec.it "writes to stdout when input is formatted" $ do
+    let (a, s, w) =
+          runGild
+            ["--input", "p.cabal"]
+            [(Input.File "p.cabal", String.toUtf8 "")]
+            []
+    a `Hspec.shouldSatisfy` Either.isRight
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.singleton Output.Stdout (String.toUtf8 "")
+
+  Hspec.it "writes to output when input is formatted" $ do
+    let (a, s, w) =
+          runGild
+            ["--input", "p.cabal", "--output", "q.cabal"]
+            [(Input.File "p.cabal", String.toUtf8 "")]
+            []
+    a `Hspec.shouldSatisfy` Either.isRight
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.singleton (Output.File "q.cabal") (String.toUtf8 "")
+
+  Hspec.it "writes to output when stdin is formatted" $ do
+    let (a, s, w) =
+          runGild
+            ["--output", "q.cabal"]
+            [(Input.Stdin, String.toUtf8 "")]
+            []
+    a `Hspec.shouldSatisfy` Either.isRight
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.singleton (Output.File "q.cabal") (String.toUtf8 "")
+
+  Hspec.it "sets input and output simultaneously" $ do
+    let (a, s, w) =
+          runGild
+            ["--io", "io.cabal"]
+            [(Input.File "io.cabal", String.toUtf8 "f:a")]
+            []
+    a `Hspec.shouldSatisfy` Either.isRight
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.singleton (Output.File "io.cabal") (String.toUtf8 "f: a\n")
 
   Hspec.it "fails when --crlf is given with format mode" $ do
     let (a, s, w) =
