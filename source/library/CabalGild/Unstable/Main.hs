@@ -7,7 +7,6 @@ import qualified CabalGild.Unstable.Action.ExtractComments as ExtractComments
 import qualified CabalGild.Unstable.Action.FormatFields as FormatFields
 import qualified CabalGild.Unstable.Action.GetCabalVersion as GetCabalVersion
 import qualified CabalGild.Unstable.Action.ReflowText as ReflowText
-import qualified CabalGild.Unstable.Action.RemovePositions as RemovePositions
 import qualified CabalGild.Unstable.Action.Render as Render
 import qualified CabalGild.Unstable.Action.StripBlanks as StripBlanks
 import qualified CabalGild.Unstable.Class.MonadLog as MonadLog
@@ -98,7 +97,6 @@ format filePath input = do
   ( StripBlanks.run
       Monad.>=> AttachComments.run
       Monad.>=> ReflowText.run csv
-      Monad.>=> RemovePositions.run
       Monad.>=> EvaluatePragmas.run filePath
       Monad.>=> FormatFields.run csv
       Monad.>=> Render.run

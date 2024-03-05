@@ -79,7 +79,6 @@ library
     CabalGild.Unstable.Action.FormatFields
     CabalGild.Unstable.Action.GetCabalVersion
     CabalGild.Unstable.Action.ReflowText
-    CabalGild.Unstable.Action.RemovePositions
     CabalGild.Unstable.Action.Render
     CabalGild.Unstable.Action.StripBlanks
     CabalGild.Unstable.Class.MonadLog
