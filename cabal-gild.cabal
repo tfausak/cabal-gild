@@ -90,7 +90,6 @@ library
     CabalGild.Unstable.Exception.InvalidMode
     CabalGild.Unstable.Exception.InvalidOption
     CabalGild.Unstable.Exception.ParseError
-    CabalGild.Unstable.Exception.SpecifiedCrlfWithFormatMode
     CabalGild.Unstable.Exception.SpecifiedOutputWithCheckMode
     CabalGild.Unstable.Exception.SpecifiedStdinWithFileInput
     CabalGild.Unstable.Exception.UnexpectedArgument

@@ -137,8 +137,6 @@ Run `cabal-gild --help` to see the options that Gild supports. They are:
   to the expected output. (Note that Gild will never produce CRLF line endings
   when formatting.)
 
-  It is an error to provide a value for this option unless the mode is `check`.
-
 - `--input=FILE`: Uses `FILE` as the input. If this is `-` (which is the
   default), then the input will be read from STDIN.
 
@@ -158,6 +156,9 @@ Run `cabal-gild --help` to see the options that Gild supports. They are:
   ``` sh
   $ cabal-gild --input p.cabal --output p.cabal
   ```
+
+  If the output is the same file as the input and the input is already
+  formatted, then nothing will happen. The output will not be modified.
 
   It is an error to provide a value for this option when the mode is `check`.
 

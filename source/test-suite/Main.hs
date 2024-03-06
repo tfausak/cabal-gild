@@ -5,7 +5,6 @@ import qualified CabalGild.Unstable.Class.MonadRead as MonadRead
 import qualified CabalGild.Unstable.Class.MonadWalk as MonadWalk
 import qualified CabalGild.Unstable.Class.MonadWrite as MonadWrite
 import qualified CabalGild.Unstable.Exception.CheckFailure as CheckFailure
-import qualified CabalGild.Unstable.Exception.SpecifiedCrlfWithFormatMode as SpecifiedCrlfWithFormatMode
 import qualified CabalGild.Unstable.Exception.SpecifiedOutputWithCheckMode as SpecifiedOutputWithCheckMode
 import qualified CabalGild.Unstable.Exception.SpecifiedStdinWithFileInput as SpecifiedStdinWithFileInput
 import qualified CabalGild.Unstable.Extra.String as String
@@ -170,15 +169,25 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.singleton (Output.File "io.cabal") (String.toUtf8 "f: a\n")
 
-  Hspec.it "fails when --crlf is given with format mode" $ do
+  Hspec.it "does not overwrite CRLF file when lenient" $ do
     let (a, s, w) =
           runGild
-            ["--crlf", "strict"]
+            ["--io", "p.cabal"]
+            [(Input.File "p.cabal", String.toUtf8 "s\r\n")]
             []
-            []
-    a `shouldBeFailure` SpecifiedCrlfWithFormatMode.SpecifiedCrlfWithFormatMode
+    a `Hspec.shouldSatisfy` Either.isRight
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
+
+  Hspec.it "overwrites CRLF file when strict" $ do
+    let (a, s, w) =
+          runGild
+            ["--crlf", "strict", "--io", "p.cabal"]
+            [(Input.File "p.cabal", String.toUtf8 "s\r\n")]
+            []
+    a `Hspec.shouldSatisfy` Either.isRight
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.singleton (Output.File "p.cabal") (String.toUtf8 "s\n")
 
   Hspec.it "uses --stdin for discovery" $ do
     let (a, s, w) =
