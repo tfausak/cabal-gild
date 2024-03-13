@@ -53,7 +53,7 @@ field i f = case f of
                    $ fieldLine i fl
                )
     _ ->
-      Lens.set Block.lineAfterLens True $
+      Lens.set Block.lineAfterLens (not $ null fls) $
         comments i (snd $ Name.annotation n)
           <> Block.fromLine
             Line.Line

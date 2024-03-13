@@ -1124,6 +1124,11 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "library\n -- cabal-gild: discover .\n exposed-modules:\n  ..."
       "library\n  -- cabal-gild: discover .\n  exposed-modules:\n    M\n"
 
+  Hspec.it "does not put a blank line after an empty field" $ do
+    expectGilded
+      "f:\ng: a"
+      "f:\ng: a\n"
+
 shouldBeFailure ::
   (Stack.HasCallStack, Eq e, Exception.Exception e, Show a) =>
   Either Exception.SomeException a ->
