@@ -1,6 +1,9 @@
 module CabalGild.Unstable.Action.EvaluatePragmas where
 
 import qualified CabalGild.Unstable.Class.MonadWalk as MonadWalk
+import qualified CabalGild.Unstable.Exception.InvalidModuleName as InvalidModuleName
+import qualified CabalGild.Unstable.Exception.InvalidOption as InvalidOption
+import qualified CabalGild.Unstable.Exception.UnknownOption as UnknownOption
 import qualified CabalGild.Unstable.Extra.FieldLine as FieldLine
 import qualified CabalGild.Unstable.Extra.ModuleName as ModuleName
 import qualified CabalGild.Unstable.Extra.Name as Name
@@ -8,9 +11,9 @@ import qualified CabalGild.Unstable.Extra.String as String
 import qualified CabalGild.Unstable.Type.Comment as Comment
 import qualified CabalGild.Unstable.Type.Pragma as Pragma
 import qualified Control.Monad as Monad
+import qualified Control.Monad.Catch as Exception
 import qualified Control.Monad.Trans.Class as Trans
 import qualified Control.Monad.Trans.Maybe as MaybeT
-import qualified Data.List.NonEmpty as NonEmpty
 import qualified Data.Maybe as Maybe
 import qualified Data.Set as Set
 import qualified Distribution.Compat.Lens as Lens
@@ -18,12 +21,13 @@ import qualified Distribution.Fields as Fields
 import qualified Distribution.ModuleName as ModuleName
 import qualified Distribution.Parsec as Parsec
 import qualified Distribution.Utils.Generic as Utils
+import qualified System.Console.GetOpt as GetOpt
 import qualified System.FilePath as FilePath
 
 -- | High level wrapper around 'field' that makes this action easier to compose
 -- with other actions.
 run ::
-  (MonadWalk.MonadWalk m) =>
+  (Exception.MonadThrow m, MonadWalk.MonadWalk m) =>
   FilePath ->
   ([Fields.Field (p, [Comment.Comment q])], cs) ->
   m ([Fields.Field (p, [Comment.Comment q])], cs)
@@ -32,7 +36,7 @@ run p (fs, cs) = (,) <$> traverse (field p) fs <*> pure cs
 -- | Evaluates pragmas within the given field. Or, if the field is a section,
 -- evaluates pragmas recursively within the fields of the section.
 field ::
-  (MonadWalk.MonadWalk m) =>
+  (Exception.MonadThrow m, MonadWalk.MonadWalk m) =>
   FilePath ->
   Fields.Field (p, [Comment.Comment q]) ->
   m (Fields.Field (p, [Comment.Comment q]))
@@ -46,22 +50,37 @@ field p f = case f of
   Fields.Section n sas fs -> Fields.Section n sas <$> traverse (field p) fs
 
 -- | If modules are discovered for a field, that fields lines are completely
--- replaced. If anything goes wrong while discovering modules, the original
--- field is returned.
+-- replaced.
 discover ::
-  (MonadWalk.MonadWalk m) =>
+  (Exception.MonadThrow m, MonadWalk.MonadWalk m) =>
   FilePath ->
   Fields.Name (p, [c]) ->
   [Fields.FieldLine (p, [c])] ->
-  NonEmpty.NonEmpty FilePath ->
+  [String] ->
   MaybeT.MaybeT m (Fields.Field (p, [c]))
 discover p n fls ds = do
+  let (strs, args, opts, errs) =
+        GetOpt.getOpt'
+          GetOpt.Permute
+          [ GetOpt.Option [] ["exclude"] (GetOpt.ReqArg id "MODULE") ""
+          ]
+          ds
+  mapM_ (Exception.throwM . UnknownOption.fromString) opts
+  mapM_ (Exception.throwM . InvalidOption.fromString) errs
+  mdls <-
+    fmap Set.fromList $
+      traverse
+        ( \str -> case Parsec.simpleParsec str of
+            Nothing -> Exception.throwM $ InvalidModuleName.fromString str
+            Just mdl -> pure mdl
+        )
+        strs
   let root = FilePath.takeDirectory p
       directories =
         FilePath.dropTrailingPathSeparator
           . FilePath.normalise
           . FilePath.combine root
-          <$> NonEmpty.toList ds
+          <$> if null args then ["."] else args
   files <- Trans.lift . fmap mconcat $ traverse MonadWalk.walk directories
   let comments = concatMap (snd . FieldLine.annotation) fls
       position =
@@ -69,6 +88,7 @@ discover p n fls ds = do
           Maybe.listToMaybe fls
       fieldLines =
         zipWith ModuleName.toFieldLine ((,) position <$> comments : repeat [])
+          . filter (`Set.notMember` mdls)
           . Maybe.mapMaybe (toModuleName directories)
           $ Maybe.mapMaybe (stripAnyExtension extensions) files
       -- This isn't great, but the comments have to go /somewhere/.

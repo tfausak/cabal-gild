@@ -6,8 +6,12 @@ import qualified CabalGild.Unstable.Class.MonadRead as MonadRead
 import qualified CabalGild.Unstable.Class.MonadWalk as MonadWalk
 import qualified CabalGild.Unstable.Class.MonadWrite as MonadWrite
 import qualified CabalGild.Unstable.Exception.CheckFailure as CheckFailure
+import qualified CabalGild.Unstable.Exception.InvalidModuleName as InvalidModuleName
+import qualified CabalGild.Unstable.Exception.InvalidOption as InvalidOption
 import qualified CabalGild.Unstable.Exception.SpecifiedOutputWithCheckMode as SpecifiedOutputWithCheckMode
 import qualified CabalGild.Unstable.Exception.SpecifiedStdinWithFileInput as SpecifiedStdinWithFileInput
+import qualified CabalGild.Unstable.Exception.UnexpectedArgument as UnexpectedArgument
+import qualified CabalGild.Unstable.Exception.UnknownOption as UnknownOption
 import qualified CabalGild.Unstable.Extra.String as String
 import qualified CabalGild.Unstable.Main as Gild
 import qualified CabalGild.Unstable.Type.Input as Input
@@ -38,6 +42,24 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     let (a, s, w) = runGild ["--version"] [] []
     a `shouldBeFailure` Exit.ExitSuccess
     w `Hspec.shouldNotBe` []
+    s `Hspec.shouldBe` Map.empty
+
+  Hspec.it "fails with an unknown option" $ do
+    let (a, s, w) = runGild ["--unknown"] [] []
+    a `shouldBeFailure` UnknownOption.UnknownOption "--unknown"
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.empty
+
+  Hspec.it "fails with an invalid option" $ do
+    let (a, s, w) = runGild ["--help=invalid"] [] []
+    a `shouldBeFailure` InvalidOption.InvalidOption "option `--help' doesn't allow an argument"
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.empty
+
+  Hspec.it "fails with an unexpected argument" $ do
+    let (a, s, w) = runGild ["unexpected"] [] []
+    a `shouldBeFailure` UnexpectedArgument.UnexpectedArgument "unexpected"
+    w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
 
   Hspec.it "reads from an input file" $ do
@@ -1043,11 +1065,59 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "library\n -- cabal-gild: discover \"s p\"\n exposed-modules:"
       "library\n  -- cabal-gild: discover \"s p\"\n  exposed-modules: M\n"
 
-  Hspec.it "" $ do
+  Hspec.it "discovers from the current directory by default" $ do
     expectDiscover
-      [("library", ["M.hs"])]
-      "library\n -- cabal-gild: discover library\n exposed-modules:"
-      "library\n  -- cabal-gild: discover library\n  exposed-modules: M\n"
+      [(".", ["M.hs"])]
+      "library\n -- cabal-gild: discover\n exposed-modules:"
+      "library\n  -- cabal-gild: discover\n  exposed-modules: M\n"
+
+  Hspec.it "allows excluding a module when discovering" $ do
+    expectDiscover
+      [(".", ["M.hs", "N.hs"])]
+      "library\n -- cabal-gild: discover --exclude M\n exposed-modules:"
+      "library\n  -- cabal-gild: discover --exclude M\n  exposed-modules: N\n"
+
+  Hspec.it "allows excluding a nested module when discovering" $ do
+    expectDiscover
+      [(".", [FilePath.combine "A" "M.hs", FilePath.combine "B" "M.hs"])]
+      "library\n -- cabal-gild: discover --exclude B.M\n exposed-modules:"
+      "library\n  -- cabal-gild: discover --exclude B.M\n  exposed-modules: A.M\n"
+
+  Hspec.it "allows excluding multiple modules when discovering" $ do
+    expectDiscover
+      [(".", ["M.hs", "N.hs", "O.hs"])]
+      "library\n -- cabal-gild: discover --exclude M --exclude O\n exposed-modules:"
+      "library\n  -- cabal-gild: discover --exclude M --exclude O\n  exposed-modules: N\n"
+
+  Hspec.it "fails when discovering with an unknown option" $ do
+    let (a, s, w) =
+          runGild
+            []
+            [(Input.Stdin, String.toUtf8 "-- cabal-gild: discover --unknown\nsignatures:")]
+            []
+    a `shouldBeFailure` UnknownOption.UnknownOption "--unknown"
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.empty
+
+  Hspec.it "fails when discovering with an invalid option" $ do
+    let (a, s, w) =
+          runGild
+            []
+            [(Input.Stdin, String.toUtf8 "-- cabal-gild: discover --exclude\nsignatures:")]
+            []
+    a `shouldBeFailure` InvalidOption.InvalidOption "option `--exclude' requires an argument MODULE"
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.empty
+
+  Hspec.it "fails when discovering with an invalid module name" $ do
+    let (a, s, w) =
+          runGild
+            []
+            [(Input.Stdin, String.toUtf8 "-- cabal-gild: discover --exclude=invalid\nsignatures:")]
+            []
+    a `shouldBeFailure` InvalidModuleName.InvalidModuleName "invalid"
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.empty
 
   Hspec.it "retains comments when discovering" $ do
     expectDiscover
