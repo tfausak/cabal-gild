@@ -1030,6 +1030,12 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "library\n -- cabal-gild: discover d e\n exposed-modules:"
       "library\n  -- cabal-gild: discover d e\n  exposed-modules:\n    M\n    N\n"
 
+  Hspec.it "discovers from a quoted directory" $ do
+    expectDiscover
+      [("d", ["M.hs"])]
+      "library\n -- cabal-gild: discover \"d\"\n exposed-modules:"
+      "library\n  -- cabal-gild: discover \"d\"\n  exposed-modules: M\n"
+
   Hspec.it "retains comments when discovering" $ do
     expectDiscover
       [(".", ["M.hs"])]
