@@ -1,3 +1,4 @@
+{- hlint ignore "Redundant bracket" -}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 import qualified CabalGild.Unstable.Class.MonadLog as MonadLog
@@ -1041,6 +1042,12 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       [("s p", ["M.hs"])]
       "library\n -- cabal-gild: discover \"s p\"\n exposed-modules:"
       "library\n  -- cabal-gild: discover \"s p\"\n  exposed-modules: M\n"
+
+  Hspec.it "" $ do
+    expectDiscover
+      [("library", ["M.hs"])]
+      "library\n -- cabal-gild: discover library\n exposed-modules:"
+      "library\n  -- cabal-gild: discover library\n  exposed-modules: M\n"
 
   Hspec.it "retains comments when discovering" $ do
     expectDiscover
