@@ -1,6 +1,6 @@
 jobs:
   build:
-    name: Build on ${{ matrix.platform }} ${{ matrix.version }} with GHC ${{ matrix.ghc }}
+    name: GHC ${{ matrix.ghc }} on ${{ matrix.platform }} ${{ matrix.version }}
     runs-on: ${{ matrix.platform }}-${{ matrix.version }}
     steps:
       - uses: actions/checkout@v4
