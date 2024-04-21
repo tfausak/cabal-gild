@@ -68,8 +68,8 @@ discover p n fls ds = do
   mapM_ (Exception.throwM . UnknownOption.fromString) opts
   mapM_ (Exception.throwM . InvalidOption.fromString) errs
   mdls <-
-    fmap Set.fromList $
-      traverse
+    Set.fromList
+      <$> traverse
         ( \str -> case Parsec.simpleParsec str of
             Nothing -> Exception.throwM $ InvalidModuleName.fromString str
             Just mdl -> pure mdl
