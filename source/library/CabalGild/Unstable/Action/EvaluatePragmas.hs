@@ -10,7 +10,6 @@ import qualified CabalGild.Unstable.Type.Pragma as Pragma
 import qualified Control.Monad as Monad
 import qualified Control.Monad.Trans.Class as Trans
 import qualified Control.Monad.Trans.Maybe as MaybeT
-import qualified Data.Containers.ListUtils as ListUtils
 import qualified Data.List.NonEmpty as NonEmpty
 import qualified Data.Maybe as Maybe
 import qualified Data.Set as Set
@@ -60,7 +59,6 @@ discover p n fls ds = do
   let root = FilePath.takeDirectory p
       directories =
         FilePath.dropTrailingPathSeparator
-          . ListUtils.nubOrd
           . FilePath.normalise
           . FilePath.combine root
           <$> NonEmpty.toList ds
