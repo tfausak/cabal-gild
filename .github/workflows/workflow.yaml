@@ -29,7 +29,7 @@ jobs:
       - run: tar --create --file artifact.tar --verbose artifact
       - uses: actions/upload-artifact@v4
         with:
-          name: cabal-gild-${{ github.sha }}-${{ matrix.platform }}-${{ matrix.version }}-${{ matrix.ghc }}
+          name: cabal-gild-${{ github.sha }}-ghc-${{ matrix.ghc }}-${{ matrix.platform }}-${{ matrix.version }}
           path: artifact.tar
       - run: cabal run -- cabal-gild-test-suite --randomize --strict
       - run: artifact/cabal-gild --input cabal-gild.cabal --mode check
@@ -92,15 +92,15 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
       - run: sh -exc 'for d in *; do cd $d; tar --extract --file artifact.tar --verbose; cd ..; done'
-      - run: cp cabal-gild-${{ github.sha }}-ubuntu-22.04-9.8/artifact/${{ env.PREFIX }}.tar.gz .
+      - run: cp cabal-gild-${{ github.sha }}-ghc-9.8-ubuntu-22.04/artifact/${{ env.PREFIX }}.tar.gz .
       - run: tar --auto-compress --create --file ../../${{ env.PREFIX }}-darwin-x64.tar.gz --verbose cabal-gild
-        working-directory: cabal-gild-${{ github.sha }}-macos-13-9.8/artifact
+        working-directory: cabal-gild-${{ github.sha }}-ghc-9.8-macos-13/artifact
       - run: tar --auto-compress --create --file ../../${{ env.PREFIX }}-darwin-arm64.tar.gz --verbose cabal-gild
-        working-directory: cabal-gild-${{ github.sha }}-macos-14-9.8/artifact
+        working-directory: cabal-gild-${{ github.sha }}-ghc-9.8-macos-14/artifact
       - run: tar --auto-compress --create --file ../../${{ env.PREFIX }}-linux-x64.tar.gz --verbose cabal-gild
-        working-directory: cabal-gild-${{ github.sha }}-ubuntu-22.04-9.8/artifact
+        working-directory: cabal-gild-${{ github.sha }}-ghc-9.8-ubuntu-22.04/artifact
       - run: tar --auto-compress --create --file ../../${{ env.PREFIX }}-win32-x64.tar.gz --verbose cabal-gild.exe
-        working-directory: cabal-gild-${{ github.sha }}-windows-2022-9.8/artifact
+        working-directory: cabal-gild-${{ github.sha }}-ghc-9.8-windows-2022/artifact
       - uses: softprops/action-gh-release@v1
         with:
           files: ${{ env.PREFIX }}*.tar.gz
