@@ -59,36 +59,32 @@ jobs:
             version: 2022
   cabal:
     name: Cabal
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - run: cabal check
   hlint:
     name: HLint
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: haskell-actions/hlint-setup@v2
-        with:
-          version: 3.8
       - uses: haskell-actions/hlint-run@v2
         with:
           fail-on: status
   ormolu:
     name: Ormolu
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: haskell-actions/run-ormolu@v15
-        with:
-          version: 0.7.4.0
   release:
     env:
       PREFIX: cabal-gild-${{ github.event.release.tag_name }}
     if: ${{ github.event_name == 'release' }}
     name: Release
     needs: build
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
       - run: sh -exc 'for d in *; do cd $d; tar --extract --file artifact.tar --verbose; cd ..; done'
