@@ -31,10 +31,6 @@ run p (fs, cs) = (,) <$> traverse (field p) fs <*> pure cs
 
 -- | Evaluates pragmas within the given field. Or, if the field is a section,
 -- evaluates pragmas recursively within the fields of the section.
---
--- If modules are discovered for a field, that fields lines are completely
--- replaced. If anything goes wrong while discovering modules, the original
--- field is returned.
 field ::
   (MonadWalk.MonadWalk m) =>
   FilePath ->
@@ -46,29 +42,41 @@ field p f = case f of
     comment <- hoistMaybe . Utils.safeLast . snd $ Name.annotation n
     pragma <- hoistMaybe . Parsec.simpleParsecBS $ Comment.value comment
     case pragma of
-      Pragma.Discover ds -> do
-        let root = FilePath.takeDirectory p
-            directories =
-              FilePath.dropTrailingPathSeparator
-                . FilePath.normalise
-                . FilePath.combine root
-                <$> NonEmpty.toList ds
-        files <- Trans.lift . fmap mconcat $ traverse MonadWalk.walk directories
-        let comments = concatMap (snd . FieldLine.annotation) fls
-            position =
-              maybe (fst $ Name.annotation n) (fst . FieldLine.annotation) $
-                Maybe.listToMaybe fls
-            fieldLines =
-              zipWith ModuleName.toFieldLine ((,) position <$> comments : repeat [])
-                . Maybe.mapMaybe (toModuleName directories)
-                $ Maybe.mapMaybe (stripAnyExtension extensions) files
-            -- This isn't great, but the comments have to go /somewhere/.
-            name =
-              if null fieldLines
-                then Lens.over (Name.annotationLens . Lens._2) (comments <>) n
-                else n
-        pure $ Fields.Field name fieldLines
+      Pragma.Discover ds -> discover p n fls ds
   Fields.Section n sas fs -> Fields.Section n sas <$> traverse (field p) fs
+
+-- | If modules are discovered for a field, that fields lines are completely
+-- replaced. If anything goes wrong while discovering modules, the original
+-- field is returned.
+discover ::
+  (MonadWalk.MonadWalk m) =>
+  FilePath ->
+  Fields.Name (p, [c]) ->
+  [Fields.FieldLine (p, [c])] ->
+  NonEmpty.NonEmpty FilePath ->
+  MaybeT.MaybeT m (Fields.Field (p, [c]))
+discover p n fls ds = do
+  let root = FilePath.takeDirectory p
+      directories =
+        FilePath.dropTrailingPathSeparator
+          . FilePath.normalise
+          . FilePath.combine root
+          <$> NonEmpty.toList ds
+  files <- Trans.lift . fmap mconcat $ traverse MonadWalk.walk directories
+  let comments = concatMap (snd . FieldLine.annotation) fls
+      position =
+        maybe (fst $ Name.annotation n) (fst . FieldLine.annotation) $
+          Maybe.listToMaybe fls
+      fieldLines =
+        zipWith ModuleName.toFieldLine ((,) position <$> comments : repeat [])
+          . Maybe.mapMaybe (toModuleName directories)
+          $ Maybe.mapMaybe (stripAnyExtension extensions) files
+      -- This isn't great, but the comments have to go /somewhere/.
+      name =
+        if null fieldLines
+          then Lens.over (Name.annotationLens . Lens._2) (comments <>) n
+          else n
+  pure $ Fields.Field name fieldLines
 
 -- | These are the names of the fields that can have this action applied to
 -- them.
