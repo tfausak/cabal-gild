@@ -1,7 +1,6 @@
 module CabalGild.Unstable.Action.EvaluatePragmas where
 
 import qualified CabalGild.Unstable.Class.MonadWalk as MonadWalk
-import qualified CabalGild.Unstable.Exception.InvalidModuleName as InvalidModuleName
 import qualified CabalGild.Unstable.Exception.InvalidOption as InvalidOption
 import qualified CabalGild.Unstable.Exception.UnknownOption as UnknownOption
 import qualified CabalGild.Unstable.Extra.FieldLine as FieldLine
@@ -23,6 +22,7 @@ import qualified Distribution.Parsec as Parsec
 import qualified Distribution.Utils.Generic as Utils
 import qualified System.Console.GetOpt as GetOpt
 import qualified System.FilePath as FilePath
+import qualified System.FilePath.Windows as FilePath.Windows
 
 -- | High level wrapper around 'field' that makes this action easier to compose
 -- with other actions.
@@ -62,23 +62,15 @@ discover p n fls ds = do
   let (strs, args, opts, errs) =
         GetOpt.getOpt'
           GetOpt.Permute
-          [ GetOpt.Option [] ["exclude"] (GetOpt.ReqArg id "MODULE") ""
+          [ GetOpt.Option [] ["exclude"] (GetOpt.ReqArg id "FILE") ""
           ]
           ds
   mapM_ (Exception.throwM . UnknownOption.fromString) opts
   mapM_ (Exception.throwM . InvalidOption.fromString) errs
-  mdls <-
-    Set.fromList
-      <$> traverse
-        ( \str -> case Parsec.simpleParsec str of
-            Nothing -> Exception.throwM $ InvalidModuleName.fromString str
-            Just mdl -> pure mdl
-        )
-        strs
   let root = FilePath.takeDirectory p
       directories =
         FilePath.dropTrailingPathSeparator
-          . FilePath.normalise
+          . normalize
           . FilePath.combine root
           <$> if null args then ["."] else args
   files <- Trans.lift . fmap mconcat $ traverse MonadWalk.walk directories
@@ -86,17 +78,25 @@ discover p n fls ds = do
       position =
         maybe (fst $ Name.annotation n) (fst . FieldLine.annotation) $
           Maybe.listToMaybe fls
+      excludedFiles = Set.fromList $ fmap normalize strs
       fieldLines =
         zipWith ModuleName.toFieldLine ((,) position <$> comments : repeat [])
-          . filter (`Set.notMember` mdls)
           . Maybe.mapMaybe (toModuleName directories)
-          $ Maybe.mapMaybe (stripAnyExtension extensions) files
+          . Maybe.mapMaybe (stripAnyExtension extensions)
+          . filter (`Set.notMember` excludedFiles)
+          $ fmap normalize files
       -- This isn't great, but the comments have to go /somewhere/.
       name =
         if null fieldLines
           then Lens.over (Name.annotationLens . Lens._2) (comments <>) n
           else n
   pure $ Fields.Field name fieldLines
+
+normalize :: FilePath -> FilePath
+normalize =
+  FilePath.normalise
+    . FilePath.joinPath
+    . FilePath.Windows.splitDirectories
 
 -- | These are the names of the fields that can have this action applied to
 -- them.

@@ -88,7 +88,6 @@ library
     CabalGild.Unstable.Exception.CheckFailure
     CabalGild.Unstable.Exception.InvalidLeniency
     CabalGild.Unstable.Exception.InvalidMode
-    CabalGild.Unstable.Exception.InvalidModuleName
     CabalGild.Unstable.Exception.InvalidOption
     CabalGild.Unstable.Exception.ParseError
     CabalGild.Unstable.Exception.SpecifiedOutputWithCheckMode
