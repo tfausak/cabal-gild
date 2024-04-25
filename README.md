@@ -211,11 +211,11 @@ before a field.
 
   Directories can be quoted if they contain spaces.
 
-  Discovered modules can be ignored by using the `--exclude=MODULE` option. For
+  Discovered modules can be ignored by using the `--exclude=FILE` option. For
   example:
 
   ``` cabal
   library
-    -- cabal-gild: discover source/library --exclude=Foo.Bar
+    -- cabal-gild: discover source/library --exclude=source/library/Foo/Bar.hs
     exposed-modules: ...
   ```
