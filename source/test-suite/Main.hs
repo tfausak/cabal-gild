@@ -1,3 +1,4 @@
+{- hlint ignore "Redundant bracket" -}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 import qualified CabalGild.Unstable.Class.MonadLog as MonadLog
@@ -5,8 +6,11 @@ import qualified CabalGild.Unstable.Class.MonadRead as MonadRead
 import qualified CabalGild.Unstable.Class.MonadWalk as MonadWalk
 import qualified CabalGild.Unstable.Class.MonadWrite as MonadWrite
 import qualified CabalGild.Unstable.Exception.CheckFailure as CheckFailure
+import qualified CabalGild.Unstable.Exception.InvalidOption as InvalidOption
 import qualified CabalGild.Unstable.Exception.SpecifiedOutputWithCheckMode as SpecifiedOutputWithCheckMode
 import qualified CabalGild.Unstable.Exception.SpecifiedStdinWithFileInput as SpecifiedStdinWithFileInput
+import qualified CabalGild.Unstable.Exception.UnexpectedArgument as UnexpectedArgument
+import qualified CabalGild.Unstable.Exception.UnknownOption as UnknownOption
 import qualified CabalGild.Unstable.Extra.String as String
 import qualified CabalGild.Unstable.Main as Gild
 import qualified CabalGild.Unstable.Type.Input as Input
@@ -21,8 +25,10 @@ import qualified Data.Functor.Identity as Identity
 import qualified Data.Map as Map
 import qualified Data.Maybe as Maybe
 import qualified GHC.Stack as Stack
+import qualified System.Directory as Directory
 import qualified System.Exit as Exit
 import qualified System.FilePath as FilePath
+import qualified System.IO.Temp as Temp
 import qualified Test.Hspec as Hspec
 
 main :: IO ()
@@ -37,6 +43,24 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     let (a, s, w) = runGild ["--version"] [] []
     a `shouldBeFailure` Exit.ExitSuccess
     w `Hspec.shouldNotBe` []
+    s `Hspec.shouldBe` Map.empty
+
+  Hspec.it "fails with an unknown option" $ do
+    let (a, s, w) = runGild ["--unknown"] [] []
+    a `shouldBeFailure` UnknownOption.UnknownOption "--unknown"
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.empty
+
+  Hspec.it "fails with an invalid option" $ do
+    let (a, s, w) = runGild ["--help=invalid"] [] []
+    a `shouldBeFailure` InvalidOption.InvalidOption "option `--help' doesn't allow an argument"
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.empty
+
+  Hspec.it "fails with an unexpected argument" $ do
+    let (a, s, w) = runGild ["unexpected"] [] []
+    a `shouldBeFailure` UnexpectedArgument.UnexpectedArgument "unexpected"
+    w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
 
   Hspec.it "reads from an input file" $ do
@@ -1030,6 +1054,86 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "library\n -- cabal-gild: discover d e\n exposed-modules:"
       "library\n  -- cabal-gild: discover d e\n  exposed-modules:\n    M\n    N\n"
 
+  Hspec.it "discovers from a quoted directory" $ do
+    expectDiscover
+      [("d", ["M.hs"])]
+      "library\n -- cabal-gild: discover \"d\"\n exposed-modules:"
+      "library\n  -- cabal-gild: discover \"d\"\n  exposed-modules: M\n"
+
+  Hspec.it "discovers from a directory with a space" $ do
+    expectDiscover
+      [("s p", ["M.hs"])]
+      "library\n -- cabal-gild: discover \"s p\"\n exposed-modules:"
+      "library\n  -- cabal-gild: discover \"s p\"\n  exposed-modules: M\n"
+
+  Hspec.it "discovers from the current directory by default" $ do
+    expectDiscover
+      [(".", ["M.hs"])]
+      "library\n -- cabal-gild: discover\n exposed-modules:"
+      "library\n  -- cabal-gild: discover\n  exposed-modules: M\n"
+
+  Hspec.it "allows excluding a path when discovering" $ do
+    expectDiscover
+      [(".", ["M.hs", "N.hs"])]
+      "library\n -- cabal-gild: discover --exclude M.hs\n exposed-modules:"
+      "library\n  -- cabal-gild: discover --exclude M.hs\n  exposed-modules: N\n"
+
+  Hspec.it "allows excluding a nested POSIX path" $ do
+    expectDiscover
+      [(".", [FilePath.combine "A" "M.hs", FilePath.combine "B" "M.hs"])]
+      "library\n -- cabal-gild: discover --exclude B/M.hs\n exposed-modules:"
+      "library\n  -- cabal-gild: discover --exclude B/M.hs\n  exposed-modules: A.M\n"
+
+  Hspec.it "allows excluding a nested Windows path" $ do
+    expectDiscover
+      [(".", [FilePath.combine "A" "M.hs", FilePath.combine "B" "M.hs"])]
+      "library\n -- cabal-gild: discover --exclude B\\M.hs\n exposed-modules:"
+      "library\n  -- cabal-gild: discover --exclude B\\M.hs\n  exposed-modules: A.M\n"
+
+  Hspec.it "allows excluding a relative POSIX path" $ do
+    expectDiscover
+      [(".", ["M.hs", "N.hs"])]
+      "library\n -- cabal-gild: discover --exclude ./M.hs\n exposed-modules:"
+      "library\n  -- cabal-gild: discover --exclude ./M.hs\n  exposed-modules: N\n"
+
+  Hspec.it "allows excluding a relative Windows path" $ do
+    expectDiscover
+      [(".", ["M.hs", "N.hs"])]
+      "library\n -- cabal-gild: discover --exclude .\\M.hs\n exposed-modules:"
+      "library\n  -- cabal-gild: discover --exclude .\\M.hs\n  exposed-modules: N\n"
+
+  Hspec.it "allows excluding multiple paths" $ do
+    expectDiscover
+      [(".", ["M.hs", "N.hs", "O.hs"])]
+      "library\n -- cabal-gild: discover --exclude M.hs --exclude O.hs\n exposed-modules:"
+      "library\n  -- cabal-gild: discover --exclude M.hs --exclude O.hs\n  exposed-modules: N\n"
+
+  Hspec.it "allows excluding paths that don't match anything" $ do
+    expectDiscover
+      [(".", ["M.hs"])]
+      "library\n -- cabal-gild: discover --exclude N.hs\n exposed-modules:"
+      "library\n  -- cabal-gild: discover --exclude N.hs\n  exposed-modules: M\n"
+
+  Hspec.it "fails when discovering with an unknown option" $ do
+    let (a, s, w) =
+          runGild
+            []
+            [(Input.Stdin, String.toUtf8 "-- cabal-gild: discover --unknown\nsignatures:")]
+            []
+    a `shouldBeFailure` UnknownOption.UnknownOption "--unknown"
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.empty
+
+  Hspec.it "fails when discovering with an invalid option" $ do
+    let (a, s, w) =
+          runGild
+            []
+            [(Input.Stdin, String.toUtf8 "-- cabal-gild: discover --exclude\nsignatures:")]
+            []
+    a `shouldBeFailure` InvalidOption.InvalidOption "option `--exclude' requires an argument FILE"
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.empty
+
   Hspec.it "retains comments when discovering" $ do
     expectDiscover
       [(".", ["M.hs"])]
@@ -1128,6 +1232,38 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     expectGilded
       "f:\ng: a"
       "f:\ng: a\n"
+
+  Hspec.around_ withTemporaryDirectory
+    . Hspec.it "discovers modules on the file system"
+    $ do
+      -- Although we already have pure tests for this behavior, it's important
+      -- to ensure that both POSIX and Windows paths are supported on the real
+      -- file system.
+      writeFile "i.cabal" $
+        unlines
+          [ "library",
+            "  -- cabal-gild: discover --exclude=.\\M2.hs --exclude=N/M1.hs",
+            "  exposed-modules:"
+          ]
+      writeFile "M1.hs" ""
+      writeFile "M2.hs" ""
+      Directory.createDirectory "N"
+      writeFile (FilePath.combine "N" "M1.hs") ""
+      writeFile (FilePath.combine "N" "M2.hs") ""
+      Gild.mainWith ["--input=i.cabal", "--output=o.cabal"]
+      readFile "o.cabal"
+        `Hspec.shouldReturn` unlines
+          [ "library",
+            "  -- cabal-gild: discover --exclude=.\\M2.hs --exclude=N/M1.hs",
+            "  exposed-modules:",
+            "    M1",
+            "    N.M2"
+          ]
+
+withTemporaryDirectory :: IO () -> IO ()
+withTemporaryDirectory =
+  Temp.withSystemTempDirectory "cabal-gild"
+    . flip Directory.withCurrentDirectory
 
 shouldBeFailure ::
   (Stack.HasCallStack, Eq e, Exception.Exception e, Show a) =>

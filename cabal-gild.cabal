@@ -146,9 +146,11 @@ test-suite cabal-gild-test-suite
   build-depends:
     bytestring,
     containers,
+    directory,
     exceptions,
     filepath,
     hspec ^>=2.11.7,
+    temporary ^>=1.3,
     transformers,
 
   hs-source-dirs: source/test-suite

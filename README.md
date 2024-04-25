@@ -178,9 +178,10 @@ Gild supports special comments in package descriptions that act as pragmas.
 Each pragma starts with `-- cabal-gild:`. Pragmas must be the last comment
 before a field.
 
-- `-- cabal-gild: discover DIRECTORY [DIRECTORY ...]`: This pragma will
-  discover any Haskell files in any of the given directories and use those to
-  populate the list of modules or signatures. For example, given this input:
+- `-- cabal-gild: discover [DIRECTORY ...]`: This pragma will discover any
+  Haskell files in any of the given directories and use those to populate the
+  list of modules or signatures. If no directories are given, defaults to `.`
+  (the current directory). For example, given this input:
 
   ``` cabal
   library
@@ -207,3 +208,14 @@ before a field.
   This pragma searches for files with any of the following extensions: `*.chs`,
   `*.cpphs`, `*.gc`, `*.hs`, `*.hsc`, `*.hsig`, `*.lhs`, `*.lhsig`, `*.ly`,
   `*.x`, or `*.y`,
+
+  Directories can be quoted if they contain spaces.
+
+  Discovered modules can be ignored by using the `--exclude=FILE` option. For
+  example:
+
+  ``` cabal
+  library
+    -- cabal-gild: discover source/library --exclude=source/library/Foo/Bar.hs
+    exposed-modules: ...
+  ```
