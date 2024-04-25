@@ -1,4 +1,3 @@
-{- hlint ignore "Redundant bracket" -}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 import qualified CabalGild.Unstable.Class.MonadLog as MonadLog
