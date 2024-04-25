@@ -25,8 +25,10 @@ import qualified Data.Functor.Identity as Identity
 import qualified Data.Map as Map
 import qualified Data.Maybe as Maybe
 import qualified GHC.Stack as Stack
+import qualified System.Directory as Directory
 import qualified System.Exit as Exit
 import qualified System.FilePath as FilePath
+import qualified System.IO.Temp as Temp
 import qualified Test.Hspec as Hspec
 
 main :: IO ()
@@ -1230,6 +1232,38 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     expectGilded
       "f:\ng: a"
       "f:\ng: a\n"
+
+  Hspec.around_ withTemporaryDirectory
+    . Hspec.it "discovers modules on the file system"
+    $ do
+      -- Although we already have pure tests for this behavior, it's important
+      -- to ensure that both POSIX and Windows paths are supported on the real
+      -- file system.
+      writeFile "i.cabal" $
+        unlines
+          [ "library",
+            "  -- cabal-gild: discover --exclude=.\\M2.hs --exclude=N/M1.hs",
+            "  exposed-modules:"
+          ]
+      writeFile "M1.hs" ""
+      writeFile "M2.hs" ""
+      Directory.createDirectory "N"
+      writeFile (FilePath.combine "N" "M1.hs") ""
+      writeFile (FilePath.combine "N" "M2.hs") ""
+      Gild.mainWith ["--input=i.cabal", "--output=o.cabal"]
+      readFile "o.cabal"
+        `Hspec.shouldReturn` unlines
+          [ "library",
+            "  -- cabal-gild: discover --exclude=.\\M2.hs --exclude=N/M1.hs",
+            "  exposed-modules:",
+            "    M1",
+            "    N.M2"
+          ]
+
+withTemporaryDirectory :: IO () -> IO ()
+withTemporaryDirectory =
+  Temp.withSystemTempDirectory "cabal-gild"
+    . flip Directory.withCurrentDirectory
 
 shouldBeFailure ::
   (Stack.HasCallStack, Eq e, Exception.Exception e, Show a) =>
