@@ -78,7 +78,8 @@ discover p n fls ds = do
       position =
         maybe (fst $ Name.annotation n) (fst . FieldLine.annotation) $
           Maybe.listToMaybe fls
-      excludedFiles = Set.fromList $ fmap normalize strs
+      -- Exclusion must be computed relative to the directory containing the cabal file (see #71)
+      excludedFiles = Set.fromList $ fmap (normalize . FilePath.combine root) strs
       fieldLines =
         zipWith ModuleName.toFieldLine ((,) position <$> comments : repeat [])
           . Maybe.mapMaybe (toModuleName directories)
