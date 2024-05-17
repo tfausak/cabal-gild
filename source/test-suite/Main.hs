@@ -939,112 +939,96 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
 
   Hspec.it "discovers an exposed module" $ do
     expectDiscover
-      Input.Stdin
       [(".", ["M.hs"])]
       "library\n -- cabal-gild: discover .\n exposed-modules:"
       "library\n  -- cabal-gild: discover .\n  exposed-modules: M\n"
 
   Hspec.it "discovers an other module" $ do
     expectDiscover
-      Input.Stdin
       [(".", ["M.hs"])]
       "library\n -- cabal-gild: discover .\n other-modules:"
       "library\n  -- cabal-gild: discover .\n  other-modules: M\n"
 
   Hspec.it "discovers a nested module" $ do
     expectDiscover
-      Input.Stdin
       [(".", [FilePath.combine "N" "O.hs"])]
       "library\n -- cabal-gild: discover .\n exposed-modules:"
       "library\n  -- cabal-gild: discover .\n  exposed-modules: N.O\n"
 
   Hspec.it "discovers multiple modules" $ do
     expectDiscover
-      Input.Stdin
       [(".", ["M.hs", "N.hs"])]
       "library\n -- cabal-gild: discover .\n exposed-modules:"
       "library\n  -- cabal-gild: discover .\n  exposed-modules:\n    M\n    N\n"
 
   Hspec.it "discovers no modules" $ do
     expectDiscover
-      Input.Stdin
       [(".", [])]
       "library\n -- cabal-gild: discover .\n exposed-modules:"
       "library\n  -- cabal-gild: discover .\n  exposed-modules:\n"
 
   Hspec.it "discovers a .lhs file" $ do
     expectDiscover
-      Input.Stdin
       [(".", ["M.lhs"])]
       "library\n -- cabal-gild: discover .\n exposed-modules:"
       "library\n  -- cabal-gild: discover .\n  exposed-modules: M\n"
 
   Hspec.it "discovers a .gc file" $ do
     expectDiscover
-      Input.Stdin
       [(".", ["M.gc"])]
       "library\n -- cabal-gild: discover .\n exposed-modules:"
       "library\n  -- cabal-gild: discover .\n  exposed-modules: M\n"
 
   Hspec.it "discovers a .chs file" $ do
     expectDiscover
-      Input.Stdin
       [(".", ["M.chs"])]
       "library\n -- cabal-gild: discover .\n exposed-modules:"
       "library\n  -- cabal-gild: discover .\n  exposed-modules: M\n"
 
   Hspec.it "discovers a .hsc file" $ do
     expectDiscover
-      Input.Stdin
       [(".", ["M.hsc"])]
       "library\n -- cabal-gild: discover .\n exposed-modules:"
       "library\n  -- cabal-gild: discover .\n  exposed-modules: M\n"
 
   Hspec.it "discovers a .y file" $ do
     expectDiscover
-      Input.Stdin
       [(".", ["M.y"])]
       "library\n -- cabal-gild: discover .\n exposed-modules:"
       "library\n  -- cabal-gild: discover .\n  exposed-modules: M\n"
 
   Hspec.it "discovers a .ly file" $ do
     expectDiscover
-      Input.Stdin
       [(".", ["M.ly"])]
       "library\n -- cabal-gild: discover .\n exposed-modules:"
       "library\n  -- cabal-gild: discover .\n  exposed-modules: M\n"
 
   Hspec.it "discovers a .x file" $ do
     expectDiscover
-      Input.Stdin
       [(".", ["M.x"])]
       "library\n -- cabal-gild: discover .\n exposed-modules:"
       "library\n  -- cabal-gild: discover .\n  exposed-modules: M\n"
 
   Hspec.it "discovers a .cpphs file" $ do
     expectDiscover
-      Input.Stdin
       [(".", ["M.cpphs"])]
       "library\n -- cabal-gild: discover .\n exposed-modules:"
       "library\n  -- cabal-gild: discover .\n  exposed-modules: M\n"
 
   Hspec.it "discovers a .hsig file" $ do
     expectDiscover
-      Input.Stdin
       [(".", ["M.hsig"])]
       "library\n -- cabal-gild: discover .\n exposed-modules:"
       "library\n  -- cabal-gild: discover .\n  exposed-modules: M\n"
 
   Hspec.it "discovers a .lhsig file" $ do
     expectDiscover
-      Input.Stdin
       [(".", ["M.lhsig"])]
       "library\n -- cabal-gild: discover .\n exposed-modules:"
       "library\n  -- cabal-gild: discover .\n  exposed-modules: M\n"
 
   Hspec.it "discovers a signature" $ do
     expectDiscover
-      Input.Stdin
       [(".", ["S.hsig"])]
       "library\n -- cabal-gild: discover .\n signatures:"
       "library\n  -- cabal-gild: discover .\n  signatures: S\n"
@@ -1066,87 +1050,80 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
 
   Hspec.it "discovers from multiple directories" $ do
     expectDiscover
-      Input.Stdin
       [("d", ["M.hs"]), ("e", ["N.hs"])]
       "library\n -- cabal-gild: discover d e\n exposed-modules:"
       "library\n  -- cabal-gild: discover d e\n  exposed-modules:\n    M\n    N\n"
 
   Hspec.it "discovers from a quoted directory" $ do
     expectDiscover
-      Input.Stdin
       [("d", ["M.hs"])]
       "library\n -- cabal-gild: discover \"d\"\n exposed-modules:"
       "library\n  -- cabal-gild: discover \"d\"\n  exposed-modules: M\n"
 
   Hspec.it "discovers from a directory with a space" $ do
     expectDiscover
-      Input.Stdin
       [("s p", ["M.hs"])]
       "library\n -- cabal-gild: discover \"s p\"\n exposed-modules:"
       "library\n  -- cabal-gild: discover \"s p\"\n  exposed-modules: M\n"
 
   Hspec.it "discovers from the current directory by default" $ do
     expectDiscover
-      Input.Stdin
       [(".", ["M.hs"])]
       "library\n -- cabal-gild: discover\n exposed-modules:"
       "library\n  -- cabal-gild: discover\n  exposed-modules: M\n"
 
   Hspec.it "allows excluding a path when discovering" $ do
     expectDiscover
-      Input.Stdin
       [(".", ["M.hs", "N.hs"])]
       "library\n -- cabal-gild: discover --exclude M.hs\n exposed-modules:"
       "library\n  -- cabal-gild: discover --exclude M.hs\n  exposed-modules: N\n"
 
   Hspec.it "allows excluding a nested POSIX path" $ do
     expectDiscover
-      Input.Stdin
       [(".", [FilePath.combine "A" "M.hs", FilePath.combine "B" "M.hs"])]
       "library\n -- cabal-gild: discover --exclude B/M.hs\n exposed-modules:"
       "library\n  -- cabal-gild: discover --exclude B/M.hs\n  exposed-modules: A.M\n"
 
   Hspec.it "allows excluding a nested Windows path" $ do
     expectDiscover
-      Input.Stdin
       [(".", [FilePath.combine "A" "M.hs", FilePath.combine "B" "M.hs"])]
       "library\n -- cabal-gild: discover --exclude B\\M.hs\n exposed-modules:"
       "library\n  -- cabal-gild: discover --exclude B\\M.hs\n  exposed-modules: A.M\n"
 
   Hspec.it "allows excluding a relative POSIX path" $ do
     expectDiscover
-      Input.Stdin
       [(".", ["M.hs", "N.hs"])]
       "library\n -- cabal-gild: discover --exclude ./M.hs\n exposed-modules:"
       "library\n  -- cabal-gild: discover --exclude ./M.hs\n  exposed-modules: N\n"
 
   Hspec.it "allows excluding a relative Windows path" $ do
     expectDiscover
-      Input.Stdin
       [(".", ["M.hs", "N.hs"])]
       "library\n -- cabal-gild: discover --exclude .\\M.hs\n exposed-modules:"
       "library\n  -- cabal-gild: discover --exclude .\\M.hs\n  exposed-modules: N\n"
 
   Hspec.it "allows excluding multiple paths" $ do
     expectDiscover
-      Input.Stdin
       [(".", ["M.hs", "N.hs", "O.hs"])]
       "library\n -- cabal-gild: discover --exclude M.hs --exclude O.hs\n exposed-modules:"
       "library\n  -- cabal-gild: discover --exclude M.hs --exclude O.hs\n  exposed-modules: N\n"
 
   Hspec.it "allows excluding paths that don't match anything" $ do
     expectDiscover
-      Input.Stdin
       [(".", ["M.hs"])]
       "library\n -- cabal-gild: discover --exclude N.hs\n exposed-modules:"
       "library\n  -- cabal-gild: discover --exclude N.hs\n  exposed-modules: M\n"
 
   Hspec.it "treats excluded paths relative to cabal file" $ do
-    expectDiscover
-      (Input.File "input/io.cabal")
-      [("input/src", ["M.hs", "N.hs"])]
-      "library\n -- cabal-gild: discover src --exclude src/N.hs\n exposed-modules:"
-      "library\n  -- cabal-gild: discover src --exclude src/N.hs\n  exposed-modules: M\n"
+    let d = "input"
+        (a, s, w) =
+          runGild
+            ["--input", FilePath.combine d "io.cabal"]
+            [(Input.File $ FilePath.combine d "io.cabal", String.toUtf8 "library\n -- cabal-gild: discover src --exclude src/N.hs\n exposed-modules:")]
+            [(FilePath.combine d "src", ["M.hs", "N.hs"])]
+    a `Hspec.shouldSatisfy` Either.isRight
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.singleton Output.Stdout (String.toUtf8 "library\n  -- cabal-gild: discover src --exclude src/N.hs\n  exposed-modules: M\n")
 
   Hspec.it "fails when discovering with an unknown option" $ do
     let (a, s, w) =
@@ -1170,21 +1147,18 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
 
   Hspec.it "retains comments when discovering" $ do
     expectDiscover
-      Input.Stdin
       [(".", ["M.hs"])]
       "library\n -- cabal-gild: discover .\n exposed-modules:\n  -- c\n  N"
       "library\n  -- cabal-gild: discover .\n  exposed-modules:\n    -- c\n    M\n"
 
   Hspec.it "concatenates comments when discovering" $ do
     expectDiscover
-      Input.Stdin
       [(".", ["M.hs"])]
       "library\n -- cabal-gild: discover .\n exposed-modules:\n  -- c\n  N\n  -- d\n  O"
       "library\n  -- cabal-gild: discover .\n  exposed-modules:\n    -- c\n    -- d\n    M\n"
 
   Hspec.it "retains comments even when no modules are discovered" $ do
     expectDiscover
-      Input.Stdin
       [(".", [])]
       "library\n -- cabal-gild: discover .\n exposed-modules:\n  -- c\n  N"
       "library\n  -- c\n  -- cabal-gild: discover .\n  exposed-modules:\n"
@@ -1261,7 +1235,6 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
 
   Hspec.it "keeps output on multiple lines for pragmas" $ do
     expectDiscover
-      Input.Stdin
       [(".", ["M.hs"])]
       "library\n -- cabal-gild: discover .\n exposed-modules:\n  ..."
       "library\n  -- cabal-gild: discover .\n  exposed-modules:\n    M\n"
@@ -1315,48 +1288,37 @@ shouldBeFailure result expected = case result of
   x -> x `Hspec.shouldSatisfy` Either.isLeft
 
 expectGilded :: (Stack.HasCallStack) => String -> String -> Hspec.Expectation
-expectGilded = expectDiscover Input.Stdin []
+expectGilded = expectDiscover []
 
 expectStable ::
   (Stack.HasCallStack) =>
-  Input.Input ->
   [(FilePath, [FilePath])] ->
   ByteString.ByteString ->
   Hspec.Expectation
-expectStable inp files input = do
-  let cliOpts = case inp of
-        Input.File fp -> ["--io", fp]
-        Input.Stdin -> []
-      (a, s, w) = runGild cliOpts [(inp, input)] files
+expectStable files input = do
+  let (a, s, w) = runGild [] [(Input.Stdin, input)] files
   a `Hspec.shouldSatisfy` Either.isRight
   w `Hspec.shouldBe` []
-  case (inp, Map.toList s) of
-    (Input.Stdin, [(Output.Stdout, output)]) ->
-      output `Hspec.shouldBe` input
-    (Input.File {}, updates) -> do
-      updates `Hspec.shouldBe` []
+  output <- case Map.toList s of
+    [(Output.Stdout, x)] -> pure x
     _ -> fail $ "impossible: " <> show s
+  output `Hspec.shouldBe` input
 
 expectDiscover ::
   (Stack.HasCallStack) =>
-  Input.Input ->
   [(FilePath, [FilePath])] ->
   String ->
   String ->
   Hspec.Expectation
-expectDiscover inp files input expected = do
-  let ioOpts = case inp of
-        Input.File fp -> ["--io", fp]
-        Input.Stdin -> []
-      (a, s, w) = runGild ioOpts [(inp, String.toUtf8 input)] files
+expectDiscover files input expected = do
+  let (a, s, w) = runGild [] [(Input.Stdin, String.toUtf8 input)] files
   a `Hspec.shouldSatisfy` Either.isRight
   w `Hspec.shouldBe` []
-  actual <- case (inp, Map.toList s) of
-    (Input.Stdin, [(Output.Stdout, x)]) -> pure x
-    (Input.File fp, [(Output.File fp', x)]) | fp == fp' -> pure x
+  actual <- case Map.toList s of
+    [(Output.Stdout, x)] -> pure x
     _ -> fail $ "impossible: " <> show s
   actual `Hspec.shouldBe` String.toUtf8 expected
-  expectStable inp files actual
+  expectStable files actual
 
 runGild ::
   [String] ->
