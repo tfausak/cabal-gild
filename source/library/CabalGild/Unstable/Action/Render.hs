@@ -108,25 +108,13 @@ sectionArgs = Lens.set Chunk.spaceBeforeLens True . foldMap sectionArg
 
 -- | Renders the given section argument to a chunk.
 sectionArg :: Fields.SectionArg a -> Chunk.Chunk
-sectionArg sa = case sa of
-  Fields.SecArgName _ bs ->
-    Lens.set Chunk.spaceBeforeLens True
-      . Lens.set Chunk.spaceAfterLens True
-      $ Chunk.fromByteString bs
-  Fields.SecArgStr _ bs ->
-    Lens.set Chunk.spaceBeforeLens True
-      . Lens.set Chunk.spaceAfterLens True
-      . Chunk.fromByteString
-      . flip ByteString.snoc 0x22
-      $ ByteString.cons 0x22 bs
-  Fields.SecArgOther _ bs ->
-    let b =
-          bs /= ByteString.singleton 0x21 -- !
-            && bs /= ByteString.singleton 0x28 -- (
-            && bs /= ByteString.singleton 0x29 -- )
-     in Lens.set Chunk.spaceBeforeLens b
-          . Lens.set Chunk.spaceAfterLens b
-          $ Chunk.fromByteString bs
+sectionArg sa = Lens.set Chunk.spaceBeforeLens True
+  . Lens.set Chunk.spaceAfterLens True
+  . Chunk.fromByteString
+  $ case sa of
+    Fields.SecArgName _ bs -> bs
+    Fields.SecArgStr _ bs -> flip ByteString.snoc 0x22 $ ByteString.cons 0x22 bs
+    Fields.SecArgOther _ bs -> bs
 
 -- | Renders the given comments to a block at the given indentation level.
 comments :: Int -> [Comment.Comment a] -> Block.Block

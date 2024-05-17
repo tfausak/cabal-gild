@@ -521,7 +521,131 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
   Hspec.it "properly formats conditionals" $ do
     expectGilded
       "if ! impl ( ghc >= 9.8 )"
-      "if !impl(ghc >= 9.8)\n"
+      "if !impl(ghc >=9.8)\n"
+
+  Hspec.it "" $ do
+    expectGilded
+      "if os ( darwin ) && arch ( aarch64 )"
+      "if os(osx) && arch(aarch64)\n"
+
+  Hspec.describe "conditionals" $ do
+    Hspec.it "formats variable" $ do
+      expectGilded
+        "if flag ( x )"
+        "if flag(x)\n"
+
+    Hspec.it "formats false" $ do
+      expectGilded
+        "if false"
+        "if false\n"
+
+    Hspec.it "formats upper false" $ do
+      expectGilded
+        "if False"
+        "if false\n"
+
+    Hspec.it "formats true" $ do
+      expectGilded
+        "if true"
+        "if true\n"
+
+    Hspec.it "formats upper true" $ do
+      expectGilded
+        "if True"
+        "if true\n"
+
+    Hspec.it "formats not" $ do
+      expectGilded
+        "if ! flag ( x )"
+        "if !flag(x)\n"
+
+    Hspec.it "formats or" $ do
+      expectGilded
+        "if flag ( x )||flag ( y )"
+        "if flag(x) || flag(y)\n"
+
+    Hspec.it "formats and" $ do
+      expectGilded
+        "if flag ( x )&&flag ( y )"
+        "if flag(x) && flag(y)\n"
+
+    Hspec.it "formats arch" $ do
+      expectGilded
+        "if arch ( aarch64 )"
+        "if arch(aarch64)\n"
+
+    Hspec.it "formats upper arch" $ do
+      expectGilded
+        "if arch ( AARCH64 )"
+        "if arch(aarch64)\n"
+
+    Hspec.it "formats arch alias" $ do
+      -- TODO
+      expectGilded
+        "if arch ( arm64 )"
+        "if arch(aarch64)\n"
+
+    Hspec.it "formats flag" $ do
+      expectGilded
+        "if flag ( x )"
+        "if flag(x)\n"
+
+    Hspec.it "formats upper flag" $ do
+      expectGilded
+        "if flag ( X )"
+        "if flag(x)\n"
+
+    Hspec.it "formats impl" $ do
+      expectGilded
+        "if impl ( ghc > 0 )"
+        "if impl(ghc >0)\n"
+
+    Hspec.it "formats upper impl" $ do
+      expectGilded
+        "if impl ( GHC > 0 )"
+        "if impl(ghc >0)\n"
+
+    Hspec.it "formats os" $ do
+      expectGilded
+        "if os ( osx )"
+        "if os(osx)\n"
+
+    Hspec.it "formats upper os" $ do
+      expectGilded
+        "if os ( OSX )"
+        "if os(osx)\n"
+
+    Hspec.it "formats os alias" $ do
+      expectGilded
+        "if os ( darwin )"
+        "if os(osx)\n"
+
+    Hspec.it "does not format old elif" $ do
+      expectGilded
+        "elif flag ( x )"
+        "elif flag ( x )\n"
+
+    Hspec.it "formats new elif" $ do
+      expectGilded
+        "cabal-version: 2.2\nelif flag ( x )"
+        "cabal-version: 2.2\nelif flag(x)\n"
+
+    Hspec.it "removes unnecessary parentheses" $ do
+      expectGilded
+        "if (flag(x))"
+        "if flag(x)\n"
+
+    Hspec.it "keeps necessary parentheses around or" $ do
+      -- TODO
+      expectGilded
+        "if (flag(x) || flag(y)) && flag(z)"
+        "if (flag(x) || flag(y)) && flag(z)\n"
+
+    Hspec.it "keeps necessary parentheses around and" $ do
+      -- TODO
+      expectGilded
+        "if !(flag(x) && flag(y))"
+        "if !(flag(x) && flag(y))\n"
 
   Hspec.describe "license-files" $ do
     -- These tests apply to other "list" fields as well. The license-files
