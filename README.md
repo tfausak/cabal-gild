@@ -1,6 +1,6 @@
 # Gild
 
-[![CI](https://github.com/tfausak/cabal-gild/actions/workflows/ci.yaml/badge.svg)](https://github.com/tfausak/cabal-gild/actions/workflows/ci.yaml)
+[![CI](https://github.com/tfausak/cabal-gild/actions/workflows/ci.yml/badge.svg)](https://github.com/tfausak/cabal-gild/actions/workflows/ci.yml)
 [![Hackage](https://badgen.net/hackage/v/cabal-gild)](https://hackage.haskell.org/package/cabal-gild)
 
 Gild is an opinionated command line utility that formats Haskell package
