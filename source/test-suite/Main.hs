@@ -1327,15 +1327,20 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "if p\n a\nelse\n b"
       "if p\n  a\nelse\n  b\n"
 
-  Hspec.it "groups 'elif' with 'if'" $ do
+  Hspec.it "does not group old 'elif' with 'if'" $ do
     expectGilded
       "if p\n a\nelif q\n b"
-      "if p\n  a\nelif q\n  b\n"
+      "if p\n  a\n\nelif q\n  b\n"
+
+  Hspec.it "groups new 'elif' with 'if'" $ do
+    expectGilded
+      "cabal-version: 2.2\nif p\n a\nelif q\n b"
+      "cabal-version: 2.2\n\nif p\n  a\nelif q\n  b\n"
 
   Hspec.it "groups 'else' with 'elif'" $ do
     expectGilded
-      "if p\n a\nelif q\n b\nelse\n c"
-      "if p\n  a\nelif q\n  b\nelse\n  c\n"
+      "cabal-version: 2.2\nif p\n a\nelif q\n b\nelse\n c"
+      "cabal-version: 2.2\n\nif p\n  a\nelif q\n  b\nelse\n  c\n"
 
   Hspec.it "does not group 'else' with anything else" $ do
     expectGilded

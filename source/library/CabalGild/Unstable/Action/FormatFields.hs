@@ -82,7 +82,7 @@ field csv f = case f of
 isConditional :: CabalSpecVersion.CabalSpecVersion -> Fields.Name p -> Bool
 isConditional csv n =
   Name.isIf n
-    || (Name.isElif n && csv >= CabalSpecVersion.CabalSpecV2_2)
+    || Name.isElif csv n
 
 -- TODO: Reimplement using `ShowS`.
 renderCondition :: a -> Condition.Condition ConfVar.ConfVar -> [Fields.SectionArg a]
