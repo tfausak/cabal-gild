@@ -6,6 +6,7 @@ import qualified CabalGild.Unstable.Extra.FieldLine as FieldLine
 import qualified CabalGild.Unstable.Extra.Name as Name
 import qualified CabalGild.Unstable.Extra.SectionArg as SectionArg
 import qualified CabalGild.Unstable.Extra.String as String
+import qualified CabalGild.Unstable.Type.Condition
 import qualified CabalGild.Unstable.Type.Dependency as Dependency
 import qualified CabalGild.Unstable.Type.ExeDependency as ExeDependency
 import qualified CabalGild.Unstable.Type.Extension as Extension
