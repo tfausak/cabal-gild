@@ -1,6 +1,7 @@
 module CabalGild.Unstable.Extra.Name where
 
 import qualified CabalGild.Unstable.Extra.String as String
+import qualified Distribution.CabalSpecVersion as CabalSpecVersion
 import qualified Distribution.Compat.Lens as Lens
 import qualified Distribution.Fields as Fields
 
@@ -21,8 +22,10 @@ isIf :: Fields.Name a -> Bool
 isIf = (== String.toUtf8 "if") . value
 
 -- | Returns true when the name is @"elif"@, false otherwise.
-isElif :: Fields.Name a -> Bool
-isElif = (== String.toUtf8 "elif") . value
+isElif :: CabalSpecVersion.CabalSpecVersion -> Fields.Name a -> Bool
+isElif csv n =
+  csv >= CabalSpecVersion.CabalSpecV2_2
+    && value n == String.toUtf8 "elif"
 
 -- | Returns true when the name is @"else"@, false otherwise.
 isElse :: Fields.Name a -> Bool

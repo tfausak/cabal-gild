@@ -4,7 +4,9 @@ module CabalGild.Unstable.Action.FormatFields where
 
 import qualified CabalGild.Unstable.Extra.FieldLine as FieldLine
 import qualified CabalGild.Unstable.Extra.Name as Name
+import qualified CabalGild.Unstable.Extra.SectionArg as SectionArg
 import qualified CabalGild.Unstable.Extra.String as String
+import qualified CabalGild.Unstable.Type.Condition as Condition
 import qualified CabalGild.Unstable.Type.Dependency as Dependency
 import qualified CabalGild.Unstable.Type.ExeDependency as ExeDependency
 import qualified CabalGild.Unstable.Type.Extension as Extension
@@ -16,6 +18,8 @@ import qualified CabalGild.Unstable.Type.ModuleReexport as ModuleReexport
 import qualified CabalGild.Unstable.Type.PkgconfigDependency as PkgconfigDependency
 import qualified CabalGild.Unstable.Type.SomeParsecParser as SPP
 import qualified CabalGild.Unstable.Type.TestedWith as TestedWith
+import qualified CabalGild.Unstable.Type.Variable as Variable
+import qualified Data.ByteString as ByteString
 import qualified Data.Functor.Identity as Identity
 import qualified Data.Map as Map
 import qualified Data.Maybe as Maybe
@@ -24,6 +28,7 @@ import qualified Distribution.FieldGrammar.Newtypes as Newtypes
 import qualified Distribution.Fields as Fields
 import qualified Distribution.ModuleName as ModuleName
 import qualified Distribution.Parsec as Parsec
+import qualified Distribution.Parsec.FieldLineStream as FieldLineStream
 import qualified Text.PrettyPrint as PrettyPrint
 
 -- | A wrapper around 'field' to allow this to be composed with other actions.
@@ -49,7 +54,33 @@ field csv f = case f of
             maybe (fst $ Name.annotation n) (fst . FieldLine.annotation) $
               Maybe.listToMaybe fls
        in Fields.Field n $ fieldLines csv position fls spp
-  Fields.Section n sas fs -> Fields.Section n sas $ fmap (field csv) fs
+  Fields.Section n sas fs ->
+    let result =
+          Parsec.runParsecParser' csv (Condition.parseCondition Variable.parseVariable) "<conditional>"
+            . FieldLineStream.fieldLineStreamFromBS
+            . ByteString.intercalate (ByteString.singleton 0x20)
+            $ fmap SectionArg.value sas
+        position =
+          fst
+            . maybe (Name.annotation n) SectionArg.annotation
+            $ Maybe.listToMaybe sas
+        newSas =
+          if isConditional csv n
+            then case result of
+              Left _ -> sas
+              Right c ->
+                pure
+                  . Fields.SecArgName (position, [])
+                  . String.toUtf8
+                  . PrettyPrint.renderStyle style
+                  $ Condition.prettyCondition Variable.prettyVariable c
+            else sas
+     in Fields.Section n newSas $ fmap (field csv) fs
+
+isConditional :: CabalSpecVersion.CabalSpecVersion -> Fields.Name p -> Bool
+isConditional csv n =
+  Name.isIf n
+    || Name.isElif csv n
 
 -- | Attempts to parse the given field lines using the given parser. If parsing
 -- fails, the field lines will be returned as is. Comments within the field

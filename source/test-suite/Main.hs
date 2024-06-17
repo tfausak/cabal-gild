@@ -521,7 +521,138 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
   Hspec.it "properly formats conditionals" $ do
     expectGilded
       "if ! impl ( ghc >= 9.8 )"
-      "if !impl(ghc >= 9.8)\n"
+      "if !impl(ghc >=9.8)\n"
+
+  Hspec.describe "conditionals" $ do
+    Hspec.it "formats variable" $ do
+      expectGilded
+        "if flag ( x )"
+        "if flag(x)\n"
+
+    Hspec.it "formats false" $ do
+      expectGilded
+        "if false"
+        "if false\n"
+
+    Hspec.it "formats upper false" $ do
+      expectGilded
+        "if False"
+        "if false\n"
+
+    Hspec.it "formats true" $ do
+      expectGilded
+        "if true"
+        "if true\n"
+
+    Hspec.it "formats upper true" $ do
+      expectGilded
+        "if True"
+        "if true\n"
+
+    Hspec.it "formats not" $ do
+      expectGilded
+        "if ! flag ( x )"
+        "if !flag(x)\n"
+
+    Hspec.it "formats or" $ do
+      expectGilded
+        "if flag ( x )||flag ( y )"
+        "if flag(x) || flag(y)\n"
+
+    Hspec.it "formats and" $ do
+      expectGilded
+        "if flag ( x )&&flag ( y )"
+        "if flag(x) && flag(y)\n"
+
+    Hspec.it "formats arch" $ do
+      expectGilded
+        "if arch ( aarch64 )"
+        "if arch(aarch64)\n"
+
+    Hspec.it "formats upper arch" $ do
+      expectGilded
+        "if arch ( AARCH64 )"
+        "if arch(aarch64)\n"
+
+    Hspec.it "formats arch alias" $ do
+      expectGilded
+        "if arch ( arm64 )"
+        "if arch(aarch64)\n"
+
+    Hspec.it "formats flag" $ do
+      expectGilded
+        "if flag ( x )"
+        "if flag(x)\n"
+
+    Hspec.it "formats upper flag" $ do
+      expectGilded
+        "if flag ( X )"
+        "if flag(x)\n"
+
+    Hspec.it "formats impl" $ do
+      expectGilded
+        "if impl ( ghc > 0 )"
+        "if impl(ghc >0)\n"
+
+    Hspec.it "formats upper impl" $ do
+      expectGilded
+        "if impl ( GHC > 0 )"
+        "if impl(ghc >0)\n"
+
+    Hspec.it "formats impl without version range" $ do
+      expectGilded
+        "if impl ( ghc )"
+        "if impl(ghc >=0)\n"
+
+    Hspec.it "formats os" $ do
+      expectGilded
+        "if os ( osx )"
+        "if os(osx)\n"
+
+    Hspec.it "formats upper os" $ do
+      expectGilded
+        "if os ( OSX )"
+        "if os(osx)\n"
+
+    Hspec.it "formats os alias" $ do
+      expectGilded
+        "if os ( darwin )"
+        "if os(osx)\n"
+
+    Hspec.it "does not format old elif" $ do
+      expectGilded
+        "elif flag ( x )"
+        "elif flag ( x )\n"
+
+    Hspec.it "formats new elif" $ do
+      expectGilded
+        "cabal-version: 2.2\nelif flag ( x )"
+        "cabal-version: 2.2\nelif flag(x)\n"
+
+    Hspec.it "keeps explicit parentheses" $ do
+      expectGilded
+        "if ( true )"
+        "if (true)\n"
+
+    Hspec.it "formats multiple nots" $ do
+      expectGilded
+        "if ! ! flag ( a )"
+        "if !!flag(a)\n"
+
+    Hspec.it "formats multiple ands" $ do
+      expectGilded
+        "if flag ( a ) && flag ( b ) && flag ( c )"
+        "if flag(a) && flag(b) && flag(c)\n"
+
+    Hspec.it "formats multiple ors" $ do
+      expectGilded
+        "if flag ( a ) || flag ( b ) || flag ( c )"
+        "if flag(a) || flag(b) || flag(c)\n"
+
+    Hspec.it "formats mixed operators" $ do
+      expectGilded
+        "if ! flag ( a ) && flag ( b ) || flag ( c )"
+        "if !flag(a) && flag(b) || flag(c)\n"
 
   Hspec.describe "license-files" $ do
     -- These tests apply to other "list" fields as well. The license-files
@@ -1203,15 +1334,20 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "if p\n a\nelse\n b"
       "if p\n  a\nelse\n  b\n"
 
-  Hspec.it "groups 'elif' with 'if'" $ do
+  Hspec.it "does not group old 'elif' with 'if'" $ do
     expectGilded
       "if p\n a\nelif q\n b"
-      "if p\n  a\nelif q\n  b\n"
+      "if p\n  a\n\nelif q\n  b\n"
+
+  Hspec.it "groups new 'elif' with 'if'" $ do
+    expectGilded
+      "cabal-version: 2.2\nif p\n a\nelif q\n b"
+      "cabal-version: 2.2\n\nif p\n  a\nelif q\n  b\n"
 
   Hspec.it "groups 'else' with 'elif'" $ do
     expectGilded
-      "if p\n a\nelif q\n b\nelse\n c"
-      "if p\n  a\nelif q\n  b\nelse\n  c\n"
+      "cabal-version: 2.2\nif p\n a\nelif q\n b\nelse\n c"
+      "cabal-version: 2.2\n\nif p\n  a\nelif q\n  b\nelse\n  c\n"
 
   Hspec.it "does not group 'else' with anything else" $ do
     expectGilded

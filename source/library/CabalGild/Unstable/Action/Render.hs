@@ -9,6 +9,7 @@ import qualified CabalGild.Unstable.Type.Comment as Comment
 import qualified CabalGild.Unstable.Type.Line as Line
 import qualified Data.ByteString as ByteString
 import qualified Data.Function as Function
+import qualified Distribution.CabalSpecVersion as CabalSpecVersion
 import qualified Distribution.Compat.Lens as Lens
 import qualified Distribution.Fields as Fields
 import qualified Distribution.Parsec.Position as Position
@@ -17,32 +18,34 @@ import qualified Distribution.Parsec.Position as Position
 -- actions.
 run ::
   (Applicative m) =>
+  CabalSpecVersion.CabalSpecVersion ->
   ([Fields.Field (Position.Position, [Comment.Comment p])], [Comment.Comment p]) ->
   m ByteString.ByteString
-run = pure . uncurry toByteString
+run csv = pure . uncurry (toByteString csv)
 
 -- | Renders the given fields and comments to a byte string.
 toByteString ::
+  CabalSpecVersion.CabalSpecVersion ->
   [Fields.Field (Position.Position, [Comment.Comment p])] ->
   [Comment.Comment p] ->
   ByteString.ByteString
-toByteString fs cs =
+toByteString csv fs cs =
   let i = 0 :: Int
    in Block.toByteString
         . Lens.set Block.lineBeforeLens False
         . Lens.set Block.lineAfterLens True
-        $ fields i fs <> comments i cs
+        $ fields csv i fs <> comments i cs
 
 -- | Renders the given fields to a block at the given indentation level.
-fields :: Int -> [Fields.Field (Position.Position, [Comment.Comment p])] -> Block.Block
-fields = foldMap . field
+fields :: CabalSpecVersion.CabalSpecVersion -> Int -> [Fields.Field (Position.Position, [Comment.Comment p])] -> Block.Block
+fields csv = foldMap . field csv
 
 -- | Renders the given field to a block at the given indentation level.
 --
 -- If a field only has one line and no comments, then it can be rendered all on
 -- one line.
-field :: Int -> Fields.Field (Position.Position, [Comment.Comment p]) -> Block.Block
-field i f = case f of
+field :: CabalSpecVersion.CabalSpecVersion -> Int -> Fields.Field (Position.Position, [Comment.Comment p]) -> Block.Block
+field csv i f = case f of
   Fields.Field n fls -> case fls of
     [fl]
       | null . snd $ FieldLine.annotation fl,
@@ -62,8 +65,8 @@ field i f = case f of
               }
           <> fieldLines (i + 1) fls
   Fields.Section n sas fs ->
-    Lens.set Block.lineBeforeLens (not $ Name.isElif n || Name.isElse n)
-      . Lens.set Block.lineAfterLens (not $ Name.isIf n || Name.isElif n)
+    Lens.set Block.lineBeforeLens (not $ Name.isElif csv n || Name.isElse n)
+      . Lens.set Block.lineAfterLens (not $ Name.isIf n || Name.isElif csv n)
       $ comments i (snd $ Name.annotation n)
         <> comments i (concatMap (snd . SectionArg.annotation) sas)
         <> Block.fromLine
@@ -71,7 +74,7 @@ field i f = case f of
             { Line.indent = i,
               Line.chunk = Lens.set Chunk.spaceAfterLens True (name n) <> sectionArgs sas
             }
-        <> Lens.set Block.lineBeforeLens False (fields (i + 1) fs)
+        <> Lens.set Block.lineBeforeLens False (fields csv (i + 1) fs)
 
 -- | Returns true if the two positions are on the same row.
 sameRow :: (Position.Position, cs) -> (Position.Position, cs) -> Bool
@@ -108,25 +111,13 @@ sectionArgs = Lens.set Chunk.spaceBeforeLens True . foldMap sectionArg
 
 -- | Renders the given section argument to a chunk.
 sectionArg :: Fields.SectionArg a -> Chunk.Chunk
-sectionArg sa = case sa of
-  Fields.SecArgName _ bs ->
-    Lens.set Chunk.spaceBeforeLens True
-      . Lens.set Chunk.spaceAfterLens True
-      $ Chunk.fromByteString bs
-  Fields.SecArgStr _ bs ->
-    Lens.set Chunk.spaceBeforeLens True
-      . Lens.set Chunk.spaceAfterLens True
-      . Chunk.fromByteString
-      . flip ByteString.snoc 0x22
-      $ ByteString.cons 0x22 bs
-  Fields.SecArgOther _ bs ->
-    let b =
-          bs /= ByteString.singleton 0x21 -- !
-            && bs /= ByteString.singleton 0x28 -- (
-            && bs /= ByteString.singleton 0x29 -- )
-     in Lens.set Chunk.spaceBeforeLens b
-          . Lens.set Chunk.spaceAfterLens b
-          $ Chunk.fromByteString bs
+sectionArg sa = Lens.set Chunk.spaceBeforeLens True
+  . Lens.set Chunk.spaceAfterLens True
+  . Chunk.fromByteString
+  $ case sa of
+    Fields.SecArgName _ bs -> bs
+    Fields.SecArgStr _ bs -> flip ByteString.snoc 0x22 $ ByteString.cons 0x22 bs
+    Fields.SecArgOther _ bs -> bs
 
 -- | Renders the given comments to a block at the given indentation level.
 comments :: Int -> [Comment.Comment a] -> Block.Block
