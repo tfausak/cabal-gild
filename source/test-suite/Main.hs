@@ -523,11 +523,6 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "if ! impl ( ghc >= 9.8 )"
       "if !impl(ghc >=9.8)\n"
 
-  Hspec.it "" $ do
-    expectGilded
-      "if os ( darwin ) && arch ( aarch64 )"
-      "if os(osx) && arch(aarch64)\n"
-
   Hspec.describe "conditionals" $ do
     Hspec.it "formats variable" $ do
       expectGilded
@@ -604,6 +599,11 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
         "if impl ( GHC > 0 )"
         "if impl(ghc >0)\n"
 
+    Hspec.it "formats impl without version range" $ do
+      expectGilded
+        "if impl ( ghc )"
+        "if impl(ghc >=0)\n"
+
     Hspec.it "formats os" $ do
       expectGilded
         "if os ( osx )"
@@ -629,15 +629,30 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
         "cabal-version: 2.2\nelif flag ( x )"
         "cabal-version: 2.2\nelif flag(x)\n"
 
-    Hspec.it "keeps necessary parentheses around or" $ do
+    Hspec.it "keeps explicit parentheses" $ do
       expectGilded
-        "if (flag(x) || flag(y)) && flag(z)"
-        "if (flag(x) || flag(y)) && flag(z)\n"
+        "if ( true )"
+        "if (true)\n"
 
-    Hspec.it "keeps necessary parentheses around and" $ do
+    Hspec.it "formats multiple nots" $ do
       expectGilded
-        "if !(flag(x) && flag(y))"
-        "if !(flag(x) && flag(y))\n"
+        "if ! ! flag ( a )"
+        "if !!flag(a)\n"
+
+    Hspec.it "formats multiple ands" $ do
+      expectGilded
+        "if flag ( a ) && flag ( b ) && flag ( c )"
+        "if flag(a) && flag(b) && flag(c)\n"
+
+    Hspec.it "formats multiple ors" $ do
+      expectGilded
+        "if flag ( a ) || flag ( b ) || flag ( c )"
+        "if flag(a) || flag(b) || flag(c)\n"
+
+    Hspec.it "formats mixed operators" $ do
+      expectGilded
+        "if ! flag ( a ) && flag ( b ) || flag ( c )"
+        "if !flag(a) && flag(b) || flag(c)\n"
 
   Hspec.describe "license-files" $ do
     -- These tests apply to other "list" fields as well. The license-files

@@ -38,7 +38,7 @@ common library
     -Wno-safe
     -Wno-unsafe
 
-  if impl(ghc >= 9.8)
+  if impl(ghc >=9.8)
     ghc-options: -Wno-missing-role-annotations
 
   if flag(pedantic)
