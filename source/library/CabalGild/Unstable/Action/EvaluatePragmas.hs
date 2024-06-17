@@ -23,6 +23,7 @@ import qualified Distribution.Utils.Generic as Utils
 import qualified System.Console.GetOpt as GetOpt
 import qualified System.FilePath as FilePath
 import qualified System.FilePath.Windows as FilePath.Windows
+import qualified System.FilePattern as FilePattern
 
 -- | High level wrapper around 'field' that makes this action easier to compose
 -- with other actions.
@@ -62,7 +63,7 @@ discover p n fls ds = do
   let (strs, args, opts, errs) =
         GetOpt.getOpt'
           GetOpt.Permute
-          [ GetOpt.Option [] ["exclude"] (GetOpt.ReqArg id "FILE") ""
+          [ GetOpt.Option [] ["exclude"] (GetOpt.ReqArg id "PATTERN") ""
           ]
           ds
   mapM_ (Exception.throwM . UnknownOption.fromString) opts
@@ -79,12 +80,12 @@ discover p n fls ds = do
         maybe (fst $ Name.annotation n) (fst . FieldLine.annotation) $
           Maybe.listToMaybe fls
       -- Exclusion must be computed relative to the directory containing the cabal file (see #71)
-      excludedFiles = Set.fromList $ fmap (normalize . FilePath.combine root) strs
+      exclusions = fmap ((FilePattern.?==) . normalize . FilePath.combine root) strs
       fieldLines =
         zipWith ModuleName.toFieldLine ((,) position <$> comments : repeat [])
           . Maybe.mapMaybe (toModuleName directories)
           . Maybe.mapMaybe (stripAnyExtension extensions)
-          . filter (`Set.notMember` excludedFiles)
+          . filter (\x -> not $ any ($ x) exclusions)
           $ fmap normalize files
       -- This isn't great, but the comments have to go /somewhere/.
       name =

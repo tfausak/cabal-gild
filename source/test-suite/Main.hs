@@ -1256,6 +1256,25 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.singleton Output.Stdout (String.toUtf8 "library\n  -- cabal-gild: discover src --exclude src/N.hs\n  exposed-modules: M\n")
 
+  Hspec.it "allows excluding simple wildcards" $ do
+    expectDiscover
+      [(".", ["M.hs", "MSpec.hs"])]
+      "library\n -- cabal-gild: discover --exclude *Spec.hs\n exposed-modules:"
+      "library\n  -- cabal-gild: discover --exclude *Spec.hs\n  exposed-modules: M\n"
+
+  Hspec.it "allows excluding complex wildcards" $ do
+    expectDiscover
+      [ ( ".",
+          [ "A.hs",
+            FilePath.combine "A" "B.hs",
+            FilePath.combine "X" "C.hs",
+            FilePath.joinPath ["A", "X", "D.hs"]
+          ]
+        )
+      ]
+      "library\n -- cabal-gild: discover --exclude **/X/**/*.hs\n exposed-modules:"
+      "library\n  -- cabal-gild: discover --exclude **/X/**/*.hs\n  exposed-modules:\n    A\n    A.B\n"
+
   Hspec.it "fails when discovering with an unknown option" $ do
     let (a, s, w) =
           runGild
@@ -1272,7 +1291,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             []
             [(Input.Stdin, String.toUtf8 "-- cabal-gild: discover --exclude\nsignatures:")]
             []
-    a `shouldBeFailure` InvalidOption.InvalidOption "option `--exclude' requires an argument FILE"
+    a `shouldBeFailure` InvalidOption.InvalidOption "option `--exclude' requires an argument PATTERN"
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
 
