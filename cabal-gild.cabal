@@ -67,7 +67,7 @@ library
     text ^>=2.0.2 || ^>=2.1,
     transformers ^>=0.6.1.0,
 
-  -- cabal-gild: discover source/library --exclude=**/Action/*.hs
+  -- cabal-gild: discover source/library
   exposed-modules:
     CabalGild
     CabalGild.Unstable.Action.AttachComments
