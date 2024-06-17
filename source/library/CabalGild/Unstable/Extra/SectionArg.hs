@@ -1,5 +1,6 @@
 module CabalGild.Unstable.Extra.SectionArg where
 
+import qualified Data.ByteString as ByteString
 import qualified Distribution.Compat.Lens as Lens
 import qualified Distribution.Fields as Fields
 
@@ -21,3 +22,10 @@ annotationLens f sa =
     )
     . f
     $ annotation sa
+
+-- | Extracts the value from the given 'Fields.SectionArg'.
+value :: Fields.SectionArg a -> ByteString.ByteString
+value sa = case sa of
+  Fields.SecArgName _ x -> x
+  Fields.SecArgStr _ x -> x
+  Fields.SecArgOther _ x -> x

@@ -6,7 +6,7 @@ import qualified CabalGild.Unstable.Extra.FieldLine as FieldLine
 import qualified CabalGild.Unstable.Extra.Name as Name
 import qualified CabalGild.Unstable.Extra.SectionArg as SectionArg
 import qualified CabalGild.Unstable.Extra.String as String
-import qualified CabalGild.Unstable.Type.Condition
+import qualified CabalGild.Unstable.Type.Condition as Condition
 import qualified CabalGild.Unstable.Type.Dependency as Dependency
 import qualified CabalGild.Unstable.Type.ExeDependency as ExeDependency
 import qualified CabalGild.Unstable.Type.Extension as Extension
@@ -18,20 +18,17 @@ import qualified CabalGild.Unstable.Type.ModuleReexport as ModuleReexport
 import qualified CabalGild.Unstable.Type.PkgconfigDependency as PkgconfigDependency
 import qualified CabalGild.Unstable.Type.SomeParsecParser as SPP
 import qualified CabalGild.Unstable.Type.TestedWith as TestedWith
+import qualified CabalGild.Unstable.Type.Variable as Variable
+import qualified Data.ByteString as ByteString
 import qualified Data.Functor.Identity as Identity
 import qualified Data.Map as Map
 import qualified Data.Maybe as Maybe
 import qualified Distribution.CabalSpecVersion as CabalSpecVersion
-import qualified Distribution.Compat.Lens as Lens
 import qualified Distribution.FieldGrammar.Newtypes as Newtypes
 import qualified Distribution.Fields as Fields
-import qualified Distribution.Fields.ConfVar as ConfVar
 import qualified Distribution.ModuleName as ModuleName
 import qualified Distribution.Parsec as Parsec
-import qualified Distribution.Parsec.Position as Position
-import qualified Distribution.Pretty as Pretty
-import qualified Distribution.Types.Condition as Condition
-import qualified Distribution.Types.ConfVar as ConfVar
+import qualified Distribution.Parsec.FieldLineStream as FieldLineStream
 import qualified Text.PrettyPrint as PrettyPrint
 
 -- | A wrapper around 'field' to allow this to be composed with other actions.
@@ -59,15 +56,10 @@ field csv f = case f of
        in Fields.Field n $ fieldLines csv position fls spp
   Fields.Section n sas fs ->
     let result =
-          snd
-            . Fields.runParseResult
-            -- TODO: Write my own parser? It would be nice to have something
-            -- like `:: Parser confVar -> Parser (Condition confVar)`. That way
-            -- I can write a parser for `ConfVar` that is permissive, which
-            -- will allow for architecture aliases (among other things). Or
-            -- even pass in the `ClassificationStrictness` to the parser.
-            . ConfVar.parseConditionConfVar
-            $ fmap (Lens.set SectionArg.annotationLens Position.zeroPos) sas
+          Parsec.runParsecParser' csv (Condition.parseCondition Variable.parseVariable) "<conditional>"
+            . FieldLineStream.fieldLineStreamFromBS
+            . ByteString.intercalate (ByteString.singleton 0x20)
+            $ fmap SectionArg.value sas
         position =
           fst
             . maybe (Name.annotation n) SectionArg.annotation
@@ -76,7 +68,12 @@ field csv f = case f of
           if isConditional csv n
             then case result of
               Left _ -> sas
-              Right c -> renderCondition (position, []) c
+              Right c ->
+                pure
+                  . Fields.SecArgName (position, [])
+                  . String.toUtf8
+                  . PrettyPrint.renderStyle style
+                  $ Condition.prettyCondition Variable.prettyVariable c
             else sas
      in Fields.Section n newSas $ fmap (field csv) fs
 
@@ -84,48 +81,6 @@ isConditional :: CabalSpecVersion.CabalSpecVersion -> Fields.Name p -> Bool
 isConditional csv n =
   Name.isIf n
     || Name.isElif csv n
-
--- TODO: Reimplement using `ShowS`.
-renderCondition :: a -> Condition.Condition ConfVar.ConfVar -> [Fields.SectionArg a]
-renderCondition a =
-  pure
-    . Fields.SecArgOther a
-    . String.toUtf8
-    . PrettyPrint.renderStyle style
-    . prettyCondition
-
-prettyCondition :: Condition.Condition ConfVar.ConfVar -> PrettyPrint.Doc
-prettyCondition c = case c of
-  Condition.Var x -> prettyConfVar x
-  Condition.Lit x -> PrettyPrint.text $ if x then "true" else "false"
-  Condition.CNot x -> PrettyPrint.char '!' <> prettyCondition x
-  Condition.COr x y ->
-    PrettyPrint.hsep
-      [ prettyCondition x,
-        PrettyPrint.text "||",
-        prettyCondition y
-      ]
-  Condition.CAnd x y ->
-    PrettyPrint.hsep
-      [ prettyCondition x,
-        PrettyPrint.text "&&",
-        prettyCondition y
-      ]
-
-prettyConfVar :: ConfVar.ConfVar -> PrettyPrint.Doc
-prettyConfVar cv = case cv of
-  ConfVar.OS x ->
-    PrettyPrint.text "os"
-      <> PrettyPrint.parens (Pretty.pretty x)
-  ConfVar.Arch x ->
-    PrettyPrint.text "arch"
-      <> PrettyPrint.parens (Pretty.pretty x)
-  ConfVar.PackageFlag x ->
-    PrettyPrint.text "flag"
-      <> PrettyPrint.parens (Pretty.pretty x)
-  ConfVar.Impl x y ->
-    PrettyPrint.text "impl"
-      <> PrettyPrint.parens (PrettyPrint.hsep [Pretty.pretty x, Pretty.pretty y])
 
 -- | Attempts to parse the given field lines using the given parser. If parsing
 -- fails, the field lines will be returned as is. Comments within the field

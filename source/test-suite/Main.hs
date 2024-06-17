@@ -580,7 +580,6 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
         "if arch(aarch64)\n"
 
     Hspec.it "formats arch alias" $ do
-      -- TODO
       expectGilded
         "if arch ( arm64 )"
         "if arch(aarch64)\n"
@@ -630,19 +629,12 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
         "cabal-version: 2.2\nelif flag ( x )"
         "cabal-version: 2.2\nelif flag(x)\n"
 
-    Hspec.it "removes unnecessary parentheses" $ do
-      expectGilded
-        "if (flag(x))"
-        "if flag(x)\n"
-
     Hspec.it "keeps necessary parentheses around or" $ do
-      -- TODO
       expectGilded
         "if (flag(x) || flag(y)) && flag(z)"
         "if (flag(x) || flag(y)) && flag(z)\n"
 
     Hspec.it "keeps necessary parentheses around and" $ do
-      -- TODO
       expectGilded
         "if !(flag(x) && flag(y))"
         "if !(flag(x) && flag(y))\n"

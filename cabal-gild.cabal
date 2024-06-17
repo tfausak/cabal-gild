@@ -91,6 +91,7 @@ library
     CabalGild.Unstable.Exception.UnexpectedArgument
     CabalGild.Unstable.Exception.UnknownOption
     CabalGild.Unstable.Extra.ByteString
+    CabalGild.Unstable.Extra.CharParsing
     CabalGild.Unstable.Extra.Either
     CabalGild.Unstable.Extra.Field
     CabalGild.Unstable.Extra.FieldLine
@@ -103,6 +104,7 @@ library
     CabalGild.Unstable.Type.Block
     CabalGild.Unstable.Type.Chunk
     CabalGild.Unstable.Type.Comment
+    CabalGild.Unstable.Type.Condition
     CabalGild.Unstable.Type.Config
     CabalGild.Unstable.Type.Context
     CabalGild.Unstable.Type.Dependency
@@ -127,6 +129,7 @@ library
     CabalGild.Unstable.Type.Set
     CabalGild.Unstable.Type.SomeParsecParser
     CabalGild.Unstable.Type.TestedWith
+    CabalGild.Unstable.Type.Variable
     CabalGild.Unstable.Type.VersionRange
 
   hs-source-dirs: source/library
