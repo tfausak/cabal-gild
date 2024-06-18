@@ -1397,6 +1397,18 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "f:\ng: a"
       "f:\ng: a\n"
 
+  Hspec.it "supports including a module" $ do
+    expectDiscover
+      [["M.hs"], ["N.hs"]]
+      "library\n -- cabal-gild: discover --include M.hs\n exposed-modules:"
+      "library\n  -- cabal-gild: discover --include M.hs\n  exposed-modules: M\n"
+
+  Hspec.it "supports including a pattern" $ do
+    expectDiscover
+      [["M1.hs"], ["M2.hs"], ["N.hs"]]
+      "library\n -- cabal-gild: discover --include M*.hs\n exposed-modules:"
+      "library\n  -- cabal-gild: discover --include M*.hs\n  exposed-modules:\n    M1\n    M2\n"
+
   Hspec.around_ withTemporaryDirectory
     . Hspec.it "discovers modules on the file system"
     $ do
