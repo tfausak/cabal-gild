@@ -13,6 +13,7 @@ import qualified Control.Monad as Monad
 import qualified Control.Monad.Catch as Exception
 import qualified Control.Monad.Trans.Class as Trans
 import qualified Control.Monad.Trans.Maybe as MaybeT
+import qualified Data.Containers.ListUtils as List
 import qualified Data.Maybe as Maybe
 import qualified Data.Set as Set
 import qualified Distribution.Compat.Lens as Lens
@@ -69,15 +70,14 @@ discover p n fls ds = do
   mapM_ (Exception.throwM . InvalidOption.fromString) errs
   let root = FilePath.takeDirectory p
       directories =
-        Set.toList
-          . Set.fromList
+        List.nubOrd
           . fmap
             ( FilePath.dropTrailingPathSeparator
                 . normalize
                 . FilePath.combine root
             )
           $ if null args then ["."] else args
-  let exclusions = fmap (normalize . FilePath.combine root) strs
+  let exclusions = List.nubOrd $ fmap (normalize . FilePath.combine root) strs
   files <-
     Trans.lift $
       MonadWalk.walk
