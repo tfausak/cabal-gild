@@ -23,7 +23,6 @@ import qualified Distribution.Utils.Generic as Utils
 import qualified System.Console.GetOpt as GetOpt
 import qualified System.FilePath as FilePath
 import qualified System.FilePath.Windows as FilePath.Windows
-import qualified System.FilePattern as FilePattern
 
 -- | High level wrapper around 'field' that makes this action easier to compose
 -- with other actions.
@@ -70,23 +69,29 @@ discover p n fls ds = do
   mapM_ (Exception.throwM . InvalidOption.fromString) errs
   let root = FilePath.takeDirectory p
       directories =
-        FilePath.dropTrailingPathSeparator
-          . normalize
-          . FilePath.combine root
-          <$> if null args then ["."] else args
-  files <- Trans.lift . fmap mconcat $ traverse MonadWalk.walk directories
+        Set.toList
+          . Set.fromList
+          . fmap
+            ( FilePath.dropTrailingPathSeparator
+                . normalize
+                . FilePath.combine root
+            )
+          $ if null args then ["."] else args
+  let exclusions = fmap (normalize . FilePath.combine root) strs
+  files <-
+    Trans.lift $
+      MonadWalk.walk
+        "."
+        (fmap (\d -> normalize $ FilePath.joinPath [d, "**"]) directories)
+        exclusions
   let comments = concatMap (snd . FieldLine.annotation) fls
       position =
         maybe (fst $ Name.annotation n) (fst . FieldLine.annotation) $
           Maybe.listToMaybe fls
-      -- Exclusion must be computed relative to the directory containing the cabal file (see #71)
-      exclusions = fmap ((FilePattern.?==) . normalize . FilePath.combine root) strs
       fieldLines =
         zipWith ModuleName.toFieldLine ((,) position <$> comments : repeat [])
           . Maybe.mapMaybe (toModuleName directories)
-          . Maybe.mapMaybe (stripAnyExtension extensions)
-          . filter (\x -> not $ any ($ x) exclusions)
-          $ fmap normalize files
+          $ Maybe.mapMaybe (stripAnyExtension extensions . normalize) files
       -- This isn't great, but the comments have to go /somewhere/.
       name =
         if null fieldLines

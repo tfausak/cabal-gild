@@ -28,6 +28,7 @@ import qualified GHC.Stack as Stack
 import qualified System.Directory as Directory
 import qualified System.Exit as Exit
 import qualified System.FilePath as FilePath
+import qualified System.FilePattern as FilePattern
 import qualified System.IO.Temp as Temp
 import qualified Test.Hspec as Hspec
 
@@ -218,7 +219,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
           runGild
             ["--stdin", "d/p.cabal"]
             [(Input.Stdin, String.toUtf8 "library\n -- cabal-gild: discover .\n exposed-modules:")]
-            [("d", ["M.hs"])]
+            [["d", "M.hs"]]
     a `Hspec.shouldSatisfy` Either.isRight
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.singleton Output.Stdout (String.toUtf8 "library\n  -- cabal-gild: discover .\n  exposed-modules: M\n")
@@ -1070,97 +1071,96 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
 
   Hspec.it "discovers an exposed module" $ do
     expectDiscover
-      [(".", ["M.hs"])]
+      [["M.hs"]]
       "library\n -- cabal-gild: discover .\n exposed-modules:"
       "library\n  -- cabal-gild: discover .\n  exposed-modules: M\n"
 
   Hspec.it "discovers an other module" $ do
     expectDiscover
-      [(".", ["M.hs"])]
+      [["M.hs"]]
       "library\n -- cabal-gild: discover .\n other-modules:"
       "library\n  -- cabal-gild: discover .\n  other-modules: M\n"
 
   Hspec.it "discovers a nested module" $ do
     expectDiscover
-      [(".", [FilePath.combine "N" "O.hs"])]
+      [["N", "O.hs"]]
       "library\n -- cabal-gild: discover .\n exposed-modules:"
       "library\n  -- cabal-gild: discover .\n  exposed-modules: N.O\n"
 
   Hspec.it "discovers multiple modules" $ do
     expectDiscover
-      [(".", ["M.hs", "N.hs"])]
+      [["M.hs"], ["N.hs"]]
       "library\n -- cabal-gild: discover .\n exposed-modules:"
       "library\n  -- cabal-gild: discover .\n  exposed-modules:\n    M\n    N\n"
 
   Hspec.it "discovers no modules" $ do
-    expectDiscover
-      [(".", [])]
+    expectGilded
       "library\n -- cabal-gild: discover .\n exposed-modules:"
       "library\n  -- cabal-gild: discover .\n  exposed-modules:\n"
 
   Hspec.it "discovers a .lhs file" $ do
     expectDiscover
-      [(".", ["M.lhs"])]
+      [["M.lhs"]]
       "library\n -- cabal-gild: discover .\n exposed-modules:"
       "library\n  -- cabal-gild: discover .\n  exposed-modules: M\n"
 
   Hspec.it "discovers a .gc file" $ do
     expectDiscover
-      [(".", ["M.gc"])]
+      [["M.gc"]]
       "library\n -- cabal-gild: discover .\n exposed-modules:"
       "library\n  -- cabal-gild: discover .\n  exposed-modules: M\n"
 
   Hspec.it "discovers a .chs file" $ do
     expectDiscover
-      [(".", ["M.chs"])]
+      [["M.chs"]]
       "library\n -- cabal-gild: discover .\n exposed-modules:"
       "library\n  -- cabal-gild: discover .\n  exposed-modules: M\n"
 
   Hspec.it "discovers a .hsc file" $ do
     expectDiscover
-      [(".", ["M.hsc"])]
+      [["M.hsc"]]
       "library\n -- cabal-gild: discover .\n exposed-modules:"
       "library\n  -- cabal-gild: discover .\n  exposed-modules: M\n"
 
   Hspec.it "discovers a .y file" $ do
     expectDiscover
-      [(".", ["M.y"])]
+      [["M.y"]]
       "library\n -- cabal-gild: discover .\n exposed-modules:"
       "library\n  -- cabal-gild: discover .\n  exposed-modules: M\n"
 
   Hspec.it "discovers a .ly file" $ do
     expectDiscover
-      [(".", ["M.ly"])]
+      [["M.ly"]]
       "library\n -- cabal-gild: discover .\n exposed-modules:"
       "library\n  -- cabal-gild: discover .\n  exposed-modules: M\n"
 
   Hspec.it "discovers a .x file" $ do
     expectDiscover
-      [(".", ["M.x"])]
+      [["M.x"]]
       "library\n -- cabal-gild: discover .\n exposed-modules:"
       "library\n  -- cabal-gild: discover .\n  exposed-modules: M\n"
 
   Hspec.it "discovers a .cpphs file" $ do
     expectDiscover
-      [(".", ["M.cpphs"])]
+      [["M.cpphs"]]
       "library\n -- cabal-gild: discover .\n exposed-modules:"
       "library\n  -- cabal-gild: discover .\n  exposed-modules: M\n"
 
   Hspec.it "discovers a .hsig file" $ do
     expectDiscover
-      [(".", ["M.hsig"])]
+      [["M.hsig"]]
       "library\n -- cabal-gild: discover .\n exposed-modules:"
       "library\n  -- cabal-gild: discover .\n  exposed-modules: M\n"
 
   Hspec.it "discovers a .lhsig file" $ do
     expectDiscover
-      [(".", ["M.lhsig"])]
+      [["M.lhsig"]]
       "library\n -- cabal-gild: discover .\n exposed-modules:"
       "library\n  -- cabal-gild: discover .\n  exposed-modules: M\n"
 
   Hspec.it "discovers a signature" $ do
     expectDiscover
-      [(".", ["S.hsig"])]
+      [["S.hsig"]]
       "library\n -- cabal-gild: discover .\n signatures:"
       "library\n  -- cabal-gild: discover .\n  signatures: S\n"
 
@@ -1181,67 +1181,67 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
 
   Hspec.it "discovers from multiple directories" $ do
     expectDiscover
-      [("d", ["M.hs"]), ("e", ["N.hs"])]
+      [["d", "M.hs"], ["e", "N.hs"]]
       "library\n -- cabal-gild: discover d e\n exposed-modules:"
       "library\n  -- cabal-gild: discover d e\n  exposed-modules:\n    M\n    N\n"
 
   Hspec.it "discovers from a quoted directory" $ do
     expectDiscover
-      [("d", ["M.hs"])]
+      [["d", "M.hs"]]
       "library\n -- cabal-gild: discover \"d\"\n exposed-modules:"
       "library\n  -- cabal-gild: discover \"d\"\n  exposed-modules: M\n"
 
   Hspec.it "discovers from a directory with a space" $ do
     expectDiscover
-      [("s p", ["M.hs"])]
+      [["s p", "M.hs"]]
       "library\n -- cabal-gild: discover \"s p\"\n exposed-modules:"
       "library\n  -- cabal-gild: discover \"s p\"\n  exposed-modules: M\n"
 
   Hspec.it "discovers from the current directory by default" $ do
     expectDiscover
-      [(".", ["M.hs"])]
+      [["M.hs"]]
       "library\n -- cabal-gild: discover\n exposed-modules:"
       "library\n  -- cabal-gild: discover\n  exposed-modules: M\n"
 
   Hspec.it "allows excluding a path when discovering" $ do
     expectDiscover
-      [(".", ["M.hs", "N.hs"])]
+      [["M.hs"], ["N.hs"]]
       "library\n -- cabal-gild: discover --exclude M.hs\n exposed-modules:"
       "library\n  -- cabal-gild: discover --exclude M.hs\n  exposed-modules: N\n"
 
   Hspec.it "allows excluding a nested POSIX path" $ do
     expectDiscover
-      [(".", [FilePath.combine "A" "M.hs", FilePath.combine "B" "M.hs"])]
+      [["A", "M.hs"], ["B", "M.hs"]]
       "library\n -- cabal-gild: discover --exclude B/M.hs\n exposed-modules:"
       "library\n  -- cabal-gild: discover --exclude B/M.hs\n  exposed-modules: A.M\n"
 
   Hspec.it "allows excluding a nested Windows path" $ do
     expectDiscover
-      [(".", [FilePath.combine "A" "M.hs", FilePath.combine "B" "M.hs"])]
+      [["A", "M.hs"], ["B", "M.hs"]]
       "library\n -- cabal-gild: discover --exclude B\\M.hs\n exposed-modules:"
       "library\n  -- cabal-gild: discover --exclude B\\M.hs\n  exposed-modules: A.M\n"
 
   Hspec.it "allows excluding a relative POSIX path" $ do
     expectDiscover
-      [(".", ["M.hs", "N.hs"])]
+      [["M.hs"], ["N.hs"]]
       "library\n -- cabal-gild: discover --exclude ./M.hs\n exposed-modules:"
       "library\n  -- cabal-gild: discover --exclude ./M.hs\n  exposed-modules: N\n"
 
   Hspec.it "allows excluding a relative Windows path" $ do
     expectDiscover
-      [(".", ["M.hs", "N.hs"])]
+      [["M.hs"], ["N.hs"]]
       "library\n -- cabal-gild: discover --exclude .\\M.hs\n exposed-modules:"
       "library\n  -- cabal-gild: discover --exclude .\\M.hs\n  exposed-modules: N\n"
 
   Hspec.it "allows excluding multiple paths" $ do
     expectDiscover
-      [(".", ["M.hs", "N.hs", "O.hs"])]
+      [["M.hs"], ["N.hs"], ["O.hs"]]
       "library\n -- cabal-gild: discover --exclude M.hs --exclude O.hs\n exposed-modules:"
       "library\n  -- cabal-gild: discover --exclude M.hs --exclude O.hs\n  exposed-modules: N\n"
 
   Hspec.it "allows excluding paths that don't match anything" $ do
     expectDiscover
-      [(".", ["M.hs"])]
+      [["M.hs"]]
       "library\n -- cabal-gild: discover --exclude N.hs\n exposed-modules:"
       "library\n  -- cabal-gild: discover --exclude N.hs\n  exposed-modules: M\n"
 
@@ -1251,27 +1251,20 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
           runGild
             ["--input", FilePath.combine d "io.cabal"]
             [(Input.File $ FilePath.combine d "io.cabal", String.toUtf8 "library\n -- cabal-gild: discover src --exclude src/N.hs\n exposed-modules:")]
-            [(FilePath.combine d "src", ["M.hs", "N.hs"])]
+            [[d, "src", "M.hs"], [d, "src", "N.hs"]]
     a `Hspec.shouldSatisfy` Either.isRight
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.singleton Output.Stdout (String.toUtf8 "library\n  -- cabal-gild: discover src --exclude src/N.hs\n  exposed-modules: M\n")
 
   Hspec.it "allows excluding simple wildcards" $ do
     expectDiscover
-      [(".", ["M.hs", "MSpec.hs"])]
+      [["M.hs"], ["MSpec.hs"]]
       "library\n -- cabal-gild: discover --exclude *Spec.hs\n exposed-modules:"
       "library\n  -- cabal-gild: discover --exclude *Spec.hs\n  exposed-modules: M\n"
 
   Hspec.it "allows excluding complex wildcards" $ do
     expectDiscover
-      [ ( ".",
-          [ "A.hs",
-            FilePath.combine "A" "B.hs",
-            FilePath.combine "X" "C.hs",
-            FilePath.joinPath ["A", "X", "D.hs"]
-          ]
-        )
-      ]
+      [["A.hs"], ["A", "B.hs"], ["X", "C.hs"], ["A", "X", "D.hs"]]
       "library\n -- cabal-gild: discover --exclude **/X/**/*.hs\n exposed-modules:"
       "library\n  -- cabal-gild: discover --exclude **/X/**/*.hs\n  exposed-modules:\n    A\n    A.B\n"
 
@@ -1297,19 +1290,18 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
 
   Hspec.it "retains comments when discovering" $ do
     expectDiscover
-      [(".", ["M.hs"])]
+      [["M.hs"]]
       "library\n -- cabal-gild: discover .\n exposed-modules:\n  -- c\n  N"
       "library\n  -- cabal-gild: discover .\n  exposed-modules:\n    -- c\n    M\n"
 
   Hspec.it "concatenates comments when discovering" $ do
     expectDiscover
-      [(".", ["M.hs"])]
+      [["M.hs"]]
       "library\n -- cabal-gild: discover .\n exposed-modules:\n  -- c\n  N\n  -- d\n  O"
       "library\n  -- cabal-gild: discover .\n  exposed-modules:\n    -- c\n    -- d\n    M\n"
 
   Hspec.it "retains comments even when no modules are discovered" $ do
-    expectDiscover
-      [(".", [])]
+    expectGilded
       "library\n -- cabal-gild: discover .\n exposed-modules:\n  -- c\n  N"
       "library\n  -- c\n  -- cabal-gild: discover .\n  exposed-modules:\n"
 
@@ -1390,7 +1382,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
 
   Hspec.it "keeps output on multiple lines for pragmas" $ do
     expectDiscover
-      [(".", ["M.hs"])]
+      [["M.hs"]]
       "library\n -- cabal-gild: discover .\n exposed-modules:\n  ..."
       "library\n  -- cabal-gild: discover .\n  exposed-modules:\n    M\n"
 
@@ -1447,7 +1439,7 @@ expectGilded = expectDiscover []
 
 expectStable ::
   (Stack.HasCallStack) =>
-  [(FilePath, [FilePath])] ->
+  [[String]] ->
   ByteString.ByteString ->
   Hspec.Expectation
 expectStable files input = do
@@ -1461,7 +1453,7 @@ expectStable files input = do
 
 expectDiscover ::
   (Stack.HasCallStack) =>
-  [(FilePath, [FilePath])] ->
+  [[String]] ->
   String ->
   String ->
   Hspec.Expectation
@@ -1478,13 +1470,13 @@ expectDiscover files input expected = do
 runGild ::
   [String] ->
   [(Input.Input, ByteString.ByteString)] ->
-  [(FilePath, [FilePath])] ->
+  [[String]] ->
   (Either E (), S, W)
 runGild arguments inputs files =
   runTest
     (Gild.mainWith arguments)
     ( Map.fromList inputs,
-      Map.mapWithKey (\d fs -> FilePath.combine d <$> fs) $ Map.fromList files
+      Map.singleton "." (fmap FilePath.joinPath files)
     )
     Map.empty
 
@@ -1520,11 +1512,15 @@ instance (Monad m) => Exception.MonadThrow (TestT m) where
   throwM = TestT . ExceptT.throwE . Exception.toException
 
 instance (Monad m) => MonadWalk.MonadWalk (TestT m) where
-  walk p = do
-    m <- TestT . Trans.lift . RWST.asks $ Map.lookup p . snd
-    case m of
-      Nothing -> Exception.throwM . userError $ "walk " <> show p
-      Just x -> pure x
+  walk d i x = do
+    result <- TestT . Trans.lift . RWST.asks $ Map.lookup d . snd
+    case result of
+      Nothing -> Exception.throwM . userError $ "walk " <> show d
+      Just fs ->
+        pure $
+          filter
+            (\f -> any (FilePattern.?== f) i && not (any (FilePattern.?== f) x))
+            fs
 
 instance (Monad m) => MonadWrite.MonadWrite (TestT m) where
   write k = TestT . Trans.lift . RWST.modify . Map.insert k
