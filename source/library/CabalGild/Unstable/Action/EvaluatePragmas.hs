@@ -13,6 +13,7 @@ import qualified Control.Monad as Monad
 import qualified Control.Monad.Catch as Exception
 import qualified Control.Monad.Trans.Class as Trans
 import qualified Control.Monad.Trans.Maybe as MaybeT
+import qualified Data.Containers.ListUtils as List
 import qualified Data.Maybe as Maybe
 import qualified Data.Set as Set
 import qualified Distribution.Compat.Lens as Lens
@@ -62,30 +63,35 @@ discover p n fls ds = do
   let (strs, args, opts, errs) =
         GetOpt.getOpt'
           GetOpt.Permute
-          [ GetOpt.Option [] ["exclude"] (GetOpt.ReqArg id "FILE") ""
+          [ GetOpt.Option [] ["exclude"] (GetOpt.ReqArg id "PATTERN") ""
           ]
           ds
   mapM_ (Exception.throwM . UnknownOption.fromString) opts
   mapM_ (Exception.throwM . InvalidOption.fromString) errs
   let root = FilePath.takeDirectory p
       directories =
-        FilePath.dropTrailingPathSeparator
-          . normalize
-          . FilePath.combine root
-          <$> if null args then ["."] else args
-  files <- Trans.lift . fmap mconcat $ traverse MonadWalk.walk directories
+        List.nubOrd
+          . fmap
+            ( FilePath.dropTrailingPathSeparator
+                . normalize
+                . FilePath.combine root
+            )
+          $ if null args then ["."] else args
+  let exclusions = List.nubOrd $ fmap (normalize . FilePath.combine root) strs
+  files <-
+    Trans.lift $
+      MonadWalk.walk
+        "."
+        (fmap (\d -> normalize $ FilePath.joinPath [d, "**"]) directories)
+        exclusions
   let comments = concatMap (snd . FieldLine.annotation) fls
       position =
         maybe (fst $ Name.annotation n) (fst . FieldLine.annotation) $
           Maybe.listToMaybe fls
-      -- Exclusion must be computed relative to the directory containing the cabal file (see #71)
-      excludedFiles = Set.fromList $ fmap (normalize . FilePath.combine root) strs
       fieldLines =
         zipWith ModuleName.toFieldLine ((,) position <$> comments : repeat [])
           . Maybe.mapMaybe (toModuleName directories)
-          . Maybe.mapMaybe (stripAnyExtension extensions)
-          . filter (`Set.notMember` excludedFiles)
-          $ fmap normalize files
+          $ Maybe.mapMaybe (stripAnyExtension extensions . normalize) files
       -- This isn't great, but the comments have to go /somewhere/.
       name =
         if null fieldLines
