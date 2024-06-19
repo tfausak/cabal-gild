@@ -8,13 +8,15 @@ import qualified CabalGild.Unstable.Extra.ModuleName as ModuleName
 import qualified CabalGild.Unstable.Extra.Name as Name
 import qualified CabalGild.Unstable.Extra.String as String
 import qualified CabalGild.Unstable.Type.Comment as Comment
+import qualified CabalGild.Unstable.Type.DiscoverTarget as DiscoverTarget
 import qualified CabalGild.Unstable.Type.Pragma as Pragma
-import qualified Control.Monad as Monad
+import qualified Control.Applicative as Applicative
 import qualified Control.Monad.Catch as Exception
 import qualified Control.Monad.Trans.Class as Trans
 import qualified Control.Monad.Trans.Maybe as MaybeT
 import qualified Data.Containers.ListUtils as List
 import qualified Data.Either as Either
+import qualified Data.Map as Map
 import qualified Data.Maybe as Maybe
 import qualified Data.Set as Set
 import qualified Distribution.Compat.Lens as Lens
@@ -44,11 +46,13 @@ field ::
   m (Fields.Field (p, [Comment.Comment q]))
 field p f = case f of
   Fields.Field n fls -> fmap (Maybe.fromMaybe f) . MaybeT.runMaybeT $ do
-    Monad.guard $ Set.member (Name.value n) relevantFieldNames
+    dt <-
+      maybe Applicative.empty pure $
+        Map.lookup (Name.value n) relevantFieldNames
     comment <- hoistMaybe . Utils.safeLast . snd $ Name.annotation n
     pragma <- hoistMaybe . Parsec.simpleParsecBS $ Comment.value comment
     case pragma of
-      Pragma.Discover ds -> discover p n fls ds
+      Pragma.Discover ds -> discover p n fls dt ds
   Fields.Section n sas fs -> Fields.Section n sas <$> traverse (field p) fs
 
 -- | If modules are discovered for a field, that fields lines are completely
@@ -58,9 +62,10 @@ discover ::
   FilePath ->
   Fields.Name (p, [c]) ->
   [Fields.FieldLine (p, [c])] ->
+  DiscoverTarget.DiscoverTarget ->
   [String] ->
   MaybeT.MaybeT m (Fields.Field (p, [c]))
-discover p n fls ds = do
+discover p n fls dt ds = do
   let (flgs, args, opts, errs) =
         GetOpt.getOpt'
           GetOpt.Permute
@@ -90,10 +95,16 @@ discover p n fls ds = do
       position =
         maybe (fst $ Name.annotation n) (fst . FieldLine.annotation) $
           Maybe.listToMaybe fls
-      fieldLines =
-        zipWith ModuleName.toFieldLine ((,) position <$> comments : repeat [])
-          . Maybe.mapMaybe (toModuleName directories)
-          $ Maybe.mapMaybe (stripAnyExtension extensions . normalize) files
+      fieldLines = case dt of
+        DiscoverTarget.Modules ->
+          zipWith ModuleName.toFieldLine ((,) position <$> comments : repeat [])
+            . Maybe.mapMaybe (toModuleName directories)
+            $ Maybe.mapMaybe (stripAnyExtension extensions . normalize) files
+        DiscoverTarget.Files ->
+          zipWith
+            (\a -> Fields.FieldLine a . String.toUtf8)
+            ((,) position <$> comments : repeat [])
+            files
       -- This isn't great, but the comments have to go /somewhere/.
       name =
         if null fieldLines
@@ -109,15 +120,23 @@ normalize =
 
 -- | These are the names of the fields that can have this action applied to
 -- them.
-relevantFieldNames :: Set.Set Fields.FieldName
+relevantFieldNames :: Map.Map Fields.FieldName DiscoverTarget.DiscoverTarget
 relevantFieldNames =
-  Set.fromList $
-    fmap
-      String.toUtf8
-      [ "exposed-modules",
-        "other-modules",
-        "signatures"
-      ]
+  Map.mapKeys String.toUtf8 . Map.fromList $
+    [ ("asm-sources", DiscoverTarget.Files),
+      ("c-sources", DiscoverTarget.Files),
+      ("cxx-sources", DiscoverTarget.Files),
+      ("data-files", DiscoverTarget.Files),
+      ("exposed-modules", DiscoverTarget.Modules),
+      ("extra-doc-files", DiscoverTarget.Files),
+      ("extra-source-files", DiscoverTarget.Files),
+      ("includes", DiscoverTarget.Files),
+      ("install-includes", DiscoverTarget.Files),
+      ("js-sources", DiscoverTarget.Files),
+      ("license-files", DiscoverTarget.Files),
+      ("other-modules", DiscoverTarget.Modules),
+      ("signatures", DiscoverTarget.Modules)
+    ]
 
 -- | Attempts to strip any of the given extensions from the file path. If any
 -- of them succeed, the result is returned. Otherwise 'Nothing' is returned.
