@@ -83,14 +83,9 @@ discover p n fls ds = do
   let exclusions = List.nubOrd $ fmap (normalize . FilePath.combine root) excs
       inclusions =
         List.nubOrd
-          . concatMap (\i -> fmap (normalize . flip FilePath.combine i) directories)
+          . fmap (normalize . FilePath.combine root)
           $ if null incs then ["**"] else incs
-  files <-
-    Trans.lift $
-      MonadWalk.walk
-        "."
-        inclusions
-        exclusions
+  files <- Trans.lift $ MonadWalk.walk "." inclusions exclusions
   let comments = concatMap (snd . FieldLine.annotation) fls
       position =
         maybe (fst $ Name.annotation n) (fst . FieldLine.annotation) $

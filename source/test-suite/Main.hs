@@ -1409,6 +1409,54 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "library\n -- cabal-gild: discover --include M*.hs\n exposed-modules:"
       "library\n  -- cabal-gild: discover --include M*.hs\n  exposed-modules:\n    M1\n    M2\n"
 
+  Hspec.it "supports including from multiple directories" $ do
+    -- Note that the include pattern needs to be `**/*X.hs` rather than just
+    -- `*X.hs`. That's because it's relative to the package description, not
+    -- the directories listed in the discover pragma.
+    expectDiscover
+      [["a", "AX.hs"], ["a", "M.hs"], ["b", "BX.hs"], ["b", "N.hs"]]
+      "library\n -- cabal-gild: discover a b --include **/*X.hs\n exposed-modules:"
+      "library\n  -- cabal-gild: discover a b --include **/*X.hs\n  exposed-modules:\n    AX\n    BX\n"
+
+  Hspec.it "supports including with multiple patterns" $ do
+    expectDiscover
+      [["M.hs"], ["N.hs"], ["O.hs"]]
+      "library\n -- cabal-gild: discover --include M.hs --include N.hs\n exposed-modules:"
+      "library\n  -- cabal-gild: discover --include M.hs --include N.hs\n  exposed-modules:\n    M\n    N\n"
+
+  Hspec.it "supports including and excluding at the same time" $ do
+    expectDiscover
+      [["XA.hs"], ["XASpec.hs"]]
+      "library\n -- cabal-gild: discover --include X*.hs --exclude *Spec.hs\n exposed-modules:"
+      "library\n  -- cabal-gild: discover --include X*.hs --exclude *Spec.hs\n  exposed-modules: XA\n"
+
+  Hspec.it "does not discover invalid module names" $ do
+    -- `a.M` is not a valid module name because `a` is lowercase. So it should
+    -- not be discovered even though it is included.
+    expectDiscover
+      [["a", "M.hs"]]
+      "library\n -- cabal-gild: discover --include a/**\n exposed-modules:"
+      "library\n  -- cabal-gild: discover --include a/**\n  exposed-modules:\n"
+
+  Hspec.it "discovers valid module names" $ do
+    -- Unlike the previous test, the module `M` should be discovered because
+    -- the directory `a` will be stripped off.
+    expectDiscover
+      [["a", "M.hs"]]
+      "library\n -- cabal-gild: discover a --include a/**\n exposed-modules:"
+      "library\n  -- cabal-gild: discover a --include a/**\n  exposed-modules: M\n"
+
+  Hspec.it "treats included patterns relative to cabal file" $ do
+    let d = "input"
+        (a, s, w) =
+          runGild
+            ["--input", FilePath.combine d "io.cabal"]
+            [(Input.File $ FilePath.combine d "io.cabal", String.toUtf8 "library\n -- cabal-gild: discover src --include src/M.hs\n exposed-modules:")]
+            [[d, "src", "M.hs"], [d, "src", "N.hs"]]
+    a `Hspec.shouldSatisfy` Either.isRight
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.singleton Output.Stdout (String.toUtf8 "library\n  -- cabal-gild: discover src --include src/M.hs\n  exposed-modules: M\n")
+
   Hspec.around_ withTemporaryDirectory
     . Hspec.it "discovers modules on the file system"
     $ do
