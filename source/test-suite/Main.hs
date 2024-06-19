@@ -9,12 +9,12 @@ import qualified CabalGild.Unstable.Exception.CheckFailure as CheckFailure
 import qualified CabalGild.Unstable.Exception.InvalidOption as InvalidOption
 import qualified CabalGild.Unstable.Exception.SpecifiedOutputWithCheckMode as SpecifiedOutputWithCheckMode
 import qualified CabalGild.Unstable.Exception.SpecifiedStdinWithFileInput as SpecifiedStdinWithFileInput
-import qualified CabalGild.Unstable.Exception.UnexpectedArgument as UnexpectedArgument
 import qualified CabalGild.Unstable.Exception.UnknownOption as UnknownOption
 import qualified CabalGild.Unstable.Extra.String as String
 import qualified CabalGild.Unstable.Main as Gild
 import qualified CabalGild.Unstable.Type.Input as Input
 import qualified CabalGild.Unstable.Type.Output as Output
+import qualified CabalGild.Unstable.Type.Severity as Severity
 import qualified Control.Monad.Catch as Exception
 import qualified Control.Monad.Trans.Class as Trans
 import qualified Control.Monad.Trans.Except as ExceptT
@@ -46,11 +46,11 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     w `Hspec.shouldNotBe` []
     s `Hspec.shouldBe` Map.empty
 
-  Hspec.it "fails with an unknown option" $ do
-    let (a, s, w) = runGild ["--unknown"] [] []
-    a `shouldBeFailure` UnknownOption.UnknownOption "--unknown"
-    w `Hspec.shouldBe` []
-    s `Hspec.shouldBe` Map.empty
+  Hspec.it "warns with an unknown option" $ do
+    let (a, s, w) = runGild ["--unknown"] [(Input.Stdin, String.toUtf8 "")] []
+    a `Hspec.shouldSatisfy` Either.isRight
+    w `Hspec.shouldBe` [(Severity.Warn, "WARNING: unknown option: --unknown")]
+    s `Hspec.shouldBe` Map.singleton Output.Stdout (String.toUtf8 "")
 
   Hspec.it "fails with an invalid option" $ do
     let (a, s, w) = runGild ["--help=invalid"] [] []
@@ -58,11 +58,11 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
 
-  Hspec.it "fails with an unexpected argument" $ do
-    let (a, s, w) = runGild ["unexpected"] [] []
-    a `shouldBeFailure` UnexpectedArgument.UnexpectedArgument "unexpected"
-    w `Hspec.shouldBe` []
-    s `Hspec.shouldBe` Map.empty
+  Hspec.it "warns with an unexpected argument" $ do
+    let (a, s, w) = runGild ["unexpected"] [(Input.Stdin, String.toUtf8 "")] []
+    a `Hspec.shouldSatisfy` Either.isRight
+    w `Hspec.shouldBe` [(Severity.Warn, "WARNING: unexpected argument: unexpected")]
+    s `Hspec.shouldBe` Map.singleton Output.Stdout (String.toUtf8 "")
 
   Hspec.it "reads from an input file" $ do
     let (a, s, w) =
@@ -1627,7 +1627,7 @@ type R = (Map.Map Input.Input ByteString.ByteString, Map.Map FilePath [FilePath]
 
 type S = Map.Map Output.Output ByteString.ByteString
 
-type W = [String]
+type W = [(Severity.Severity, String)]
 
 newtype TestT m a = TestT
   { runTestT :: ExceptT.ExceptT E (RWST.RWST R W S m) a
@@ -1635,7 +1635,7 @@ newtype TestT m a = TestT
   deriving (Applicative, Functor, Monad)
 
 instance (Monad m) => MonadLog.MonadLog (TestT m) where
-  logLn = TestT . Trans.lift . RWST.tell . pure
+  logLn s = TestT . Trans.lift . RWST.tell . pure . (,) s
 
 instance (Monad m) => MonadRead.MonadRead (TestT m) where
   read k = do

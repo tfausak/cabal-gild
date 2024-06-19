@@ -13,3 +13,8 @@ fromString :: String -> Input
 fromString s = case s of
   "-" -> Stdin
   _ -> File s
+
+toString :: Input -> String
+toString i = case i of
+  Stdin -> "-"
+  File s -> s

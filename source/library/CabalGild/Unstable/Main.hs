@@ -25,7 +25,9 @@ import qualified CabalGild.Unstable.Type.Mode as Mode
 import qualified CabalGild.Unstable.Type.Output as Output
 import qualified Control.Monad as Monad
 import qualified Control.Monad.Catch as Exception
+import qualified Control.Monad.Writer as Writer
 import qualified Data.ByteString as ByteString
+import qualified Data.Foldable as Foldable
 import qualified Distribution.Fields as Fields
 import qualified System.Environment as Environment
 import qualified System.Exit as Exit
@@ -63,8 +65,10 @@ mainWith ::
   [String] ->
   m ()
 mainWith arguments = do
-  flags <- Flag.fromArguments arguments
-  config <- Config.fromFlags flags
+  (flags, w1) <- Writer.runWriterT $ Flag.fromArguments arguments
+  Foldable.traverse_ (MonadLog.warn . mappend "WARNING: ") w1
+  (config, w2) <- Writer.runWriterT $ Config.fromFlags flags
+  Foldable.traverse_ (MonadLog.warn . mappend "WARNING: ") w2
   context <- Context.fromConfig config
 
   input <- MonadRead.read $ Context.input context
