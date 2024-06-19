@@ -419,7 +419,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
   Hspec.it "formats a comment in a field's value" $ do
     expectGilded
       "f:\n 1\n -- c\n 2"
-      "f:\n  1\n  -- c\n  2\n"
+      "f:\n  -- c\n  1\n  2\n"
 
   Hspec.it "formats a comment after a field's value" $ do
     expectGilded
@@ -512,12 +512,12 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       Hspec.it "does not insert extra blank lines before comments" $ do
         expectGilded
           "cabal-version: 3.0\ndescription:\n -- c\n 1\n -- d\n 2"
-          "cabal-version: 3.0\ndescription:\n  -- c\n  1\n  -- d\n  2\n"
+          "cabal-version: 3.0\ndescription:\n  -- c\n  -- d\n  1\n  2\n"
 
       Hspec.it "does not consider comments for indentation" $ do
         expectGilded
           "cabal-version: 3.0\ndescription:\n  1\n -- c\n    2"
-          "cabal-version: 3.0\ndescription:\n  1\n  -- c\n    2\n"
+          "cabal-version: 3.0\ndescription:\n  -- c\n  1\n    2\n"
 
   Hspec.it "properly formats conditionals" $ do
     expectGilded
@@ -1516,6 +1516,16 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       [["example.txt"]]
       "-- cabal-gild: discover\nlicense-files:"
       "-- cabal-gild: discover\nlicense-files: example.txt\n"
+
+  Hspec.it "floats comments on unknown fields" $ do
+    expectGilded
+      "unknown-field:\n the\n -- some comment\n value"
+      "unknown-field:\n  -- some comment\n  the\n  value\n"
+
+  Hspec.it "floats comments when parsing field fails" $ do
+    expectGilded
+      "build-depends:\n >> no\n -- comment\n parse"
+      "build-depends:\n  -- comment\n  >> no\n  parse\n"
 
   Hspec.around_ withTemporaryDirectory
     . Hspec.it "discovers modules on the file system"
