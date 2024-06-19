@@ -47,13 +47,13 @@ field ::
   Fields.Field (p, [c]) ->
   Fields.Field (p, [c])
 field csv f = case f of
-  Fields.Field n fls -> case Map.lookup (Name.value n) parsers of
-    Nothing -> f
-    Just spp ->
-      let position =
-            maybe (fst $ Name.annotation n) (fst . FieldLine.annotation) $
-              Maybe.listToMaybe fls
-       in Fields.Field n $ fieldLines csv position fls spp
+  Fields.Field n fls ->
+    let position =
+          maybe (fst $ Name.annotation n) (fst . FieldLine.annotation) $
+            Maybe.listToMaybe fls
+     in Fields.Field n $ case Map.lookup (Name.value n) parsers of
+          Nothing -> floatComments position fls
+          Just spp -> fieldLines csv position fls spp
   Fields.Section n sas fs ->
     let result =
           Parsec.runParsecParser' csv (Condition.parseCondition Variable.parseVariable) "<conditional>"
@@ -93,13 +93,27 @@ fieldLines ::
   [Fields.FieldLine (p, [c])]
 fieldLines csv position fls SPP.SomeParsecParser {SPP.parsec = parsec, SPP.pretty = pretty} =
   case Parsec.runParsecParser' csv parsec "" $ FieldLine.toFieldLineStream fls of
-    Left _ -> fls
+    Left _ -> floatComments position fls
     Right r ->
-      fmap (\(c, l) -> Fields.FieldLine c $ String.toUtf8 l)
-        . zip ((,) position <$> concatMap (snd . FieldLine.annotation) fls : repeat [])
+      zipWith
+        (\b l -> Fields.FieldLine (position, if b then collectComments fls else []) $ String.toUtf8 l)
+        (True : repeat False)
         . lines
         . PrettyPrint.renderStyle style
         $ pretty csv r
+
+floatComments ::
+  p ->
+  [Fields.FieldLine (p, [c])] ->
+  [Fields.FieldLine (p, [c])]
+floatComments p fls =
+  zipWith
+    (\b -> Fields.FieldLine (p, if b then collectComments fls else []) . FieldLine.value)
+    (True : repeat False)
+    fls
+
+collectComments :: [Fields.FieldLine (p, [c])] -> [c]
+collectComments = concatMap (snd . FieldLine.annotation)
 
 -- | This style attempts to force everything to be on its own line.
 style :: PrettyPrint.Style
