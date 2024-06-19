@@ -177,44 +177,69 @@ Gild supports special comments in package descriptions that act as pragmas.
 Each pragma starts with `-- cabal-gild:`. Pragmas must be the last comment
 before a field.
 
-- `-- cabal-gild: discover [DIRECTORY ...]`: This pragma will discover any
-  Haskell files in any of the given directories and use those to populate the
-  list of modules or signatures. If no directories are given, defaults to `.`
-  (the current directory). For example, given this input:
+#### `discover`
 
-  ``` cabal
-  library
-    -- cabal-gild: discover source/library
-    exposed-modules: ...
-  ```
+```
+-- cabal-gild: discover [DIRECTORY ...] [--include=PATTERN ...] [--exclude=PATTERN ...]
+```
 
-  Assuming there is a single Haskell file at `source/library/M.hs`, Gild will
-  produce this output:
+This pragma will discover any Haskell files in any of the given directories and
+use those to populate the list of modules or signatures. If no directories are
+given, defaults to `.` (the directory of the package description). For example,
+given this input:
 
-  ``` cabal
-  library
-    -- cabal-gild: discover source/library
-    exposed-modules: M
-  ```
+``` cabal
+library
+  -- cabal-gild: discover
+  exposed-modules: ...
+```
 
-  This pragma only works with the `exposed-modules`, `other-modules`, and
-  `signatures` fields. It will be ignored on all other fields.
+Assuming there is a single Haskell file at `Example.hs`, Gild will produce this
+output:
 
-  Any existing modules or signatures in the list will be ignored. The entire
-  field will be replaced. This means adding, removing, and renaming modules or
-  signatures should be handled automatically.
+``` cabal
+library
+  -- cabal-gild: discover
+  exposed-modules: Example
+```
 
-  This pragma searches for files with any of the following extensions: `*.chs`,
-  `*.cpphs`, `*.gc`, `*.hs`, `*.hsc`, `*.hsig`, `*.lhs`, `*.lhsig`, `*.ly`,
-  `*.x`, or `*.y`,
+This pragma only works with the `exposed-modules`, `other-modules`, and
+`signatures` fields. It will be ignored on all other fields.
 
-  Directories can be quoted if they contain spaces.
+Any existing modules or signatures in the list will be ignored. The entire
+field will be replaced. This means adding, removing, and renaming modules or
+signatures should be handled automatically.
 
-  Discovered modules can be ignored by using the `--exclude=FILE` option. For
-  example:
+This pragma searches for files with any of the following extensions: `*.chs`,
+`*.cpphs`, `*.gc`, `*.hs`, `*.hsc`, `*.hsig`, `*.lhs`, `*.lhsig`, `*.ly`,
+`*.x`, or `*.y`,
 
-  ``` cabal
-  library
-    -- cabal-gild: discover source/library --exclude=source/library/Foo/Bar.hs
-    exposed-modules: ...
-  ```
+Directories can be quoted if they contain spaces. For example:
+
+``` cabal
+library
+  -- cabal-gild: discover "my modules"
+  exposed-modules: ...
+```
+
+By default, all files in any of the given directories are considered for
+discovery. To explicitly include only certain files, use the
+`--include=PATTERN` option. For example:
+
+``` cabal
+library
+  -- cabal-gild: discover --include=**/*Spec.hs
+  other-modules: ...
+```
+
+Files can be excluded from discovery by using the `--exclude=PATTERN` option.
+For example:
+
+``` cabal
+library
+  -- cabal-gild: discover --exclude=**/*Spec.hs
+  exposed-modules: ...
+```
+
+If a file would match both the `--include` pattern and the `--exclude` pattern,
+it will be excluded.

@@ -14,6 +14,7 @@ import qualified Control.Monad.Catch as Exception
 import qualified Control.Monad.Trans.Class as Trans
 import qualified Control.Monad.Trans.Maybe as MaybeT
 import qualified Data.Containers.ListUtils as List
+import qualified Data.Either as Either
 import qualified Data.Maybe as Maybe
 import qualified Data.Set as Set
 import qualified Distribution.Compat.Lens as Lens
@@ -60,12 +61,14 @@ discover ::
   [String] ->
   MaybeT.MaybeT m (Fields.Field (p, [c]))
 discover p n fls ds = do
-  let (strs, args, opts, errs) =
+  let (flgs, args, opts, errs) =
         GetOpt.getOpt'
           GetOpt.Permute
-          [ GetOpt.Option [] ["exclude"] (GetOpt.ReqArg id "PATTERN") ""
+          [ GetOpt.Option [] ["include"] (GetOpt.ReqArg Right "PATTERN") "",
+            GetOpt.Option [] ["exclude"] (GetOpt.ReqArg Left "PATTERN") ""
           ]
           ds
+  let (excs, incs) = Either.partitionEithers flgs
   mapM_ (Exception.throwM . UnknownOption.fromString) opts
   mapM_ (Exception.throwM . InvalidOption.fromString) errs
   let root = FilePath.takeDirectory p
@@ -77,13 +80,12 @@ discover p n fls ds = do
                 . FilePath.combine root
             )
           $ if null args then ["."] else args
-  let exclusions = List.nubOrd $ fmap (normalize . FilePath.combine root) strs
-  files <-
-    Trans.lift $
-      MonadWalk.walk
-        "."
-        (fmap (\d -> normalize $ FilePath.joinPath [d, "**"]) directories)
-        exclusions
+  let exclusions = List.nubOrd $ fmap (normalize . FilePath.combine root) excs
+      inclusions =
+        List.nubOrd
+          . fmap (normalize . FilePath.combine root)
+          $ if null incs then ["**"] else incs
+  files <- Trans.lift $ MonadWalk.walk "." inclusions exclusions
   let comments = concatMap (snd . FieldLine.annotation) fls
       position =
         maybe (fst $ Name.annotation n) (fst . FieldLine.annotation) $
