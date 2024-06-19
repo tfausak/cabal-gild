@@ -1457,6 +1457,66 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.singleton Output.Stdout (String.toUtf8 "library\n  -- cabal-gild: discover src --include src/M.hs\n  exposed-modules: M\n")
 
+  Hspec.it "discovers asm-sources" $ do
+    expectDiscover
+      [["example.txt"]]
+      "-- cabal-gild: discover\nasm-sources:"
+      "-- cabal-gild: discover\nasm-sources: example.txt\n"
+
+  Hspec.it "discovers c-sources" $ do
+    expectDiscover
+      [["example.txt"]]
+      "-- cabal-gild: discover\nc-sources:"
+      "-- cabal-gild: discover\nc-sources: example.txt\n"
+
+  Hspec.it "discovers cxx-sources" $ do
+    expectDiscover
+      [["example.txt"]]
+      "-- cabal-gild: discover\ncxx-sources:"
+      "-- cabal-gild: discover\ncxx-sources: example.txt\n"
+
+  Hspec.it "discovers data-files" $ do
+    expectDiscover
+      [["example.txt"]]
+      "-- cabal-gild: discover\ndata-files:"
+      "-- cabal-gild: discover\ndata-files: example.txt\n"
+
+  Hspec.it "discovers extra-doc-files" $ do
+    expectDiscover
+      [["example.txt"]]
+      "-- cabal-gild: discover\nextra-doc-files:"
+      "-- cabal-gild: discover\nextra-doc-files: example.txt\n"
+
+  Hspec.it "discovers extra-source-files" $ do
+    expectDiscover
+      [["example.txt"]]
+      "-- cabal-gild: discover\nextra-source-files:"
+      "-- cabal-gild: discover\nextra-source-files: example.txt\n"
+
+  Hspec.it "discovers includes" $ do
+    expectDiscover
+      [["example.txt"]]
+      "-- cabal-gild: discover\nincludes:"
+      "-- cabal-gild: discover\nincludes: example.txt\n"
+
+  Hspec.it "discovers install-includes" $ do
+    expectDiscover
+      [["example.txt"]]
+      "-- cabal-gild: discover\ninstall-includes:"
+      "-- cabal-gild: discover\ninstall-includes: example.txt\n"
+
+  Hspec.it "discovers js-sources" $ do
+    expectDiscover
+      [["example.txt"]]
+      "-- cabal-gild: discover\njs-sources:"
+      "-- cabal-gild: discover\njs-sources: example.txt\n"
+
+  Hspec.it "discovers license-files" $ do
+    expectDiscover
+      [["example.txt"]]
+      "-- cabal-gild: discover\nlicense-files:"
+      "-- cabal-gild: discover\nlicense-files: example.txt\n"
+
   Hspec.around_ withTemporaryDirectory
     . Hspec.it "discovers modules on the file system"
     $ do

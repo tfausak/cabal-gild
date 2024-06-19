@@ -183,10 +183,9 @@ before a field.
 -- cabal-gild: discover [DIRECTORY ...] [--include=PATTERN ...] [--exclude=PATTERN ...]
 ```
 
-This pragma will discover any Haskell files in any of the given directories and
-use those to populate the list of modules or signatures. If no directories are
-given, defaults to `.` (the directory of the package description). For example,
-given this input:
+This pragma will discover files in any of the given directories. If no
+directories are given, defaults to `.` (the directory of the package
+description). For example, given this input:
 
 ``` cabal
 library
@@ -203,16 +202,43 @@ library
   exposed-modules: Example
 ```
 
-This pragma only works with the `exposed-modules`, `other-modules`, and
-`signatures` fields. It will be ignored on all other fields.
+This pragma works with the following fields:
 
-Any existing modules or signatures in the list will be ignored. The entire
-field will be replaced. This means adding, removing, and renaming modules or
-signatures should be handled automatically.
+- `asm-sources`
+- `c-sources`
+- `cxx-sources`
+- `data-files`
+- `exposed-modules`
+- `extra-doc-files`
+- `extra-source-files`
+- `includes`
+- `install-includes`
+- `js-sources`
+- `license-files`
+- `other-modules`
+- `signatures`
 
-This pragma searches for files with any of the following extensions: `*.chs`,
-`*.cpphs`, `*.gc`, `*.hs`, `*.hsc`, `*.hsig`, `*.lhs`, `*.lhsig`, `*.ly`,
-`*.x`, or `*.y`,
+It will be ignored on all other fields. For the `exposed-modules`,
+`other-modules`, and `signatures` fields, only files with the following
+extensions will be discovered:
+
+- `*.chs`
+- `*.cpphs`
+- `*.gc`
+- `*.hs`
+- `*.hsc`
+- `*.hsig`
+- `*.lhs`
+- `*.lhsig`
+- `*.ly`
+- `*.x`
+- `*.y`
+
+For all other fields, files with any extension will be discovered.
+
+Any existing files, modules, or signatures in the field will be ignored. The
+entire field will be replaced. This means adding, removing, and renaming files
+should be handled automatically.
 
 Directories can be quoted if they contain spaces. For example:
 
