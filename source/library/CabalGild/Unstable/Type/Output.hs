@@ -13,8 +13,3 @@ fromString :: String -> Output
 fromString s = case s of
   "-" -> Stdout
   _ -> File s
-
-toString :: Output -> String
-toString o = case o of
-  Stdout -> "-"
-  File s -> s
