@@ -43,7 +43,7 @@ parseCondition parseVariable = Parsec.PP $ \csv -> do
       )
       csv
 
--- Parses a literal 'Condition'.
+-- | Parses a literal 'Condition'.
 parseLit :: (Parsec.CabalParsing m) => m Bool
 parseLit =
   Parse.choice
