@@ -82,6 +82,7 @@ library
     CabalGild.Unstable.Class.MonadRead
     CabalGild.Unstable.Class.MonadWalk
     CabalGild.Unstable.Class.MonadWrite
+    CabalGild.Unstable.Class.Warning
     CabalGild.Unstable.Exception.CheckFailure
     CabalGild.Unstable.Exception.InvalidLeniency
     CabalGild.Unstable.Exception.InvalidMode
@@ -132,9 +133,12 @@ library
     CabalGild.Unstable.Type.Set
     CabalGild.Unstable.Type.Severity
     CabalGild.Unstable.Type.SomeParsecParser
+    CabalGild.Unstable.Type.SomeWarning
     CabalGild.Unstable.Type.TestedWith
     CabalGild.Unstable.Type.Variable
     CabalGild.Unstable.Type.VersionRange
+    CabalGild.Unstable.Warning.UnexpectedArgument
+    CabalGild.Unstable.Warning.UnknownOption
 
   hs-source-dirs: source/library
   other-modules: Paths_cabal_gild

@@ -3,8 +3,9 @@
 module CabalGild.Unstable.Type.Flag where
 
 import qualified CabalGild.Unstable.Exception.InvalidOption as InvalidOption
-import qualified CabalGild.Unstable.Exception.UnexpectedArgument as UnexpectedArgument
-import qualified CabalGild.Unstable.Exception.UnknownOption as UnknownOption
+import qualified CabalGild.Unstable.Type.SomeWarning as SomeWarning
+import qualified CabalGild.Unstable.Warning.UnexpectedArgument as UnexpectedArgument
+import qualified CabalGild.Unstable.Warning.UnknownOption as UnknownOption
 import qualified Control.Monad.Catch as Exception
 import qualified Control.Monad.Writer as Writer
 import qualified Data.Foldable as Foldable
@@ -83,11 +84,11 @@ options =
 -- | Converts a list of command line arguments into a list of flags. If there
 -- are any invalid options an exception will be thrown.
 fromArguments ::
-  (Exception.MonadThrow m, Writer.MonadWriter (Seq.Seq String) m) =>
+  (Exception.MonadThrow m, Writer.MonadWriter (Seq.Seq SomeWarning.SomeWarning) m) =>
   [String] -> m [Flag]
 fromArguments arguments = do
   let (flgs, args, opts, errs) = GetOpt.getOpt' GetOpt.Permute options arguments
-  Foldable.traverse_ (Writer.tell . Seq.singleton . Exception.displayException . UnexpectedArgument.fromString) args
-  Foldable.traverse_ (Writer.tell . Seq.singleton . Exception.displayException . UnknownOption.fromString) opts
+  Foldable.traverse_ (Writer.tell . Seq.singleton . SomeWarning.SomeWarning . UnexpectedArgument.fromString) args
+  Foldable.traverse_ (Writer.tell . Seq.singleton . SomeWarning.SomeWarning . UnknownOption.fromString) opts
   Foldable.traverse_ (Exception.throwM . InvalidOption.fromString) errs
   pure flgs

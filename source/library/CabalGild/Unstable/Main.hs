@@ -13,6 +13,7 @@ import qualified CabalGild.Unstable.Class.MonadLog as MonadLog
 import qualified CabalGild.Unstable.Class.MonadRead as MonadRead
 import qualified CabalGild.Unstable.Class.MonadWalk as MonadWalk
 import qualified CabalGild.Unstable.Class.MonadWrite as MonadWrite
+import qualified CabalGild.Unstable.Class.Warning as Warning
 import qualified CabalGild.Unstable.Exception.CheckFailure as CheckFailure
 import qualified CabalGild.Unstable.Exception.ParseError as ParseError
 import qualified CabalGild.Unstable.Extra.ByteString as ByteString
@@ -66,7 +67,7 @@ mainWith ::
   m ()
 mainWith arguments = do
   (flags, w1) <- Writer.runWriterT $ Flag.fromArguments arguments
-  Foldable.traverse_ (MonadLog.warn . mappend "WARNING: ") w1
+  Foldable.traverse_ (MonadLog.warn . mappend "WARNING: " . Warning.displayWarning) w1
   (config, w2) <- Writer.runWriterT $ Config.fromFlags flags
   Foldable.traverse_ (MonadLog.warn . mappend "WARNING: ") w2
   context <- Context.fromConfig config
