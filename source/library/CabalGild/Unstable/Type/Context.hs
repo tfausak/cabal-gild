@@ -14,6 +14,7 @@ import qualified Control.Monad as Monad
 import qualified Control.Monad.Catch as Exception
 import qualified Data.Char as Char
 import qualified Data.List as List
+import qualified Data.Maybe as Maybe
 import qualified Data.Version as Version
 import qualified Paths_cabal_gild as This
 import qualified System.Console.GetOpt as GetOpt
@@ -40,7 +41,7 @@ fromConfig ::
 fromConfig config = do
   let version = Version.showVersion This.version
 
-  Monad.when (Optional.withDefault False $ Config.help config) $ do
+  Monad.when (Maybe.fromMaybe False . Optional.toMaybe $ Config.help config) $ do
     let header =
           unlines
             [ "cabal-gild version " <> version,
@@ -52,7 +53,7 @@ fromConfig config = do
       $ GetOpt.usageInfo header Flag.options
     Exception.throwM Exit.ExitSuccess
 
-  Monad.when (Optional.withDefault False $ Config.version config) $ do
+  Monad.when (Maybe.fromMaybe False . Optional.toMaybe $ Config.version config) $ do
     MonadLog.info version
     Exception.throwM Exit.ExitSuccess
 
@@ -66,15 +67,15 @@ fromConfig config = do
       Exception.throwM SpecifiedOutputWithCheckMode.SpecifiedOutputWithCheckMode
     _ -> pure ()
 
-  let theInput = Optional.withDefault Input.Stdin $ Config.input config
+  let theInput = Maybe.fromMaybe Input.Stdin . Optional.toMaybe $ Config.input config
       filePath = case theInput of
         Input.Stdin -> "."
         Input.File f -> f
   pure
     Context
-      { crlf = Optional.withDefault Leniency.Lenient $ Config.crlf config,
+      { crlf = Maybe.fromMaybe Leniency.Lenient . Optional.toMaybe $ Config.crlf config,
         input = theInput,
-        mode = Optional.withDefault Mode.Format $ Config.mode config,
-        output = Optional.withDefault Output.Stdout $ Config.output config,
-        stdin = Optional.withDefault filePath $ Config.stdin config
+        mode = Maybe.fromMaybe Mode.Format . Optional.toMaybe $ Config.mode config,
+        output = Maybe.fromMaybe Output.Stdout . Optional.toMaybe $ Config.output config,
+        stdin = Maybe.fromMaybe filePath . Optional.toMaybe $ Config.stdin config
       }
