@@ -9,6 +9,8 @@ import qualified Text.Parsec as P
 import qualified Text.Parsec.Expr as PE
 import qualified Text.PrettyPrint as PrettyPrint
 
+-- | Similar to 'Distribution.Types.Condition.Condition', but retains
+-- information about parentheses.
 data Condition a
   = Par (Condition a)
   | Not (Condition a)
@@ -18,6 +20,9 @@ data Condition a
   | Var a
   deriving (Eq, Show)
 
+-- | Similar to 'Distribution.Fields.ConfVar.parseConditionConfVar', but
+-- parameterized on the variable parser. Also it's a normal parser rather than
+-- a function on section arguments.
 parseCondition :: Parsec.ParsecParser a -> Parsec.ParsecParser (Condition a)
 parseCondition parseVariable = Parsec.PP $ \csv -> do
   let operators :: (P.Stream s m Char) => PE.OperatorTable s u m (Condition b)
@@ -38,6 +43,7 @@ parseCondition parseVariable = Parsec.PP $ \csv -> do
       )
       csv
 
+-- Parses a literal 'Condition'.
 parseLit :: (Parsec.CabalParsing m) => m Bool
 parseLit =
   Parse.choice
@@ -47,6 +53,8 @@ parseLit =
       False <$ Parse.token "false"
     ]
 
+-- | Pretty-prints a 'Condition' using the given pretty-printer for the
+-- variables.
 prettyCondition :: (a -> PrettyPrint.Doc) -> Condition a -> PrettyPrint.Doc
 prettyCondition f x =
   case x of

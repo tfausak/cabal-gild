@@ -12,6 +12,7 @@ import qualified CabalGild.Unstable.Type.Output as Output
 import qualified Control.Monad as Monad
 import qualified Control.Monad.Catch as Exception
 import qualified Control.Monad.Writer as Writer
+import qualified Data.Foldable as Foldable
 import qualified Data.Sequence as Seq
 
 -- | This data type represents the configuration for the command line utility.
@@ -47,24 +48,24 @@ applyFlag ::
 applyFlag config flag = case flag of
   Flag.CRLF s -> do
     l <- Leniency.fromString s
-    forSpecific (crlf config) $ \old ->
+    Foldable.for_ (Optional.toMaybe $ crlf config) $ \old ->
       Writer.tell
         . Seq.singleton
         $ unwords ["changing --crlf from", show old, "to", show l]
     pure config {crlf = Optional.Specific l}
   Flag.Help b -> pure config {help = Optional.Specific b}
   Flag.Input s -> do
-    forSpecific (input config) $ \old ->
+    Foldable.for_ (Optional.toMaybe $ input config) $ \old ->
       Writer.tell
         . Seq.singleton
         $ unwords ["changing --input from", show old, "to", show s]
     pure config {input = Optional.Specific $ Input.fromString s}
   Flag.IO s -> do
-    forSpecific (input config) $ \old ->
+    Foldable.for_ (Optional.toMaybe $ input config) $ \old ->
       Writer.tell
         . Seq.singleton
         $ unwords ["changing --input from", show old, "to", show s]
-    forSpecific (output config) $ \old ->
+    Foldable.for_ (Optional.toMaybe $ output config) $ \old ->
       Writer.tell
         . Seq.singleton
         $ unwords ["changing --output from", show old, "to", show s]
@@ -74,32 +75,25 @@ applyFlag config flag = case flag of
           output = Optional.Specific $ Output.fromString s
         }
   Flag.Mode s -> do
-    forSpecific (mode config) $ \old ->
+    Foldable.for_ (Optional.toMaybe $ mode config) $ \old ->
       Writer.tell
         . Seq.singleton
         $ unwords ["changing --mode from", show old, "to", show s]
     m <- Mode.fromString s
     pure config {mode = Optional.Specific m}
   Flag.Output s -> do
-    forSpecific (output config) $ \old ->
+    Foldable.for_ (Optional.toMaybe $ output config) $ \old ->
       Writer.tell
         . Seq.singleton
         $ unwords ["changing --output from", show old, "to", show s]
     pure config {output = Optional.Specific $ Output.fromString s}
   Flag.Stdin s -> do
-    forSpecific (stdin config) $ \old ->
+    Foldable.for_ (Optional.toMaybe $ stdin config) $ \old ->
       Writer.tell
         . Seq.singleton
         $ unwords ["changing --stdin from", show old, "to", show s]
     pure config {stdin = Optional.Specific s}
   Flag.Version b -> pure config {version = Optional.Specific b}
-
-forSpecific ::
-  (Applicative f) =>
-  Optional.Optional a -> (a -> f ()) -> f ()
-forSpecific o f = case o of
-  Optional.Default -> pure ()
-  Optional.Specific x -> f x
 
 -- | Converts a list of flags into a config by starting with 'initial' and
 -- repeatedly calling 'applyFlag'.

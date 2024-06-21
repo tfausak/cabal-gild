@@ -96,6 +96,7 @@ library
     CabalGild.Unstable.Extra.Either
     CabalGild.Unstable.Extra.Field
     CabalGild.Unstable.Extra.FieldLine
+    CabalGild.Unstable.Extra.FilePath
     CabalGild.Unstable.Extra.List
     CabalGild.Unstable.Extra.ModuleName
     CabalGild.Unstable.Extra.Name

@@ -4,6 +4,7 @@ import qualified CabalGild.Unstable.Class.MonadWalk as MonadWalk
 import qualified CabalGild.Unstable.Exception.InvalidOption as InvalidOption
 import qualified CabalGild.Unstable.Exception.UnknownOption as UnknownOption
 import qualified CabalGild.Unstable.Extra.FieldLine as FieldLine
+import qualified CabalGild.Unstable.Extra.FilePath as FilePath
 import qualified CabalGild.Unstable.Extra.ModuleName as ModuleName
 import qualified CabalGild.Unstable.Extra.Name as Name
 import qualified CabalGild.Unstable.Extra.String as String
@@ -26,7 +27,6 @@ import qualified Distribution.Parsec as Parsec
 import qualified Distribution.Utils.Generic as Utils
 import qualified System.Console.GetOpt as GetOpt
 import qualified System.FilePath as FilePath
-import qualified System.FilePath.Windows as FilePath.Windows
 
 -- | High level wrapper around 'field' that makes this action easier to compose
 -- with other actions.
@@ -77,18 +77,19 @@ discover p n fls dt ds = do
   mapM_ (Exception.throwM . UnknownOption.fromString) opts
   mapM_ (Exception.throwM . InvalidOption.fromString) errs
   let root = FilePath.takeDirectory p
+      clean = FilePath.normalise . FilePath.toPosixSeparators
       directories =
         List.nubOrd
           . fmap
             ( FilePath.dropTrailingPathSeparator
-                . normalize
+                . clean
                 . FilePath.combine root
             )
           $ if null args then ["."] else args
-  let exclusions = List.nubOrd $ fmap (normalize . FilePath.combine root) excs
+  let exclusions = List.nubOrd $ fmap (clean . FilePath.combine root) excs
       inclusions =
         List.nubOrd
-          . fmap (normalize . FilePath.combine root)
+          . fmap (clean . FilePath.combine root)
           $ if null incs then ["**"] else incs
   files <- Trans.lift $ MonadWalk.walk "." inclusions exclusions
   let comments = concatMap (snd . FieldLine.annotation) fls
@@ -99,7 +100,7 @@ discover p n fls dt ds = do
         DiscoverTarget.Modules ->
           zipWith ModuleName.toFieldLine ((,) position <$> comments : repeat [])
             . Maybe.mapMaybe (toModuleName directories)
-            $ Maybe.mapMaybe (stripAnyExtension extensions . normalize) files
+            $ Maybe.mapMaybe (stripAnyExtension extensions . clean) files
         DiscoverTarget.Files ->
           zipWith
             (\a -> Fields.FieldLine a . String.toUtf8)
@@ -111,12 +112,6 @@ discover p n fls dt ds = do
           then Lens.over (Name.annotationLens . Lens._2) (comments <>) n
           else n
   pure $ Fields.Field name fieldLines
-
-normalize :: FilePath -> FilePath
-normalize =
-  FilePath.normalise
-    . FilePath.joinPath
-    . FilePath.Windows.splitDirectories
 
 -- | These are the names of the fields that can have this action applied to
 -- them.

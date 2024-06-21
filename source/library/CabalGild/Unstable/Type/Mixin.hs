@@ -24,6 +24,7 @@ instance Parsec.Parsec Mixin where
 instance Pretty.Pretty Mixin where
   pretty = Pretty.pretty . unwrap
 
+-- | Sorts the 'Mixin.mixinIncludeRenaming' field using 'sortIncludeRenaming'.
 sortMixin :: Mixin.Mixin -> Mixin.Mixin
 sortMixin x =
   Mixin.Mixin
@@ -32,6 +33,8 @@ sortMixin x =
       Mixin.mixinIncludeRenaming = sortIncludeRenaming $ Mixin.mixinIncludeRenaming x
     }
 
+-- | Sorts both 'IncludeRenaming.includeProvidesRn' and
+-- 'IncludeRenaming.includeRequiresRn' fields using 'sortModuleRenaming'.
 sortIncludeRenaming :: IncludeRenaming.IncludeRenaming -> IncludeRenaming.IncludeRenaming
 sortIncludeRenaming x =
   IncludeRenaming.IncludeRenaming
@@ -39,6 +42,8 @@ sortIncludeRenaming x =
       IncludeRenaming.includeRequiresRn = sortModuleRenaming $ IncludeRenaming.includeRequiresRn x
     }
 
+-- | Sorts both 'ModuleRenaming.HidingRenaming' and
+-- 'ModuleRenaming.ModuleRenaming' variants.
 sortModuleRenaming :: ModuleRenaming.ModuleRenaming -> ModuleRenaming.ModuleRenaming
 sortModuleRenaming x = case x of
   ModuleRenaming.DefaultRenaming -> ModuleRenaming.DefaultRenaming
