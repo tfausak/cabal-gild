@@ -88,6 +88,6 @@ fromArguments ::
 fromArguments arguments = do
   let (flgs, args, opts, errs) = GetOpt.getOpt' GetOpt.Permute options arguments
   Foldable.traverse_ (Writer.tell . Seq.singleton . Exception.displayException . UnexpectedArgument.fromString) args
-  Foldable.traverse_ (Exception.throwM . InvalidOption.fromString) errs
   Foldable.traverse_ (Writer.tell . Seq.singleton . Exception.displayException . UnknownOption.fromString) opts
+  Foldable.traverse_ (Exception.throwM . InvalidOption.fromString) errs
   pure flgs
