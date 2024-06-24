@@ -1,7 +1,10 @@
 {- hlint ignore "Redundant bracket" -}
 {-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE TypeApplications #-}
 
 import qualified CabalGild.Unstable.Class.MonadLog as MonadLog
 import qualified CabalGild.Unstable.Class.MonadRead as MonadRead
@@ -29,6 +32,7 @@ import qualified Data.Either as Either
 import qualified Data.Functor.Identity as Identity
 import qualified Data.Map as Map
 import qualified Data.Maybe as Maybe
+import qualified Data.Typeable as Typeable
 import qualified GHC.Stack as Stack
 import qualified System.Directory as Directory
 import qualified System.Exit as Exit
@@ -1673,7 +1677,9 @@ type W = [Either SomeWarning String]
 data SomeWarning = forall w. (Warning.Warning w) => SomeWarning w
 
 instance Eq SomeWarning where
-  SomeWarning x == SomeWarning y = show x == show y
+  SomeWarning (x :: a) == SomeWarning (y :: b) = case Typeable.eqT @a @b of
+    Nothing -> False
+    Just Typeable.Refl -> x == y
 
 deriving instance Show SomeWarning
 
