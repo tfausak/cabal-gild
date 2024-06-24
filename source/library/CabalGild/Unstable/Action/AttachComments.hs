@@ -55,7 +55,7 @@ fieldLine (Fields.FieldLine p bs) =
 
 -- | Attaches comments to a section argument. Note that section arguments
 -- cannot actually have comments attached. That's because section arguments
--- must be on -- the same line as the section name, so all comments will end up
+-- must be on the same line as the section name, so all comments will end up
 -- attached to the name.
 sectionArg ::
   (Ord p) =>

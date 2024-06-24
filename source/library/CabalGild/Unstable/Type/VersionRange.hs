@@ -16,6 +16,9 @@ data VersionRange a
   | Intersect (VersionRange a) (VersionRange a)
   deriving (Eq, Ord, Show)
 
+-- | Converts a 'PkgconfigVersionRange.PkgconfigVersionRange' into a
+-- 'VersionRange'. Note that the former is more expressive, so things like
+-- 'PkgconfigVersionRange.PcOrLaterVersion' will be converted into a 'Union'.
 fromPkgconfigVersionRange ::
   PkgconfigVersionRange.PkgconfigVersionRange ->
   VersionRange PkgconfigVersion.PkgconfigVersion
@@ -29,6 +32,8 @@ fromPkgconfigVersionRange x = case x of
   PkgconfigVersionRange.PcUnionVersionRanges v w -> Union (fromPkgconfigVersionRange v) (fromPkgconfigVersionRange w)
   PkgconfigVersionRange.PcIntersectVersionRanges v w -> Intersect (fromPkgconfigVersionRange v) (fromPkgconfigVersionRange w)
 
+-- | Converts a 'VersionRange.VersionRange' into a 'VersionRange'. These are
+-- isomorphic, so no information is lost.
 fromVersionRange :: VersionRange.VersionRange -> VersionRange Version.Version
 fromVersionRange =
   VersionRange.foldVersionRange

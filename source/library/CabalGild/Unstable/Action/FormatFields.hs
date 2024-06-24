@@ -77,6 +77,8 @@ field csv f = case f of
             else sas
      in Fields.Section n newSas $ fmap (field csv) fs
 
+-- | Returns 'True' if the field name is a conditional. @if@ is always one, and
+-- @elif@ is one for Cabal versions 2.2 and later.
 isConditional :: CabalSpecVersion.CabalSpecVersion -> Fields.Name p -> Bool
 isConditional csv n =
   Name.isIf n
@@ -102,6 +104,8 @@ fieldLines csv position fls SPP.SomeParsecParser {SPP.parsec = parsec, SPP.prett
         . PrettyPrint.renderStyle style
         $ pretty csv r
 
+-- | Collects comments from the given field lines (see 'collectComments') and
+-- attaches them all to the first one.
 floatComments ::
   p ->
   [Fields.FieldLine (p, [c])] ->
@@ -112,6 +116,8 @@ floatComments p fls =
     (True : repeat False)
     fls
 
+-- | Collects all comments from the given field lines. Their relative order
+-- will be maintained.
 collectComments :: [Fields.FieldLine (p, [c])] -> [c]
 collectComments = concatMap (snd . FieldLine.annotation)
 
