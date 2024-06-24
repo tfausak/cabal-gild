@@ -2,7 +2,7 @@ module CabalGild.Unstable.Warning.UnknownOption where
 
 import qualified CabalGild.Unstable.Class.Warning as Warning
 
--- | This warning is thrown when a command line option is not known.
+-- | This warning is emitted when a command line option is not known.
 newtype UnknownOption
   = UnknownOption String
   deriving (Eq, Show)

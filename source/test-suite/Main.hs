@@ -17,6 +17,7 @@ import qualified CabalGild.Unstable.Extra.String as String
 import qualified CabalGild.Unstable.Main as Gild
 import qualified CabalGild.Unstable.Type.Input as Input
 import qualified CabalGild.Unstable.Type.Output as Output
+import qualified CabalGild.Unstable.Warning.DuplicateOption as DuplicateOption
 import qualified CabalGild.Unstable.Warning.UnexpectedArgument as UnexpectedArgument
 import qualified CabalGild.Unstable.Warning.UnknownOption as UnknownOption
 import qualified Control.Monad.Catch as Exception
@@ -51,10 +52,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     s `Hspec.shouldBe` Map.empty
 
   Hspec.it "warns with an unknown option" $ do
-    let (a, s, w) = runGild ["--unknown"] [(Input.Stdin, String.toUtf8 "")] []
-    a `Hspec.shouldSatisfy` Either.isRight
-    w `Hspec.shouldBe` [Left . SomeWarning $ UnknownOption.fromString "--unknown"]
-    s `Hspec.shouldBe` Map.singleton Output.Stdout (String.toUtf8 "")
+    expectWarning ["--unknown"] $ UnknownOption.fromString "--unknown"
 
   Hspec.it "fails with an invalid option" $ do
     let (a, s, w) = runGild ["--help=invalid"] [] []
@@ -63,10 +61,32 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     s `Hspec.shouldBe` Map.empty
 
   Hspec.it "warns with an unexpected argument" $ do
-    let (a, s, w) = runGild ["unexpected"] [(Input.Stdin, String.toUtf8 "")] []
-    a `Hspec.shouldSatisfy` Either.isRight
-    w `Hspec.shouldBe` [Left . SomeWarning $ UnexpectedArgument.fromString "unexpected"]
-    s `Hspec.shouldBe` Map.singleton Output.Stdout (String.toUtf8 "")
+    expectWarning ["unexpected"] $ UnexpectedArgument.fromString "unexpected"
+
+  Hspec.it "warns when --crlf is given twice" $ do
+    expectWarning
+      ["--crlf=strict", "--crlf=lenient"]
+      $ DuplicateOption.DuplicateOption "crlf" "strict" "lenient"
+
+  Hspec.it "warns when --input is given twice" $ do
+    expectWarning
+      ["--input=f", "--input=-"]
+      $ DuplicateOption.DuplicateOption "input" "f" "-"
+
+  Hspec.it "warns when --mode is given twice" $ do
+    expectWarning
+      ["--mode=check", "--mode=format"]
+      $ DuplicateOption.DuplicateOption "mode" "check" "format"
+
+  Hspec.it "warns when --output is given twice" $ do
+    expectWarning
+      ["--output=f", "--output=-"]
+      $ DuplicateOption.DuplicateOption "output" "f" "-"
+
+  Hspec.it "warns when --stdin is given twice" $ do
+    expectWarning
+      ["--stdin=f", "--stdin=g"]
+      $ DuplicateOption.DuplicateOption "stdin" "f" "g"
 
   Hspec.it "reads from an input file" $ do
     let (a, s, w) =
@@ -1619,6 +1639,13 @@ runGild arguments inputs files =
       Map.singleton "." (fmap FilePath.joinPath files)
     )
     Map.empty
+
+expectWarning :: (Warning.Warning w) => [String] -> w -> Hspec.Expectation
+expectWarning flags warning = do
+  let (a, s, w) = runGild flags [(Input.Stdin, String.toUtf8 "")] []
+  a `Hspec.shouldSatisfy` Either.isRight
+  w `Hspec.shouldBe` [Left $ SomeWarning warning]
+  s `Hspec.shouldBe` Map.singleton Output.Stdout (String.toUtf8 "")
 
 type Test = TestT Identity.Identity
 

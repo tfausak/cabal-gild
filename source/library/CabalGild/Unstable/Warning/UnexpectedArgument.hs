@@ -2,7 +2,7 @@ module CabalGild.Unstable.Warning.UnexpectedArgument where
 
 import qualified CabalGild.Unstable.Class.Warning as Warning
 
--- | This warning is thrown when an unexpected command line argument is
+-- | This warning is emitted when an unexpected command line argument is
 -- encountered.
 newtype UnexpectedArgument
   = UnexpectedArgument String

@@ -133,6 +133,7 @@ library
     CabalGild.Unstable.Type.TestedWith
     CabalGild.Unstable.Type.Variable
     CabalGild.Unstable.Type.VersionRange
+    CabalGild.Unstable.Warning.DuplicateOption
     CabalGild.Unstable.Warning.UnexpectedArgument
     CabalGild.Unstable.Warning.UnknownOption
 
