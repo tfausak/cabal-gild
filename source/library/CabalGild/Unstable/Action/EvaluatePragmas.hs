@@ -113,10 +113,9 @@ discover p n fls dt ds = do
           else n
   pure $ Fields.Field name fieldLines
 
+-- | Converts separators into POSIX format and then normalizes the result.
 clean :: FilePath -> FilePath
-clean =
-  FilePath.normalise
-    . FilePath.toPosixSeparators
+clean = FilePath.normalise . FilePath.toPosixSeparators
 
 -- | These are the names of the fields that can have this action applied to
 -- them.

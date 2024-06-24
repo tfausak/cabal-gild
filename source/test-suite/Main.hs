@@ -82,6 +82,19 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.singleton Output.Stdout (String.toUtf8 "")
 
+  Hspec.it "warns multiple times when a flag is repeatedly overriden" $ do
+    let (a, s, w) =
+          runGild
+            ["-ia", "-ib", "-i-"]
+            [(Input.Stdin, String.toUtf8 "")]
+            []
+    a `Hspec.shouldSatisfy` Either.isRight
+    w
+      `Hspec.shouldBe` [ Left . SomeWarning $ DuplicateOption.DuplicateOption "input" "a" "b",
+                         Left . SomeWarning $ DuplicateOption.DuplicateOption "input" "b" "-"
+                       ]
+    s `Hspec.shouldBe` Map.singleton Output.Stdout (String.toUtf8 "")
+
   Hspec.it "warns when --input is given twice" $ do
     expectWarning
       ["--input=f", "--input=-"]

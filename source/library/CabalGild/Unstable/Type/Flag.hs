@@ -113,6 +113,7 @@ emitWarnings :: (MonadWarn.MonadWarn m) => [Flag] -> m ()
 emitWarnings =
   let toWarnings o l =
         fmap (uncurry . flip $ DuplicateOption.DuplicateOption o)
+          . reverse
           . filter (uncurry (/=))
           $ zip l (drop 1 l)
       fromFlag f = case f of
