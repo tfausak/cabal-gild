@@ -104,9 +104,9 @@ fromArguments :: (Exception.MonadThrow m, MonadWarn.MonadWarn m) => [String] -> 
 fromArguments arguments = do
   let (flgs, args, opts, errs) = GetOpt.getOpt' GetOpt.Permute options arguments
   Foldable.traverse_ (MonadWarn.warn . UnexpectedArgument.fromString) args
-  Foldable.traverse_ (Exception.throwM . InvalidOption.fromString) errs
   Foldable.traverse_ (MonadWarn.warn . UnknownOption.fromString) opts
   emitWarnings flgs
+  Foldable.traverse_ (Exception.throwM . InvalidOption.fromString) errs
   pure flgs
 
 emitWarnings :: (MonadWarn.MonadWarn m) => [Flag] -> m ()
