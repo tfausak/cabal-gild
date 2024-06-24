@@ -68,6 +68,16 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       ["--crlf=strict", "--crlf=lenient"]
       $ DuplicateOption.DuplicateOption "crlf" "strict" "lenient"
 
+  Hspec.it "does not warn when a flag is given twice with the same value" $ do
+    let (a, s, w) =
+          runGild
+            ["--crlf=strict", "--crlf=strict"]
+            [(Input.Stdin, String.toUtf8 "")]
+            []
+    a `Hspec.shouldSatisfy` Either.isRight
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.singleton Output.Stdout (String.toUtf8 "")
+
   Hspec.it "warns when --input is given twice" $ do
     expectWarning
       ["--input=f", "--input=-"]

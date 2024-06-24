@@ -111,7 +111,10 @@ fromArguments arguments = do
 
 emitWarnings :: (MonadWarn.MonadWarn m) => [Flag] -> m ()
 emitWarnings =
-  let toWarning o l = zipWith (flip $ DuplicateOption.DuplicateOption o) l (drop 1 l)
+  let toWarnings o l =
+        fmap (uncurry . flip $ DuplicateOption.DuplicateOption o)
+          . filter (uncurry (/=))
+          $ zip l (drop 1 l)
       fromFlag f = case f of
         CRLF s -> Just (crlfOption, [s])
         Input s -> Just (inputOption, [s])
@@ -121,7 +124,7 @@ emitWarnings =
         Stdin s -> Just (stdinOption, [s])
         _ -> Nothing
    in Foldable.traverse_ MonadWarn.warn
-        . concatMap (uncurry toWarning)
+        . concatMap (uncurry toWarnings)
         . Map.toAscList
         . Map.fromListWith (<>)
         . Maybe.mapMaybe fromFlag
