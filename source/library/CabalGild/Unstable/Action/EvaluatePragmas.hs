@@ -1,8 +1,8 @@
 module CabalGild.Unstable.Action.EvaluatePragmas where
 
 import qualified CabalGild.Unstable.Class.MonadWalk as MonadWalk
+import qualified CabalGild.Unstable.Class.MonadWarn as MonadWarn
 import qualified CabalGild.Unstable.Exception.InvalidOption as InvalidOption
-import qualified CabalGild.Unstable.Exception.UnknownOption as UnknownOption
 import qualified CabalGild.Unstable.Extra.FieldLine as FieldLine
 import qualified CabalGild.Unstable.Extra.ModuleName as ModuleName
 import qualified CabalGild.Unstable.Extra.Name as Name
@@ -10,6 +10,7 @@ import qualified CabalGild.Unstable.Extra.String as String
 import qualified CabalGild.Unstable.Type.Comment as Comment
 import qualified CabalGild.Unstable.Type.DiscoverTarget as DiscoverTarget
 import qualified CabalGild.Unstable.Type.Pragma as Pragma
+import qualified CabalGild.Unstable.Warning.UnknownOption as UnknownOption
 import qualified Control.Applicative as Applicative
 import qualified Control.Monad.Catch as Exception
 import qualified Control.Monad.Trans.Class as Trans
@@ -31,7 +32,7 @@ import qualified System.FilePath.Windows as FilePath.Windows
 -- | High level wrapper around 'field' that makes this action easier to compose
 -- with other actions.
 run ::
-  (Exception.MonadThrow m, MonadWalk.MonadWalk m) =>
+  (Exception.MonadThrow m, MonadWalk.MonadWalk m, MonadWarn.MonadWarn m) =>
   FilePath ->
   ([Fields.Field (p, [Comment.Comment q])], cs) ->
   m ([Fields.Field (p, [Comment.Comment q])], cs)
@@ -40,7 +41,7 @@ run p (fs, cs) = (,) <$> traverse (field p) fs <*> pure cs
 -- | Evaluates pragmas within the given field. Or, if the field is a section,
 -- evaluates pragmas recursively within the fields of the section.
 field ::
-  (Exception.MonadThrow m, MonadWalk.MonadWalk m) =>
+  (Exception.MonadThrow m, MonadWalk.MonadWalk m, MonadWarn.MonadWarn m) =>
   FilePath ->
   Fields.Field (p, [Comment.Comment q]) ->
   m (Fields.Field (p, [Comment.Comment q]))
@@ -58,7 +59,7 @@ field p f = case f of
 -- | If modules are discovered for a field, that fields lines are completely
 -- replaced.
 discover ::
-  (Exception.MonadThrow m, MonadWalk.MonadWalk m) =>
+  (Exception.MonadThrow m, MonadWalk.MonadWalk m, MonadWarn.MonadWarn m) =>
   FilePath ->
   Fields.Name (p, [c]) ->
   [Fields.FieldLine (p, [c])] ->
@@ -74,7 +75,7 @@ discover p n fls dt ds = do
           ]
           ds
   let (excs, incs) = Either.partitionEithers flgs
-  mapM_ (Exception.throwM . UnknownOption.fromString) opts
+  mapM_ (MonadWarn.warn . UnknownOption.fromString) opts
   mapM_ (Exception.throwM . InvalidOption.fromString) errs
   let root = FilePath.takeDirectory p
       directories =
