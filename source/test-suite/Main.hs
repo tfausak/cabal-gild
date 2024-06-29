@@ -1554,8 +1554,8 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             "    N.M2"
           ]
       d <- Directory.getCurrentDirectory
-      Gild.mainWith ["--input", FilePath.combine d "i.cabal", "--output=r.cabal"]
-      readFile "r.cabal"
+      Gild.mainWith ["--input", FilePath.combine d "i.cabal", "--output=a.cabal"]
+      readFile "a.cabal"
         `Hspec.shouldReturn` unlines
           [ "library",
             "  -- cabal-gild: discover --exclude=.\\M2.hs --exclude=N/M1.hs",
