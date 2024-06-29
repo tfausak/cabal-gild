@@ -1622,7 +1622,7 @@ runGild arguments inputs files =
   runTest
     (Gild.mainWith arguments)
     ( Map.fromList inputs,
-      fmap (fmap FilePath.joinPath) $ uncurry Map.singleton files
+      fmap FilePath.joinPath <$> uncurry Map.singleton files
     )
     Map.empty
 
