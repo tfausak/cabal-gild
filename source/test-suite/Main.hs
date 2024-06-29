@@ -1527,16 +1527,6 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "build-depends:\n >> no\n -- comment\n parse"
       "build-depends:\n  -- comment\n  >> no\n  parse\n"
 
-  Hspec.it "discovers modules when using absolute path as input" $ do
-    let (a, s, w) =
-          runGild
-            ["-i", "/a/b.cabal"]
-            [(Input.File "/a/b.cabal", String.toUtf8 "-- cabal-gild: discover\nexposed-modules:")]
-            ("/a", [["C.hs"]])
-    a `Hspec.shouldSatisfy` Either.isRight
-    w `Hspec.shouldBe` []
-    s `Hspec.shouldBe` Map.singleton Output.Stdout (String.toUtf8 "-- cabal-gild: discover\nexposed-modules: C\n")
-
   Hspec.around_ withTemporaryDirectory
     . Hspec.it "discovers modules on the file system"
     $ do
@@ -1554,8 +1544,18 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       Directory.createDirectory "N"
       writeFile (FilePath.combine "N" "M1.hs") ""
       writeFile (FilePath.combine "N" "M2.hs") ""
-      Gild.mainWith ["--input=i.cabal", "--output=o.cabal"]
-      readFile "o.cabal"
+      Gild.mainWith ["--input=i.cabal", "--output=r.cabal"]
+      readFile "r.cabal"
+        `Hspec.shouldReturn` unlines
+          [ "library",
+            "  -- cabal-gild: discover --exclude=.\\M2.hs --exclude=N/M1.hs",
+            "  exposed-modules:",
+            "    M1",
+            "    N.M2"
+          ]
+      d <- Directory.getCurrentDirectory
+      Gild.mainWith ["--input", FilePath.combine d "i.cabal", "--output=r.cabal"]
+      readFile "r.cabal"
         `Hspec.shouldReturn` unlines
           [ "library",
             "  -- cabal-gild: discover --exclude=.\\M2.hs --exclude=N/M1.hs",
