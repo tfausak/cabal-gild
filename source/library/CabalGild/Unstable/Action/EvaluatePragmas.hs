@@ -76,21 +76,17 @@ discover p n fls dt ds = do
   let (excs, incs) = Either.partitionEithers flgs
   mapM_ (Exception.throwM . UnknownOption.fromString) opts
   mapM_ (Exception.throwM . InvalidOption.fromString) errs
-  let root = FilePath.takeDirectory p
+  let root = FilePath.dropTrailingPathSeparator . normalize $ FilePath.takeDirectory p
       directories =
         List.nubOrd
-          . fmap
-            ( FilePath.dropTrailingPathSeparator
-                . normalize
-                . FilePath.combine root
-            )
+          . fmap normalize
           $ if null args then ["."] else args
-  let exclusions = List.nubOrd $ fmap (normalize . FilePath.combine root) excs
+      exclusions = List.nubOrd $ fmap normalize excs
       inclusions =
         List.nubOrd
-          . fmap (normalize . FilePath.combine root)
+          . fmap normalize
           $ if null incs then ["**"] else incs
-  files <- Trans.lift $ MonadWalk.walk "." inclusions exclusions
+  files <- Trans.lift $ MonadWalk.walk root inclusions exclusions
   let comments = concatMap (snd . FieldLine.annotation) fls
       position =
         maybe (fst $ Name.annotation n) (fst . FieldLine.annotation) $
