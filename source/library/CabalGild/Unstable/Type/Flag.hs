@@ -2,9 +2,9 @@ module CabalGild.Unstable.Type.Flag where
 
 import qualified CabalGild.Unstable.Class.MonadWarn as MonadWarn
 import qualified CabalGild.Unstable.Exception.InvalidOption as InvalidOption
+import qualified CabalGild.Unstable.Exception.UnexpectedArgument as UnexpectedArgument
+import qualified CabalGild.Unstable.Exception.UnknownOption as UnknownOption
 import qualified CabalGild.Unstable.Warning.DuplicateOption as DuplicateOption
-import qualified CabalGild.Unstable.Warning.UnexpectedArgument as UnexpectedArgument
-import qualified CabalGild.Unstable.Warning.UnknownOption as UnknownOption
 import qualified Control.Monad.Catch as Exception
 import qualified Data.Foldable as Foldable
 import qualified Data.Map as Map
@@ -103,10 +103,10 @@ stdinOption = "stdin"
 fromArguments :: (Exception.MonadThrow m, MonadWarn.MonadWarn m) => [String] -> m [Flag]
 fromArguments arguments = do
   let (flgs, args, opts, errs) = GetOpt.getOpt' GetOpt.Permute options arguments
-  Foldable.traverse_ (MonadWarn.warn . UnexpectedArgument.fromString) args
-  Foldable.traverse_ (MonadWarn.warn . UnknownOption.fromString) opts
   emitWarnings flgs
+  Foldable.traverse_ (Exception.throwM . UnexpectedArgument.fromString) args
   Foldable.traverse_ (Exception.throwM . InvalidOption.fromString) errs
+  Foldable.traverse_ (Exception.throwM . UnknownOption.fromString) opts
   pure flgs
 
 emitWarnings :: (MonadWarn.MonadWarn m) => [Flag] -> m ()

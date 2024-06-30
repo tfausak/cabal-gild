@@ -90,6 +90,8 @@ library
     CabalGild.Unstable.Exception.ParseError
     CabalGild.Unstable.Exception.SpecifiedOutputWithCheckMode
     CabalGild.Unstable.Exception.SpecifiedStdinWithFileInput
+    CabalGild.Unstable.Exception.UnexpectedArgument
+    CabalGild.Unstable.Exception.UnknownOption
     CabalGild.Unstable.Extra.ByteString
     CabalGild.Unstable.Extra.CharParsing
     CabalGild.Unstable.Extra.Either
@@ -134,8 +136,6 @@ library
     CabalGild.Unstable.Type.Variable
     CabalGild.Unstable.Type.VersionRange
     CabalGild.Unstable.Warning.DuplicateOption
-    CabalGild.Unstable.Warning.UnexpectedArgument
-    CabalGild.Unstable.Warning.UnknownOption
 
   hs-source-dirs: source/library
   other-modules: Paths_cabal_gild

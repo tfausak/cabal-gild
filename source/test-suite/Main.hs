@@ -16,13 +16,13 @@ import qualified CabalGild.Unstable.Exception.CheckFailure as CheckFailure
 import qualified CabalGild.Unstable.Exception.InvalidOption as InvalidOption
 import qualified CabalGild.Unstable.Exception.SpecifiedOutputWithCheckMode as SpecifiedOutputWithCheckMode
 import qualified CabalGild.Unstable.Exception.SpecifiedStdinWithFileInput as SpecifiedStdinWithFileInput
+import qualified CabalGild.Unstable.Exception.UnexpectedArgument as UnexpectedArgument
+import qualified CabalGild.Unstable.Exception.UnknownOption as UnknownOption
 import qualified CabalGild.Unstable.Extra.String as String
 import qualified CabalGild.Unstable.Main as Gild
 import qualified CabalGild.Unstable.Type.Input as Input
 import qualified CabalGild.Unstable.Type.Output as Output
 import qualified CabalGild.Unstable.Warning.DuplicateOption as DuplicateOption
-import qualified CabalGild.Unstable.Warning.UnexpectedArgument as UnexpectedArgument
-import qualified CabalGild.Unstable.Warning.UnknownOption as UnknownOption
 import qualified Control.Monad.Catch as Exception
 import qualified Control.Monad.Trans.Class as Trans
 import qualified Control.Monad.Trans.Except as ExceptT
@@ -55,8 +55,11 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     w `Hspec.shouldNotBe` []
     s `Hspec.shouldBe` Map.empty
 
-  Hspec.it "warns with an unknown option" $ do
-    expectWarning ["--unknown"] $ UnknownOption.fromString "--unknown"
+  Hspec.it "fails with an unknown option" $ do
+    let (a, s, w) = runGild ["--unknown"] [] (".", [])
+    a `shouldBeFailure` UnknownOption.UnknownOption "--unknown"
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.empty
 
   Hspec.it "fails with an invalid option" $ do
     let (a, s, w) = runGild ["--help=invalid"] [] (".", [])
@@ -64,8 +67,11 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
 
-  Hspec.it "warns with an unexpected argument" $ do
-    expectWarning ["unexpected"] $ UnexpectedArgument.fromString "unexpected"
+  Hspec.it "fails with an unexpected argument" $ do
+    let (a, s, w) = runGild ["unexpected"] [] (".", [])
+    a `shouldBeFailure` UnexpectedArgument.UnexpectedArgument "unexpected"
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.empty
 
   Hspec.it "warns when --crlf is given twice" $ do
     expectWarning
@@ -1325,15 +1331,15 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "library\n -- cabal-gild: discover --exclude **/X/**/*.hs\n exposed-modules:"
       "library\n  -- cabal-gild: discover --exclude **/X/**/*.hs\n  exposed-modules:\n    A\n    A.B\n"
 
-  Hspec.it "warns when discovering with an unknown option" $ do
+  Hspec.it "fails when discovering with an unknown option" $ do
     let (a, s, w) =
           runGild
             []
             [(Input.Stdin, String.toUtf8 "-- cabal-gild: discover --unknown\nsignatures:")]
             (".", [])
-    a `Hspec.shouldSatisfy` Either.isRight
-    w `Hspec.shouldBe` [Left . SomeWarning $ UnknownOption.fromString "--unknown"]
-    s `Hspec.shouldBe` Map.singleton Output.Stdout (String.toUtf8 "-- cabal-gild: discover --unknown\nsignatures:\n")
+    a `shouldBeFailure` UnknownOption.UnknownOption "--unknown"
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.empty
 
   Hspec.it "fails when discovering with an invalid option" $ do
     let (a, s, w) =
