@@ -1,7 +1,6 @@
 module CabalGild.Unstable.Action.EvaluatePragmas where
 
 import qualified CabalGild.Unstable.Class.MonadWalk as MonadWalk
-import qualified CabalGild.Unstable.Class.MonadWarn as MonadWarn
 import qualified CabalGild.Unstable.Exception.InvalidOption as InvalidOption
 import qualified CabalGild.Unstable.Exception.UnknownOption as UnknownOption
 import qualified CabalGild.Unstable.Extra.FieldLine as FieldLine
@@ -32,7 +31,7 @@ import qualified System.FilePath as FilePath
 -- | High level wrapper around 'field' that makes this action easier to compose
 -- with other actions.
 run ::
-  (Exception.MonadThrow m, MonadWalk.MonadWalk m, MonadWarn.MonadWarn m) =>
+  (Exception.MonadThrow m, MonadWalk.MonadWalk m) =>
   FilePath ->
   ([Fields.Field (p, [Comment.Comment q])], cs) ->
   m ([Fields.Field (p, [Comment.Comment q])], cs)
@@ -41,7 +40,7 @@ run p (fs, cs) = (,) <$> traverse (field p) fs <*> pure cs
 -- | Evaluates pragmas within the given field. Or, if the field is a section,
 -- evaluates pragmas recursively within the fields of the section.
 field ::
-  (Exception.MonadThrow m, MonadWalk.MonadWalk m, MonadWarn.MonadWarn m) =>
+  (Exception.MonadThrow m, MonadWalk.MonadWalk m) =>
   FilePath ->
   Fields.Field (p, [Comment.Comment q]) ->
   m (Fields.Field (p, [Comment.Comment q]))

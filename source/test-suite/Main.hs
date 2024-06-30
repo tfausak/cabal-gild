@@ -1683,7 +1683,7 @@ runGild arguments inputs files =
     )
     Map.empty
 
-expectWarning :: (Warning.Warning w) => [String] -> w -> Hspec.Expectation
+expectWarning :: (Stack.HasCallStack, Warning.Warning w) => [String] -> w -> Hspec.Expectation
 expectWarning flags warning = do
   let (a, s, w) = runGild flags [(Input.Stdin, String.toUtf8 "")] (".", [])
   a `Hspec.shouldSatisfy` Either.isRight
