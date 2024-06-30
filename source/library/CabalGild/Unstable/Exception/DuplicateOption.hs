@@ -1,8 +1,8 @@
-module CabalGild.Unstable.Warning.DuplicateOption where
+module CabalGild.Unstable.Exception.DuplicateOption where
 
-import qualified CabalGild.Unstable.Class.Warning as Warning
+import qualified Control.Monad.Catch as Exception
 
--- | This warning is emitted when an option is specified more than once.
+-- | This exception is thrown when an option is specified more than once.
 data DuplicateOption
   = DuplicateOption
   { option :: String,
@@ -11,8 +11,8 @@ data DuplicateOption
   }
   deriving (Eq, Show)
 
-instance Warning.Warning DuplicateOption where
-  displayWarning x =
+instance Exception.Exception DuplicateOption where
+  displayException x =
     "overriding option --"
       <> option x
       <> " (before: "
