@@ -98,18 +98,19 @@ stdinOption :: String
 stdinOption = "stdin"
 
 -- | Converts a list of command line arguments into a list of flags. If there
--- are any invalid options, an exception will be thrown.
+-- are any unexpected arguments, invalid options, or unknown options, an
+-- exception will be thrown.
 fromArguments :: (Exception.MonadThrow m) => [String] -> m [Flag]
 fromArguments arguments = do
   let (flgs, args, opts, errs) = GetOpt.getOpt' GetOpt.Permute options arguments
   Foldable.traverse_ (Exception.throwM . UnexpectedArgument.fromString) args
   Foldable.traverse_ (Exception.throwM . InvalidOption.fromString) errs
   Foldable.traverse_ (Exception.throwM . UnknownOption.fromString) opts
-  throwExceptions flgs
+  detectDuplicateOptions flgs
   pure flgs
 
-throwExceptions :: (Exception.MonadThrow m) => [Flag] -> m ()
-throwExceptions =
+detectDuplicateOptions :: (Exception.MonadThrow m) => [Flag] -> m ()
+detectDuplicateOptions =
   let toWarnings o l =
         fmap (uncurry . flip $ DuplicateOption.DuplicateOption o)
           . reverse
