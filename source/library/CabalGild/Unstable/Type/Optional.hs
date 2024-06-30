@@ -8,13 +8,12 @@ data Optional a
   | Specific a
   deriving (Eq, Show)
 
--- | Uses the provided default value if the optional is 'Default', otherwise
--- gets the value out of the 'Specific'. Similar to 'Data.Maybe.fromMaybe'.
-withDefault :: a -> Optional a -> a
-withDefault = flip optional id
+-- | Converts a 'Maybe' value into an 'Optional' one.
+fromMaybe :: Maybe a -> Optional a
+fromMaybe = maybe Default Specific
 
--- | Basic destructor, similar to 'maybe'.
-optional :: b -> (a -> b) -> Optional a -> b
-optional b f o = case o of
-  Default -> b
-  Specific s -> f s
+-- | Converts an 'Optional' value into a 'Maybe' one.
+toMaybe :: Optional a -> Maybe a
+toMaybe o = case o of
+  Default -> Nothing
+  Specific s -> Just s

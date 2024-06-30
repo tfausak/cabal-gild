@@ -1,10 +1,13 @@
 module CabalGild.Unstable.Type.Flag where
 
+import qualified CabalGild.Unstable.Exception.DuplicateOption as DuplicateOption
 import qualified CabalGild.Unstable.Exception.InvalidOption as InvalidOption
 import qualified CabalGild.Unstable.Exception.UnexpectedArgument as UnexpectedArgument
 import qualified CabalGild.Unstable.Exception.UnknownOption as UnknownOption
 import qualified Control.Monad.Catch as Exception
 import qualified Data.Foldable as Foldable
+import qualified Data.Map as Map
+import qualified Data.Maybe as Maybe
 import qualified System.Console.GetOpt as GetOpt
 
 -- | A flag, which represents a command line option. The values associated with
@@ -46,35 +49,53 @@ options =
       "",
     GetOpt.Option
       []
-      ["crlf"]
+      [crlfOption]
       (GetOpt.ReqArg CRLF "LENIENCY")
       "Sets the CRLF handling mode. Must be either 'lenient' or 'strict'.\nDefault: 'lenient'",
     GetOpt.Option
       ['i']
-      ["input"]
+      [inputOption]
       (GetOpt.ReqArg Input "FILE")
       "Sets the input file. Use '-' for standard input (STDIN).\nDefault: '-'",
     GetOpt.Option
       []
-      ["io"]
+      [ioOption]
       (GetOpt.ReqArg IO "FILE")
       "Shortcut for setting both the input and output files.",
     GetOpt.Option
       ['m']
-      ["mode"]
+      [modeOption]
       (GetOpt.ReqArg Mode "MODE")
       "Sets the mode. Must be either 'check' or 'format'.\nDefault: 'format'",
     GetOpt.Option
       ['o']
-      ["output"]
+      [outputOption]
       (GetOpt.ReqArg Output "FILE")
       "Sets the output file. Use '-' for standard output (STDOUT).\nDefault: '-'",
     GetOpt.Option
       ['s']
-      ["stdin"]
+      [stdinOption]
       (GetOpt.ReqArg Stdin "FILE")
       "Sets the path to the input file when using STDIN.\nDefault: '.'"
   ]
+
+crlfOption :: String
+crlfOption = "crlf"
+
+inputOption :: String
+inputOption = "input"
+
+ioOption :: String
+ioOption = "io"
+
+modeOption :: String
+modeOption = "mode"
+
+outputOption :: String
+outputOption = "output"
+
+stdinOption :: String
+stdinOption = "stdin"
 
 -- | Converts a list of command line arguments into a list of flags. If there
 -- are any unexpected arguments, invalid options, or unknown options, an
@@ -85,4 +106,26 @@ fromArguments arguments = do
   Foldable.traverse_ (Exception.throwM . UnexpectedArgument.fromString) args
   Foldable.traverse_ (Exception.throwM . InvalidOption.fromString) errs
   Foldable.traverse_ (Exception.throwM . UnknownOption.fromString) opts
+  detectDuplicateOptions flgs
   pure flgs
+
+detectDuplicateOptions :: (Exception.MonadThrow m) => [Flag] -> m ()
+detectDuplicateOptions =
+  let toWarnings o l =
+        fmap (uncurry . flip $ DuplicateOption.DuplicateOption o)
+          . reverse
+          . filter (uncurry (/=))
+          $ zip l (drop 1 l)
+      fromFlag f = case f of
+        CRLF s -> Just (crlfOption, [s])
+        Input s -> Just (inputOption, [s])
+        IO s -> Just (ioOption, [s])
+        Mode s -> Just (modeOption, [s])
+        Output s -> Just (outputOption, [s])
+        Stdin s -> Just (stdinOption, [s])
+        _ -> Nothing
+   in Foldable.traverse_ Exception.throwM
+        . concatMap (uncurry toWarnings)
+        . Map.toAscList
+        . Map.fromListWith (<>)
+        . Maybe.mapMaybe fromFlag

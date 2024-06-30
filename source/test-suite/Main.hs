@@ -1,4 +1,3 @@
-{- hlint ignore "Redundant bracket" -}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 import qualified CabalGild.Unstable.Class.MonadLog as MonadLog
@@ -6,6 +5,7 @@ import qualified CabalGild.Unstable.Class.MonadRead as MonadRead
 import qualified CabalGild.Unstable.Class.MonadWalk as MonadWalk
 import qualified CabalGild.Unstable.Class.MonadWrite as MonadWrite
 import qualified CabalGild.Unstable.Exception.CheckFailure as CheckFailure
+import qualified CabalGild.Unstable.Exception.DuplicateOption as DuplicateOption
 import qualified CabalGild.Unstable.Exception.InvalidOption as InvalidOption
 import qualified CabalGild.Unstable.Exception.SpecifiedOutputWithCheckMode as SpecifiedOutputWithCheckMode
 import qualified CabalGild.Unstable.Exception.SpecifiedStdinWithFileInput as SpecifiedStdinWithFileInput
@@ -47,22 +47,54 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     s `Hspec.shouldBe` Map.empty
 
   Hspec.it "fails with an unknown option" $ do
-    let (a, s, w) = runGild ["--unknown"] [] (".", [])
-    a `shouldBeFailure` UnknownOption.UnknownOption "--unknown"
-    w `Hspec.shouldBe` []
-    s `Hspec.shouldBe` Map.empty
+    expectException ["--unknown"] $
+      UnknownOption.fromString "--unknown"
 
   Hspec.it "fails with an invalid option" $ do
-    let (a, s, w) = runGild ["--help=invalid"] [] (".", [])
-    a `shouldBeFailure` InvalidOption.InvalidOption "option `--help' doesn't allow an argument"
-    w `Hspec.shouldBe` []
-    s `Hspec.shouldBe` Map.empty
+    expectException ["--help=invalid"] $
+      InvalidOption.fromString "option `--help' doesn't allow an argument"
 
   Hspec.it "fails with an unexpected argument" $ do
-    let (a, s, w) = runGild ["unexpected"] [] (".", [])
-    a `shouldBeFailure` UnexpectedArgument.UnexpectedArgument "unexpected"
+    expectException ["unexpected"] $
+      UnexpectedArgument.fromString "unexpected"
+
+  Hspec.it "fails when --crlf is given twice" $ do
+    expectException ["--crlf=strict", "--crlf=lenient"] $
+      DuplicateOption.DuplicateOption "crlf" "strict" "lenient"
+
+  Hspec.it "does not fail when a flag is given twice with the same value" $ do
+    let (a, s, w) =
+          runGild
+            ["--crlf=strict", "--crlf=strict"]
+            [(Input.Stdin, String.toUtf8 "")]
+            (".", [])
+    a `Hspec.shouldSatisfy` Either.isRight
     w `Hspec.shouldBe` []
-    s `Hspec.shouldBe` Map.empty
+    s `Hspec.shouldBe` Map.singleton Output.Stdout (String.toUtf8 "")
+
+  Hspec.it "fails when a flag is repeatedly overriden" $ do
+    expectException ["-ia", "-ib", "-i-"] $
+      DuplicateOption.DuplicateOption "input" "a" "b"
+
+  Hspec.it "fails when --input is given twice" $ do
+    expectException
+      ["--input=f", "--input=-"]
+      $ DuplicateOption.DuplicateOption "input" "f" "-"
+
+  Hspec.it "fails when --mode is given twice" $ do
+    expectException
+      ["--mode=check", "--mode=format"]
+      $ DuplicateOption.DuplicateOption "mode" "check" "format"
+
+  Hspec.it "fails when --output is given twice" $ do
+    expectException
+      ["--output=f", "--output=-"]
+      $ DuplicateOption.DuplicateOption "output" "f" "-"
+
+  Hspec.it "fails when --stdin is given twice" $ do
+    expectException
+      ["--stdin=f", "--stdin=g"]
+      $ DuplicateOption.DuplicateOption "stdin" "f" "g"
 
   Hspec.it "reads from an input file" $ do
     let (a, s, w) =
@@ -1625,6 +1657,15 @@ runGild arguments inputs files =
       fmap FilePath.joinPath <$> uncurry Map.singleton files
     )
     Map.empty
+
+expectException ::
+  (Stack.HasCallStack, Eq e, Exception.Exception e) =>
+  [String] -> e -> Hspec.Expectation
+expectException flags exception = do
+  let (a, s, w) = runGild flags [] (".", [])
+  a `shouldBeFailure` exception
+  w `Hspec.shouldBe` []
+  s `Hspec.shouldBe` Map.empty
 
 type Test = TestT Identity.Identity
 
