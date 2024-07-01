@@ -1559,6 +1559,12 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "build-depends:\n >> no\n -- comment\n parse"
       "build-depends:\n  -- comment\n  >> no\n  parse\n"
 
+  Hspec.it "only discovers modules in given directories" $ do
+    expectDiscover
+      (".", [["Setup.hs"], ["source", "Example.hs"]])
+      "-- cabal-gild: discover source\nexposed-modules:"
+      "-- cabal-gild: discover source\nexposed-modules: Example\n"
+
   Hspec.around_ withTemporaryDirectory
     . Hspec.it "discovers modules on the file system"
     $ do

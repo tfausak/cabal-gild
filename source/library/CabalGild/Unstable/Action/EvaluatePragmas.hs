@@ -85,7 +85,7 @@ discover p n fls dt ds = do
       inclusions =
         List.nubOrd
           . fmap clean
-          $ if null incs then ["**"] else incs
+          $ if null incs then fmap (`FilePath.combine` "**") directories else incs
   files <- Trans.lift $ MonadWalk.walk root inclusions exclusions
   let comments = concatMap (snd . FieldLine.annotation) fls
       position =
