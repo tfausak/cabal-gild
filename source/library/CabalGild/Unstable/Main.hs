@@ -9,7 +9,9 @@ import qualified CabalGild.Unstable.Action.GetCabalVersion as GetCabalVersion
 import qualified CabalGild.Unstable.Action.ReflowText as ReflowText
 import qualified CabalGild.Unstable.Action.Render as Render
 import qualified CabalGild.Unstable.Action.StripBlanks as StripBlanks
+import qualified CabalGild.Unstable.Class.MonadDirectory as MonadDirectory
 import qualified CabalGild.Unstable.Class.MonadLog as MonadLog
+import qualified CabalGild.Unstable.Class.MonadHandle as MonadHandle
 import qualified CabalGild.Unstable.Class.MonadRead as MonadRead
 import qualified CabalGild.Unstable.Class.MonadWalk as MonadWalk
 import qualified CabalGild.Unstable.Class.MonadWrite as MonadWrite
@@ -26,9 +28,11 @@ import qualified CabalGild.Unstable.Type.Output as Output
 import qualified Control.Monad as Monad
 import qualified Control.Monad.Catch as Exception
 import qualified Data.ByteString as ByteString
+import qualified Data.Foldable as Foldable
 import qualified Distribution.Fields as Fields
 import qualified System.Environment as Environment
 import qualified System.Exit as Exit
+import qualified System.FilePath as FilePath
 import qualified System.IO as IO
 
 -- | This is the main entry point for the application. It gets the command line
@@ -54,7 +58,9 @@ onException e = case Exception.fromException e of
 -- constraints so that it can be run in pure code if so desired. But most often
 -- this will be run in 'IO'.
 mainWith ::
-  ( MonadLog.MonadLog m,
+  ( MonadDirectory.MonadDirectory m,
+    MonadHandle.MonadHandle m,
+    MonadLog.MonadLog m,
     MonadRead.MonadRead m,
     Exception.MonadThrow m,
     MonadWalk.MonadWalk m,
@@ -65,7 +71,14 @@ mainWith ::
 mainWith arguments = do
   flags <- Flag.fromArguments arguments
   config <- Config.fromFlags flags
-  context <- Context.fromConfig config
+  context <- do
+    context <- Context.fromConfig config
+    isTerm <- MonadHandle.hIsTerminalDevice $ Context.input context
+    if isTerm
+      then do
+        fs <- MonadDirectory.listDirectory "."
+        pure $ maybe id Context.setIO (Foldable.find ((== ".cabal") . FilePath.takeExtension) fs) context
+      else pure context
 
   input <- MonadRead.read $ Context.input context
   output <- format (Context.stdin context) input
