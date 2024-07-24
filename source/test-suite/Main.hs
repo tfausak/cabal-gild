@@ -1668,7 +1668,9 @@ runGild arguments inputs files =
 
 expectException ::
   (Stack.HasCallStack, Eq e, Exception.Exception e) =>
-  [String] -> e -> Hspec.Expectation
+  [String] ->
+  e ->
+  Hspec.Expectation
 expectException flags exception = do
   let (a, s, w) = runGild flags [] (".", [])
   a `shouldBeFailure` exception
@@ -1725,4 +1727,3 @@ instance (Monad m) => MonadDirectory.MonadDirectory (TestT m) where
 
 instance (Monad m) => MonadHandle.MonadHandle (TestT m) where
   hIsTerminalDevice = const $ pure False
-

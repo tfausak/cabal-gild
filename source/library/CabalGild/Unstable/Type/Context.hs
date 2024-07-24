@@ -32,7 +32,7 @@ data Context = Context
   deriving (Eq, Show)
 
 setIO :: FilePath -> Context -> Context
-setIO fp c = c {input = Input.File fp, output = Output.File fp }
+setIO fp c = c {input = Input.File fp, output = Output.File fp}
 
 -- | Creates a 'Context' from a 'Config.Config'. If the help or version was
 -- requested, then this will throw an 'Exit.ExitSuccess'. Otherwise this makes

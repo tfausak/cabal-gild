@@ -10,8 +10,8 @@ import qualified CabalGild.Unstable.Action.ReflowText as ReflowText
 import qualified CabalGild.Unstable.Action.Render as Render
 import qualified CabalGild.Unstable.Action.StripBlanks as StripBlanks
 import qualified CabalGild.Unstable.Class.MonadDirectory as MonadDirectory
-import qualified CabalGild.Unstable.Class.MonadLog as MonadLog
 import qualified CabalGild.Unstable.Class.MonadHandle as MonadHandle
+import qualified CabalGild.Unstable.Class.MonadLog as MonadLog
 import qualified CabalGild.Unstable.Class.MonadRead as MonadRead
 import qualified CabalGild.Unstable.Class.MonadWalk as MonadWalk
 import qualified CabalGild.Unstable.Class.MonadWrite as MonadWrite

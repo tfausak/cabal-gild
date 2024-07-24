@@ -10,4 +10,3 @@ instance MonadHandle IO where
   hIsTerminalDevice i = case i of
     Input.Stdin -> System.hIsTerminalDevice System.stdin
     _ -> pure False
-
