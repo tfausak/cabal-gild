@@ -8,7 +8,7 @@ import qualified Distribution.Parsec as Parsec
 newtype Pragma a = Pragma a
   deriving (Eq, Show)
 
-instance Parsec.Parsec a => Parsec.Parsec (Pragma a) where
+instance (Parsec.Parsec a) => Parsec.Parsec (Pragma a) where
   parsec = do
     CharParsing.spaces
     Monad.void $ CharParsing.string cabalGildPragmaPrefix
@@ -17,4 +17,3 @@ instance Parsec.Parsec a => Parsec.Parsec (Pragma a) where
 
 cabalGildPragmaPrefix :: String
 cabalGildPragmaPrefix = "cabal-gild:"
-

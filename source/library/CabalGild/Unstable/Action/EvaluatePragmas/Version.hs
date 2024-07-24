@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP #-}
+
 module CabalGild.Unstable.Action.EvaluatePragmas.Version where
 
 import qualified CabalGild.Unstable.Type.Comment as Comment
@@ -20,7 +21,7 @@ data Version = Version
 instance Parsec.Parsec Version where
   parsec = Version <$ CharParsing.string cabalVersionPragma
 
-cabalVersionPragma :: String.IsString a => a
+cabalVersionPragma :: (String.IsString a) => a
 cabalVersionPragma = String.fromString "version"
 
 version ::
@@ -31,4 +32,4 @@ version comment = case Parsec.simpleParsecBS $ Comment.value comment of
   Nothing -> comment
   Just (Pragma.Pragma Version) -> comment {Comment.value = String.fromString versionComment}
   where
-  versionComment = " " <> Pragma.cabalGildPragmaPrefix <> " " <> cabalVersionPragma <> " " <> CURRENT_PACKAGE_VERSION
+    versionComment = " " <> Pragma.cabalGildPragmaPrefix <> " " <> cabalVersionPragma <> " " <> CURRENT_PACKAGE_VERSION

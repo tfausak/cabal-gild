@@ -1,7 +1,5 @@
 module CabalGild.Unstable.Action.EvaluatePragmas.Discover where
 
-import qualified Distribution.FieldGrammar.Newtypes as Newtypes
-import qualified Control.Monad as Monad
 import qualified CabalGild.Unstable.Class.MonadWalk as MonadWalk
 import qualified CabalGild.Unstable.Exception.InvalidOption as InvalidOption
 import qualified CabalGild.Unstable.Exception.UnknownOption as UnknownOption
@@ -14,6 +12,7 @@ import qualified CabalGild.Unstable.Type.Comment as Comment
 import qualified CabalGild.Unstable.Type.DiscoverTarget as DiscoverTarget
 import qualified CabalGild.Unstable.Type.Pragma as Pragma
 import qualified Control.Applicative as Applicative
+import qualified Control.Monad as Monad
 import qualified Control.Monad.Catch as Exception
 import qualified Control.Monad.Trans.Class as Trans
 import qualified Control.Monad.Trans.Maybe as MaybeT
@@ -24,6 +23,7 @@ import qualified Data.Maybe as Maybe
 import qualified Data.Set as Set
 import qualified Distribution.Compat.CharParsing as CharParsing
 import qualified Distribution.Compat.Lens as Lens
+import qualified Distribution.FieldGrammar.Newtypes as Newtypes
 import qualified Distribution.Fields as Fields
 import qualified Distribution.ModuleName as ModuleName
 import qualified Distribution.Parsec as Parsec
@@ -59,7 +59,6 @@ instance Parsec.Parsec Discover where
         ([] <$ CharParsing.spaces)
     CharParsing.eof
     pure . Discover $ fmap Newtypes.getToken' arguments
-
 
 -- | If modules are discovered for a field, that fields lines are completely
 -- replaced.

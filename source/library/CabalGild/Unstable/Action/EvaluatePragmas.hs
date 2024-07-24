@@ -15,4 +15,3 @@ run ::
   ([Fields.Field (p, [Comment.Comment q])], cs) ->
   m ([Fields.Field (p, [Comment.Comment q])], cs)
 run p (fs, cs) = (,) <$> traverse (EvaluateDiscover.field p . EvaluateVersion.field) fs <*> pure cs
-
