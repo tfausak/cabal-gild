@@ -12,7 +12,7 @@ import qualified Distribution.Parsec as Parsec
 field ::
   () =>
   Fields.Field (p, [Comment.Comment q]) ->
-  (Fields.Field (p, [Comment.Comment q]))
+  Fields.Field (p, [Comment.Comment q])
 field = fmap $ fmap $ fmap version
 
 data Version = Version
