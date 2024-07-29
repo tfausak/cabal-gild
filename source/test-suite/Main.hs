@@ -1,6 +1,5 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
-import qualified CabalGild.Unstable.Class.MonadDirectory as MonadDirectory
 import qualified CabalGild.Unstable.Class.MonadHandle as MonadHandle
 import qualified CabalGild.Unstable.Class.MonadLog as MonadLog
 import qualified CabalGild.Unstable.Class.MonadRead as MonadRead
@@ -1722,8 +1721,5 @@ instance (Monad m) => MonadWalk.MonadWalk (TestT m) where
 instance (Monad m) => MonadWrite.MonadWrite (TestT m) where
   write k = TestT . Trans.lift . RWST.modify . Map.insert k
 
-instance (Monad m) => MonadDirectory.MonadDirectory (TestT m) where
-  listDirectory = const $ pure []
-
 instance (Monad m) => MonadHandle.MonadHandle (TestT m) where
-  hIsTerminalDevice = const $ pure False
+  stdinIsTerminalDevice = pure False
