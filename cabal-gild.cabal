@@ -158,6 +158,7 @@ test-suite cabal-gild-test-suite
     hspec ^>=2.11.8,
     temporary ^>=1.3,
     transformers,
+    main-tester ^>=0.2.0.1
 
   hs-source-dirs: source/test-suite
   main-is: Main.hs
