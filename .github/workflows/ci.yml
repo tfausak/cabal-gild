@@ -14,6 +14,7 @@ jobs:
       - run: cabal configure --enable-optimization=2 --enable-tests --flags=pedantic --jobs
       - run: cat cabal.project.local
       - run: cp cabal.project.local artifact
+      - run: cabal update
       - run: cabal freeze
       - run: cat cabal.project.freeze
       - run: cp cabal.project.freeze artifact
