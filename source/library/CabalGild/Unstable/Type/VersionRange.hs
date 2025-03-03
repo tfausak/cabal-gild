@@ -43,3 +43,12 @@ fromVersionRange =
     Earlier
     Union
     Intersect
+
+toVersionRange :: VersionRange Version.Version -> VersionRange.VersionRange
+toVersionRange x = case x of
+  Any -> VersionRange.anyVersion
+  This v -> VersionRange.thisVersion v
+  Later v -> VersionRange.laterVersion v
+  Earlier v -> VersionRange.earlierVersion v
+  Union v w -> VersionRange.unionVersionRanges (toVersionRange v) (toVersionRange w)
+  Intersect v w -> VersionRange.intersectVersionRanges (toVersionRange v) (toVersionRange w)
