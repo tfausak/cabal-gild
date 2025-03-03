@@ -1582,8 +1582,73 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
 
   Hspec.it "" $ do
     expectGilded
-      "cabal-version: 3.0\nbuild-depends: base:base > 0"
-      "cabal-version: 3.0\nbuild-depends: base:base >0\n"
+      "cabal-version: 3.0\nbuild-depends: base > 0"
+      "cabal-version: 3.0\nbuild-depends: base >0\n"
+
+  Hspec.it "" $ do
+    expectGilded
+      "cabal-version: 3.0\nbuild-depends: base == 0.*"
+      "cabal-version: 3.0\nbuild-depends: base ==0.*\n"
+
+  Hspec.it "" $ do
+    expectGilded
+      "build-depends: v-any -any"
+      "build-depends: v-any >=0\n"
+
+  Hspec.it "" $ do
+    expectGilded
+      "build-depends: v-none -none"
+      "build-depends: v-none <0\n"
+
+  Hspec.it "" $ do
+    expectGilded
+      "build-depends: v-this == 1"
+      "build-depends: v-this ==1\n"
+
+  Hspec.it "" $ do
+    expectGilded
+      "build-depends: v-later > 1"
+      "build-depends: v-later >1\n"
+
+  Hspec.it "" $ do
+    expectGilded
+      "build-depends: v-earlier < 1"
+      "build-depends: v-earlier <1\n"
+
+  Hspec.it "" $ do
+    expectGilded
+      "build-depends: v-or-later >= 1"
+      "build-depends: v-or-later >=1\n"
+
+  Hspec.it "" $ do
+    expectGilded
+      "build-depends: v-or-earlier <= 1"
+      "build-depends: v-or-earlier <=1\n"
+
+  Hspec.it "" $ do
+    expectGilded
+      "build-depends: v-union == 1 || == 2"
+      "build-depends: v-union ==1 || ==2\n"
+
+  Hspec.it "" $ do
+    expectGilded
+      "build-depends: v-intersect == 1 && == 2"
+      "build-depends: v-intersect ==1 && ==2\n"
+
+  Hspec.it "" $ do
+    expectGilded
+      "build-depends: v-within == 1.*"
+      "build-depends: v-within ==1.*\n"
+
+  Hspec.it "" $ do
+    expectGilded
+      "cabal-version: 2.0\nbuild-depends: v-major-bound ^>= 1"
+      "cabal-version: 2.0\nbuild-depends: v-major-bound ^>=1\n"
+
+  Hspec.it "" $ do
+    expectGilded
+      "cabal-version: 3.0\nbuild-depends: v-set == { 1, 2 }"
+      "cabal-version: 3.0\nbuild-depends: v-set =={1, 2}\n"
 
   Hspec.around_ withTemporaryDirectory
     . Hspec.it "discovers modules on the file system"
