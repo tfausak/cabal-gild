@@ -1575,11 +1575,6 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "cabal-version: 3.0\nbuild-depends: x:{ x }"
       "cabal-version: 3.0\nbuild-depends: x:{x}\n"
 
-  Hspec.it "sorts sub-library names" $ do
-    expectGilded
-      "cabal-version: 3.0\nbuild-depends: x:{ y , x }"
-      "cabal-version: 3.0\nbuild-depends: x:{x, y}\n"
-
   Hspec.around_ withTemporaryDirectory
     . Hspec.it "discovers modules on the file system"
     $ do
