@@ -112,7 +112,6 @@ library
     CabalGild.Unstable.Type.ExeDependency
     CabalGild.Unstable.Type.Extension
     CabalGild.Unstable.Type.Flag
-    CabalGild.Unstable.Type.ForeignLibOption
     CabalGild.Unstable.Type.Input
     CabalGild.Unstable.Type.Leniency
     CabalGild.Unstable.Type.Line
