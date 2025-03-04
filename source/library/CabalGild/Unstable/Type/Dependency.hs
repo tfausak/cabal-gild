@@ -51,7 +51,7 @@ instance Pretty.Pretty Dependency where
                 PrettyPrint.braces
                   . PrettyPrint.hsep
                   . PrettyPrint.punctuate PrettyPrint.comma
-                  . fmap (Pretty.pretty)
+                  . fmap Pretty.pretty
                   . NonEmpty.toList
                   $ NonEmpty.sort ucns
         ver =
