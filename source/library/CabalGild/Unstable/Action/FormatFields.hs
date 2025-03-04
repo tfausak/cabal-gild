@@ -15,7 +15,6 @@ import qualified CabalGild.Unstable.Type.Language as Language
 import qualified CabalGild.Unstable.Type.LegacyExeDependency as LegacyExeDependency
 import qualified CabalGild.Unstable.Type.Mixin as Mixin
 import qualified CabalGild.Unstable.Type.ModuleReexport as ModuleReexport
-import qualified CabalGild.Unstable.Type.PkgconfigDependency as PkgconfigDependency
 import qualified CabalGild.Unstable.Type.SomeParsecParser as SPP
 import qualified CabalGild.Unstable.Type.TestedWith as TestedWith
 import qualified CabalGild.Unstable.Type.Variable as Variable
@@ -29,6 +28,7 @@ import qualified Distribution.Fields as Fields
 import qualified Distribution.ModuleName as ModuleName
 import qualified Distribution.Parsec as Parsec
 import qualified Distribution.Parsec.FieldLineStream as FieldLineStream
+import qualified Distribution.Types.PkgconfigDependency as PkgconfigDependency
 import qualified Text.PrettyPrint as PrettyPrint
 
 -- | A wrapper around 'field' to allow this to be composed with other actions.
