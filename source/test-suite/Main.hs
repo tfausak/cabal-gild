@@ -1575,6 +1575,67 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "cabal-version: 3.0\nbuild-depends: x:{ x }"
       "cabal-version: 3.0\nbuild-depends: x:{x}\n"
 
+  Hspec.describe "version ranges" $ do
+    Hspec.it "any" $ do
+      expectGilded
+        "build-depends: x -any"
+        "build-depends: x\n"
+
+    Hspec.it "none" $ do
+      expectGilded
+        "build-depends: x -none"
+        "build-depends: x <0\n"
+
+    Hspec.it "this" $ do
+      expectGilded
+        "build-depends: x == 1"
+        "build-depends: x ==1\n"
+
+    Hspec.it "later" $ do
+      expectGilded
+        "build-depends: x > 1"
+        "build-depends: x >1\n"
+
+    Hspec.it "or later" $ do
+      expectGilded
+        "build-depends: x >= 1"
+        "build-depends: x >=1\n"
+
+    Hspec.it "earlier" $ do
+      expectGilded
+        "build-depends: x < 1"
+        "build-depends: x <1\n"
+
+    Hspec.it "or earlier" $ do
+      expectGilded
+        "build-depends: x <= 1"
+        "build-depends: x <=1\n"
+
+    Hspec.it "union" $ do
+      expectGilded
+        "build-depends: x > 1 || < 1"
+        "build-depends: x >1 || <1\n"
+
+    Hspec.it "intersect" $ do
+      expectGilded
+        "build-depends: x > 1 && < 2"
+        "build-depends: x >1 && <2\n"
+
+    Hspec.it "within" $ do
+      expectGilded
+        "build-depends: x == 1.*"
+        "build-depends: x ==1.*\n"
+
+    Hspec.it "major bound" $ do
+      expectGilded
+        "cabal-version: 2.0\nbuild-depends: x ^>= 1"
+        "cabal-version: 2.0\nbuild-depends: x ^>=1\n"
+
+    Hspec.it "set" $ do
+      expectGilded
+        "cabal-version: 3.0\nbuild-depends: x == { 1 , 2 }"
+        "cabal-version: 3.0\nbuild-depends: x =={1, 2}\n"
+
   Hspec.around_ withTemporaryDirectory
     . Hspec.it "discovers modules on the file system"
     $ do
