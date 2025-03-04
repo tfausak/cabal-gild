@@ -121,7 +121,6 @@ library
     CabalGild.Unstable.Type.List
     CabalGild.Unstable.Type.Mixin
     CabalGild.Unstable.Type.Mode
-    CabalGild.Unstable.Type.ModuleReexport
     CabalGild.Unstable.Type.Optional
     CabalGild.Unstable.Type.Output
     CabalGild.Unstable.Type.Pragma
