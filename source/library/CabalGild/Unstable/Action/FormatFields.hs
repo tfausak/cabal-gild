@@ -7,15 +7,8 @@ import qualified CabalGild.Unstable.Extra.Name as Name
 import qualified CabalGild.Unstable.Extra.SectionArg as SectionArg
 import qualified CabalGild.Unstable.Extra.String as String
 import qualified CabalGild.Unstable.Type.Condition as Condition
-import qualified CabalGild.Unstable.Type.Dependency as Dependency
-import qualified CabalGild.Unstable.Type.ExeDependency as ExeDependency
 import qualified CabalGild.Unstable.Type.Extension as Extension
-import qualified CabalGild.Unstable.Type.ForeignLibOption as ForeignLibOption
-import qualified CabalGild.Unstable.Type.Language as Language
-import qualified CabalGild.Unstable.Type.LegacyExeDependency as LegacyExeDependency
 import qualified CabalGild.Unstable.Type.Mixin as Mixin
-import qualified CabalGild.Unstable.Type.ModuleReexport as ModuleReexport
-import qualified CabalGild.Unstable.Type.PkgconfigDependency as PkgconfigDependency
 import qualified CabalGild.Unstable.Type.SomeParsecParser as SPP
 import qualified CabalGild.Unstable.Type.TestedWith as TestedWith
 import qualified CabalGild.Unstable.Type.Variable as Variable
@@ -29,6 +22,13 @@ import qualified Distribution.Fields as Fields
 import qualified Distribution.ModuleName as ModuleName
 import qualified Distribution.Parsec as Parsec
 import qualified Distribution.Parsec.FieldLineStream as FieldLineStream
+import qualified Distribution.Types.Dependency as Dependency
+import qualified Distribution.Types.ExeDependency as ExeDependency
+import qualified Distribution.Types.ForeignLibOption as ForeignLibOption
+import qualified Distribution.Types.LegacyExeDependency as LegacyExeDependency
+import qualified Distribution.Types.ModuleReexport as ModuleReexport
+import qualified Distribution.Types.PkgconfigDependency as PkgconfigDependency
+import qualified Language.Haskell.Extension as Haskell
 import qualified Text.PrettyPrint as PrettyPrint
 
 -- | A wrapper around 'field' to allow this to be composed with other actions.
@@ -193,7 +193,7 @@ parsers =
           "mixins" =: SPP.set @Newtypes.CommaVCat @(Identity.Identity Mixin.Mixin),
           "options" =: SPP.set @Newtypes.FSep @(Identity.Identity ForeignLibOption.ForeignLibOption),
           "other-extensions" =: SPP.set @Newtypes.FSep @(Newtypes.MQuoted Extension.Extension),
-          "other-languages" =: SPP.set @Newtypes.FSep @(Newtypes.MQuoted Language.Language),
+          "other-languages" =: SPP.set @Newtypes.FSep @(Newtypes.MQuoted Haskell.Language),
           "other-modules" =: SPP.set @Newtypes.VCat @(Newtypes.MQuoted ModuleName.ModuleName),
           "pkgconfig-depends" =: SPP.set @Newtypes.CommaFSep @(Identity.Identity PkgconfigDependency.PkgconfigDependency),
           "reexported-modules" =: SPP.set @Newtypes.CommaVCat @(Identity.Identity ModuleReexport.ModuleReexport),

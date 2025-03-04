@@ -107,31 +107,22 @@ library
     CabalGild.Unstable.Type.Condition
     CabalGild.Unstable.Type.Config
     CabalGild.Unstable.Type.Context
-    CabalGild.Unstable.Type.Dependency
     CabalGild.Unstable.Type.DiscoverTarget
-    CabalGild.Unstable.Type.ExeDependency
     CabalGild.Unstable.Type.Extension
     CabalGild.Unstable.Type.Flag
-    CabalGild.Unstable.Type.ForeignLibOption
     CabalGild.Unstable.Type.Input
-    CabalGild.Unstable.Type.Language
-    CabalGild.Unstable.Type.LegacyExeDependency
     CabalGild.Unstable.Type.Leniency
     CabalGild.Unstable.Type.Line
     CabalGild.Unstable.Type.List
     CabalGild.Unstable.Type.Mixin
     CabalGild.Unstable.Type.Mode
-    CabalGild.Unstable.Type.ModuleReexport
     CabalGild.Unstable.Type.Optional
     CabalGild.Unstable.Type.Output
-    CabalGild.Unstable.Type.PkgconfigDependency
-    CabalGild.Unstable.Type.PkgconfigVersionRange
     CabalGild.Unstable.Type.Pragma
     CabalGild.Unstable.Type.Set
     CabalGild.Unstable.Type.SomeParsecParser
     CabalGild.Unstable.Type.TestedWith
     CabalGild.Unstable.Type.Variable
-    CabalGild.Unstable.Type.VersionRange
 
   hs-source-dirs: source/library
   other-modules: Paths_cabal_gild
