@@ -49,31 +49,32 @@ instance Parsec.Parsec Dependency where
         }
 
 instance Pretty.Pretty Dependency where
-  pretty dependency =
+  prettyVersioned csv dependency =
     PrettyPrint.hsep
       [ PrettyPrint.hcat
-          [ Pretty.pretty $ packageName dependency,
+          [ Pretty.prettyVersioned csv $ packageName dependency,
             case libraryNames dependency of
               Nothing -> mempty
               Just e ->
                 PrettyPrint.char ':' <> case e of
-                  Left ucn -> Pretty.pretty ucn
+                  Left ucn -> Pretty.prettyVersioned csv ucn
                   Right ucns ->
                     PrettyPrint.braces
                       . foldr1
                         ( \ucn doc ->
                             PrettyPrint.hsep
                               [ PrettyPrint.hcat
-                                  [ Pretty.pretty ucn,
+                                  [ Pretty.prettyVersioned csv ucn,
                                     PrettyPrint.comma
                                   ],
                                 doc
                               ]
                         )
-                      . fmap Pretty.pretty
+                      . fmap (Pretty.prettyVersioned csv)
                       $ NonEmpty.sort ucns
           ],
         if VersionRange.isAnyVersion $ versionRange dependency
           then mempty
-          else Pretty.pretty $ versionRange dependency
+          else Pretty.prettyVersioned csv $ versionRange dependency
       ]
+  pretty = Pretty.prettyVersioned CabalSpecVersion.CabalSpecV1_0

@@ -1592,13 +1592,23 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
 
   Hspec.it "" $ do
     expectGilded
-      "build-depends: v-any -any"
-      "build-depends: v-any >=0\n"
+      "build-depends: v-any-old -any"
+      "build-depends: v-any-old\n"
 
   Hspec.it "" $ do
     expectGilded
-      "build-depends: v-none -none"
-      "build-depends: v-none <0\n"
+      "cabal-version: 3.4\nbuild-depends: v-any-new -any"
+      "cabal-version: 3.4\nbuild-depends: v-any-new\n"
+
+  Hspec.it "" $ do
+    expectGilded
+      "cabal-version: 1.22\nbuild-depends: v-none-old -none"
+      "cabal-version: 1.22\nbuild-depends: v-none-old <0\n"
+
+  Hspec.it "" $ do
+    expectGilded
+      "cabal-version: 3.4\nbuild-depends: v-none-new -none"
+      "cabal-version: 3.4\nbuild-depends: v-none-new <0\n"
 
   Hspec.it "" $ do
     expectGilded
