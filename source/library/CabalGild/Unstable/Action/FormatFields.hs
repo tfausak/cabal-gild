@@ -8,7 +8,6 @@ import qualified CabalGild.Unstable.Extra.SectionArg as SectionArg
 import qualified CabalGild.Unstable.Extra.String as String
 import qualified CabalGild.Unstable.Type.Condition as Condition
 import qualified CabalGild.Unstable.Type.Dependency as Dependency
-import qualified CabalGild.Unstable.Type.ExeDependency as ExeDependency
 import qualified CabalGild.Unstable.Type.Extension as Extension
 import qualified CabalGild.Unstable.Type.Mixin as Mixin
 import qualified CabalGild.Unstable.Type.SomeParsecParser as SPP
@@ -24,6 +23,7 @@ import qualified Distribution.Fields as Fields
 import qualified Distribution.ModuleName as ModuleName
 import qualified Distribution.Parsec as Parsec
 import qualified Distribution.Parsec.FieldLineStream as FieldLineStream
+import qualified Distribution.Types.ExeDependency as ExeDependency
 import qualified Distribution.Types.ForeignLibOption as ForeignLibOption
 import qualified Distribution.Types.LegacyExeDependency as LegacyExeDependency
 import qualified Distribution.Types.ModuleReexport as ModuleReexport
