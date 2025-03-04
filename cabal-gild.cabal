@@ -107,7 +107,6 @@ library
     CabalGild.Unstable.Type.Condition
     CabalGild.Unstable.Type.Config
     CabalGild.Unstable.Type.Context
-    CabalGild.Unstable.Type.Dependency
     CabalGild.Unstable.Type.DiscoverTarget
     CabalGild.Unstable.Type.Extension
     CabalGild.Unstable.Type.Flag
