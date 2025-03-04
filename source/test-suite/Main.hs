@@ -1565,20 +1565,20 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "-- cabal-gild: discover source\nexposed-modules:"
       "-- cabal-gild: discover source\nexposed-modules: Example\n"
 
-  Hspec.it "" $ do
+  Hspec.it "keeps an explicit sub-library name" $ do
     expectGilded
-      "build-depends: base:base"
-      "build-depends: base:base\n"
+      "cabal-version: 3.0\nbuild-depends: x:x"
+      "cabal-version: 3.0\nbuild-depends: x:x\n"
 
-  Hspec.it "" $ do
+  Hspec.it "keeps a singleton set of sub-library names" $ do
     expectGilded
-      "cabal-version: 3.0\nbuild-depends: base:base"
-      "cabal-version: 3.0\nbuild-depends: base:base\n"
+      "cabal-version: 3.0\nbuild-depends: x:{ x }"
+      "cabal-version: 3.0\nbuild-depends: x:{x}\n"
 
-  Hspec.it "" $ do
+  Hspec.it "sorts sub-library names" $ do
     expectGilded
-      "cabal-version: 3.0\nbuild-depends: base:{ base }"
-      "cabal-version: 3.0\nbuild-depends: base:{base}\n"
+      "cabal-version: 3.0\nbuild-depends: x:{ y , x }"
+      "cabal-version: 3.0\nbuild-depends: x:{x, y}\n"
 
   Hspec.around_ withTemporaryDirectory
     . Hspec.it "discovers modules on the file system"
