@@ -1,6 +1,5 @@
 module CabalGild.Unstable.Type.PkgconfigDependency where
 
-import qualified CabalGild.Unstable.Type.PkgconfigVersionRange as PkgconfigVersionRange
 import qualified Data.Ord as Ord
 import qualified Distribution.Parsec as Parsec
 import qualified Distribution.Pretty as Pretty
@@ -17,7 +16,7 @@ newtype PkgconfigDependency = PkgconfigDependency
 instance Ord PkgconfigDependency where
   compare =
     Ord.comparing $
-      (\(PkgconfigDependency.PkgconfigDependency pn pvr) -> (pn, PkgconfigVersionRange.PkgconfigVersionRange pvr))
+      (\(PkgconfigDependency.PkgconfigDependency pn pvr) -> (pn, pvr))
         . unwrap
 
 instance Parsec.Parsec PkgconfigDependency where

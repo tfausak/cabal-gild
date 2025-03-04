@@ -125,7 +125,6 @@ library
     CabalGild.Unstable.Type.Optional
     CabalGild.Unstable.Type.Output
     CabalGild.Unstable.Type.PkgconfigDependency
-    CabalGild.Unstable.Type.PkgconfigVersionRange
     CabalGild.Unstable.Type.Pragma
     CabalGild.Unstable.Type.Set
     CabalGild.Unstable.Type.SomeParsecParser
