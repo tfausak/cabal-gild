@@ -115,7 +115,6 @@ library
     CabalGild.Unstable.Type.ForeignLibOption
     CabalGild.Unstable.Type.Input
     CabalGild.Unstable.Type.Language
-    CabalGild.Unstable.Type.LegacyExeDependency
     CabalGild.Unstable.Type.Leniency
     CabalGild.Unstable.Type.Line
     CabalGild.Unstable.Type.List
