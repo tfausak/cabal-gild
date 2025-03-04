@@ -1,6 +1,5 @@
 module CabalGild.Unstable.Type.LegacyExeDependency where
 
-import qualified CabalGild.Unstable.Type.VersionRange as VersionRange
 import qualified Data.Ord as Ord
 import qualified Distribution.Parsec as Parsec
 import qualified Distribution.Pretty as Pretty
@@ -17,7 +16,7 @@ newtype LegacyExeDependency = LegacyExeDependency
 instance Ord LegacyExeDependency where
   compare =
     Ord.comparing $
-      (\(LegacyExeDependency.LegacyExeDependency s vr) -> (s, VersionRange.fromVersionRange vr))
+      (\(LegacyExeDependency.LegacyExeDependency s vr) -> (s, vr))
         . unwrap
 
 instance Parsec.Parsec LegacyExeDependency where

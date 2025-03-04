@@ -1,6 +1,5 @@
 module CabalGild.Unstable.Type.ExeDependency where
 
-import qualified CabalGild.Unstable.Type.VersionRange as VersionRange
 import qualified Data.Ord as Ord
 import qualified Distribution.Parsec as Parsec
 import qualified Distribution.Pretty as Pretty
@@ -16,7 +15,7 @@ newtype ExeDependency = ExeDependency
 instance Ord ExeDependency where
   compare =
     Ord.comparing $
-      (\(ExeDependency.ExeDependency pn ucn vr) -> (pn, ucn, VersionRange.fromVersionRange vr))
+      (\(ExeDependency.ExeDependency pn ucn vr) -> (pn, ucn, vr))
         . unwrap
 
 instance Parsec.Parsec ExeDependency where

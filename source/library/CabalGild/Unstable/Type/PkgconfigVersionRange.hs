@@ -1,6 +1,5 @@
 module CabalGild.Unstable.Type.PkgconfigVersionRange where
 
-import qualified CabalGild.Unstable.Type.VersionRange as VersionRange
 import qualified Data.Ord as Ord
 import qualified Distribution.Parsec as Parsec
 import qualified Distribution.Pretty as Pretty
@@ -16,9 +15,8 @@ newtype PkgconfigVersionRange = PkgconfigVersionRange
 
 instance Ord PkgconfigVersionRange where
   compare =
-    Ord.comparing $
-      VersionRange.fromPkgconfigVersionRange
-        . unwrap
+    Ord.comparing
+      unwrap
 
 instance Parsec.Parsec PkgconfigVersionRange where
   parsec = PkgconfigVersionRange <$> Parsec.parsec

@@ -1,6 +1,5 @@
 module CabalGild.Unstable.Type.Dependency where
 
-import qualified CabalGild.Unstable.Type.VersionRange as VersionRange
 import qualified Data.Ord as Ord
 import qualified Distribution.Parsec as Parsec
 import qualified Distribution.Pretty as Pretty
@@ -16,7 +15,7 @@ newtype Dependency = Dependency
 instance Ord Dependency where
   compare =
     Ord.comparing $
-      (\(Dependency.Dependency pn vr lns) -> (pn, VersionRange.fromVersionRange vr, lns))
+      (\(Dependency.Dependency pn vr lns) -> (pn, vr, lns))
         . unwrap
 
 instance Parsec.Parsec Dependency where
