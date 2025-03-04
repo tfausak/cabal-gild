@@ -28,7 +28,7 @@ instance Parsec.Parsec Dependency where
       csv <- Parsec.askCabalSpecVersion
       Monad.guard $ csv >= CabalSpecVersion.CabalSpecV3_0
       Monad.msum
-        [ fmap Left Parsec.parsec,
+        [ Left <$> Parsec.parsec,
           Right
             <$> Parse.between
               (Parse.char '{' *> Parse.spaces)
@@ -36,45 +36,26 @@ instance Parsec.Parsec Dependency where
               (Parsec.parsecCommaNonEmpty Parsec.parsec)
         ]
     Parse.spaces
-    versionRange <-
-      Monad.msum
-        [ Parsec.parsec,
-          pure VersionRange.anyVersion
-        ]
-    pure
-      MkDependency
-        { packageName,
-          libraryNames,
-          versionRange
-        }
+    versionRange <- Parse.option VersionRange.anyVersion Parsec.parsec
+    pure MkDependency {packageName, libraryNames, versionRange}
 
 instance Pretty.Pretty Dependency where
-  prettyVersioned csv dependency =
-    PrettyPrint.hsep
-      [ PrettyPrint.hcat
-          [ Pretty.prettyVersioned csv $ packageName dependency,
-            case libraryNames dependency of
-              Nothing -> mempty
-              Just e ->
-                PrettyPrint.char ':' <> case e of
-                  Left ucn -> Pretty.prettyVersioned csv ucn
-                  Right ucns ->
-                    PrettyPrint.braces
-                      . foldr1
-                        ( \ucn doc ->
-                            PrettyPrint.hsep
-                              [ PrettyPrint.hcat
-                                  [ Pretty.prettyVersioned csv ucn,
-                                    PrettyPrint.comma
-                                  ],
-                                doc
-                              ]
-                        )
-                      . fmap (Pretty.prettyVersioned csv)
-                      $ NonEmpty.sort ucns
-          ],
-        if VersionRange.isAnyVersion $ versionRange dependency
-          then mempty
-          else Pretty.prettyVersioned csv $ versionRange dependency
-      ]
-  pretty = Pretty.prettyVersioned CabalSpecVersion.CabalSpecV1_0
+  pretty dependency =
+    let pkg = Pretty.pretty $ packageName dependency
+        libs = case libraryNames dependency of
+          Nothing -> mempty
+          Just e ->
+            PrettyPrint.char ':' <> case e of
+              Left ucn -> Pretty.pretty ucn
+              Right ucns ->
+                PrettyPrint.braces
+                  . PrettyPrint.hsep
+                  . PrettyPrint.punctuate PrettyPrint.comma
+                  . fmap (Pretty.pretty)
+                  . NonEmpty.toList
+                  $ NonEmpty.sort ucns
+        ver =
+          if VersionRange.isAnyVersion $ versionRange dependency
+            then mempty
+            else Pretty.pretty $ versionRange dependency
+     in PrettyPrint.hsep [pkg <> libs, ver]
