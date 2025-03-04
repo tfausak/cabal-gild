@@ -5,8 +5,7 @@ import qualified Distribution.FieldGrammar.Newtypes as Newtypes
 import qualified Distribution.Parsec as Parsec
 import qualified Distribution.Pretty as Pretty
 
--- | This type exists to provide an 'Ord' instance for 'Newtypes.TestedWith',
--- which was added in @Cabal-syntax-3.10.1.0@.
+-- | This type exists to provide an 'Ord' instance for 'Newtypes.TestedWith'.
 newtype TestedWith = TestedWith
   { unwrap :: Newtypes.TestedWith
   }
