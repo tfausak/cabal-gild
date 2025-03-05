@@ -1576,10 +1576,15 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "cabal-version: 3.0\nbuild-depends: x:{x}\n"
 
   Hspec.describe "version ranges" $ do
+    Hspec.it "implicit" $ do
+      expectGilded
+        "build-depends: x"
+        "build-depends: x\n"
+
     Hspec.it "any" $ do
       expectGilded
         "build-depends: x -any"
-        "build-depends: x\n"
+        "build-depends: x >=0\n"
 
     Hspec.it "none" $ do
       expectGilded
