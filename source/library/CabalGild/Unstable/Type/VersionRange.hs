@@ -169,9 +169,3 @@ renderConstraint x =
           PrettyPrint.text "||",
           renderConstraint r
         ]
-
-simplifyConstraint :: Constraint -> Constraint
-simplifyConstraint x = case x of
-  Any -> Op Ge . One . MkVersion . pure $ Numeric 0
-  None -> Op Lt . One . MkVersion . pure $ Numeric 0
-  _ -> x

@@ -54,7 +54,5 @@ instance Pretty.Pretty Dependency where
                   . fmap Pretty.pretty
                   . NonEmpty.toList
                   $ NonEmpty.sort ucns
-        ver =
-          foldMap (VersionRange.renderConstraint . VersionRange.simplifyConstraint) $
-            versionRange dependency
+        ver = foldMap VersionRange.renderConstraint $ versionRange dependency
      in PrettyPrint.hsep [pkg <> libs, ver]

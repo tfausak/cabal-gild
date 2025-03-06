@@ -1584,12 +1584,12 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     Hspec.it "any" $ do
       expectGilded
         "build-depends: x -any"
-        "build-depends: x >=0\n"
+        "build-depends: x -any\n"
 
     Hspec.it "none" $ do
       expectGilded
         "build-depends: x -none"
-        "build-depends: x <0\n"
+        "build-depends: x -none\n"
 
     Hspec.it "this" $ do
       expectGilded
