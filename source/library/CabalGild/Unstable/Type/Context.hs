@@ -23,6 +23,7 @@ import qualified Data.Version as Version
 import qualified Paths_cabal_gild as This
 import qualified System.Console.GetOpt as GetOpt
 import qualified System.Exit as Exit
+import qualified System.IO as IO
 
 -- | Represents the context necessary to run the program. This is essentially a
 -- simplified 'Config.Config'.
@@ -35,16 +36,13 @@ data Context = Context
   }
   deriving (Eq, Show)
 
-setIO :: FilePath -> Context -> Context
-setIO fp c = c {input = Input.File fp, output = Output.File fp}
-
 -- | Creates a 'Context' from a 'Config.Config'. If the help or version was
 -- requested, then this will throw an 'Exit.ExitSuccess'. Otherwise this makes
 -- sure the config is valid before returning the context.
 fromConfig ::
-  ( MonadLog.MonadLog m,
+  ( MonadHandle.MonadHandle m,
+    MonadLog.MonadLog m,
     Exception.MonadThrow m,
-    MonadHandle.MonadHandle m,
     MonadWalk.MonadWalk m
   ) =>
   Config.Config ->
@@ -84,7 +82,7 @@ fromConfig config = do
         Input.File f -> f
       preOutput = Maybe.fromMaybe Output.Stdout . Optional.toMaybe $ Config.output config
   (theInput, theOutput) <- do
-    isTerm <- MonadHandle.stdinIsTerminalDevice
+    isTerm <- MonadHandle.isTerminalDevice IO.stdin
     if preInput == Input.Stdin && preOutput == Output.Stdout && isTerm
       then do
         cabalFiles <- MonadWalk.walk "." ["*.cabal"] []

@@ -55,12 +55,12 @@ onException e = case Exception.fromException e of
 -- constraints so that it can be run in pure code if so desired. But most often
 -- this will be run in 'IO'.
 mainWith ::
-  ( MonadLog.MonadLog m,
+  ( MonadHandle.MonadHandle m,
+    MonadLog.MonadLog m,
     MonadRead.MonadRead m,
     Exception.MonadThrow m,
     MonadWalk.MonadWalk m,
-    MonadWrite.MonadWrite m,
-    MonadHandle.MonadHandle m
+    MonadWrite.MonadWrite m
   ) =>
   [String] ->
   m ()
