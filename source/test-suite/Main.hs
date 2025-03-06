@@ -745,7 +745,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
   Hspec.it "formats complex tested-with version range" $ do
     expectGilded
       "tested-with: GHC == { 9.8.1 , 9.6.4 }"
-      "tested-with: ghc =={9.8.1, 9.6.4}\n"
+      "tested-with: ghc =={9.6.4, 9.8.1}\n"
 
   Hspec.it "sorts data-files" $ do
     expectGilded
@@ -1643,13 +1643,18 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
 
     Hspec.it "major bound" $ do
       expectGilded
-        "cabal-version: 2.0\nbuild-depends: x ^>= 1"
-        "cabal-version: 2.0\nbuild-depends: x ^>=1\n"
+        "build-depends: x ^>= 1"
+        "build-depends: x ^>=1\n"
 
     Hspec.it "set" $ do
       expectGilded
-        "cabal-version: 3.0\nbuild-depends: x == { 1 , 2 }"
-        "cabal-version: 3.0\nbuild-depends: x =={1, 2}\n"
+        "build-depends: x == { 1 , 2 }"
+        "build-depends: x =={1, 2}\n"
+
+    Hspec.it "sorts set" $ do
+      expectGilded
+        "build-depends: x == { 2, 1 }"
+        "build-depends: x =={1, 2}\n"
 
   Hspec.around_ withTemporaryDirectory
     . Hspec.it "discovers modules on the file system"

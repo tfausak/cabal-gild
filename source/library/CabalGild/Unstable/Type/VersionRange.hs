@@ -4,6 +4,7 @@ module CabalGild.Unstable.Type.VersionRange where
 
 import qualified CabalGild.Unstable.Extra.CharParsing as Parse
 import qualified Data.List.NonEmpty as NonEmpty
+import qualified Data.Set as Set
 import qualified Distribution.Compat.CharParsing as Parse
 import qualified Distribution.Parsec as Parsec
 import qualified Distribution.Pretty as Pretty
@@ -76,14 +77,14 @@ renderVersion (MkVersion parts) =
 
 data Versions
   = One Version
-  | Set [Version]
+  | Set (Set.Set Version)
   deriving (Eq, Ord, Show)
 
 parseVersions :: (Parsec.CabalParsing m) => m Versions
 parseVersions =
   Parse.choice
     [ One <$> parseVersion,
-      Set <$> Parse.braces (Parse.sepBy parseVersion $ Parse.token ",")
+      Set . Set.fromList <$> Parse.braces (Parse.sepBy parseVersion $ Parse.token ",")
     ]
 
 renderVersions :: Versions -> PrettyPrint.Doc
@@ -94,7 +95,8 @@ renderVersions x =
       PrettyPrint.braces
         . PrettyPrint.hsep
         . PrettyPrint.punctuate PrettyPrint.comma
-        $ fmap renderVersion vs
+        . fmap renderVersion
+        $ Set.toAscList vs
 
 data Operator
   = Caret
