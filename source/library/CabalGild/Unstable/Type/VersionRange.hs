@@ -5,7 +5,7 @@ import qualified Data.List.NonEmpty as NonEmpty
 import qualified Distribution.Compat.CharParsing as Parse
 import qualified Distribution.Parsec as Parsec
 import qualified Numeric.Natural as Natural
-import qualified Text.PrettyPrint as PrettyPrint
+import qualified Text.PrettyPrint as Pretty
 import qualified Text.Read as Read
 
 data Part
@@ -16,25 +16,30 @@ data Part
 parseNumeric :: (Parsec.CabalParsing m) => m Natural.Natural
 parseNumeric =
   Parse.choice
-    [ 0 <$ Parse.token "0",
-      do
-        c <- Parse.satisfy $ \c -> '1' <= c && c <= '9'
-        cs <- Parse.many Parse.digit
-        Parse.spaces
-        let s = c : cs
-        case Read.readMaybe s of
-          Nothing -> fail $ "invalid Natural: " <> show s
-          Just n -> pure n
+    [ parseZero,
+      parseNonZero
     ]
 
-renderNumeric :: Natural.Natural -> PrettyPrint.Doc
-renderNumeric = PrettyPrint.text . show
+parseZero :: (Parsec.CabalParsing m) => m Natural.Natural
+parseZero = 0 <$ Parse.token "0"
+
+parseNonZero :: (Parsec.CabalParsing m) => m Natural.Natural
+parseNonZero = do
+  c <- Parse.satisfy $ \c -> '1' <= c && c <= '9'
+  cs <- Parse.many Parse.digit
+  let s = c : cs
+  case Read.readMaybe s of
+    Nothing -> fail $ "invalid Natural: " <> show s
+    Just n -> n <$ Parse.spaces
+
+renderNumeric :: Natural.Natural -> Pretty.Doc
+renderNumeric = Pretty.text . show
 
 parseWildcard :: (Parsec.CabalParsing m) => m ()
 parseWildcard = Parse.token "*"
 
-renderWildcard :: PrettyPrint.Doc
-renderWildcard = PrettyPrint.char '*'
+renderWildcard :: Pretty.Doc
+renderWildcard = Pretty.char '*'
 
 parsePart :: (Parsec.CabalParsing m) => m Part
 parsePart =
@@ -43,7 +48,7 @@ parsePart =
       Wildcard <$ parseWildcard
     ]
 
-renderPart :: Part -> PrettyPrint.Doc
+renderPart :: Part -> Pretty.Doc
 renderPart x =
   case x of
     Numeric n -> renderNumeric n
@@ -59,10 +64,10 @@ parseVersion =
     <$> Parse.sepByNonEmpty parsePart (Parse.char '.')
     <* Parse.spaces
 
-renderVersion :: Version -> PrettyPrint.Doc
+renderVersion :: Version -> Pretty.Doc
 renderVersion (MkVersion parts) =
   mconcat
-    . PrettyPrint.punctuate (PrettyPrint.char '.')
+    . Pretty.punctuate (Pretty.char '.')
     . fmap renderPart
     $ NonEmpty.toList parts
 
@@ -75,19 +80,17 @@ parseVersions :: (Parsec.CabalParsing m) => m Versions
 parseVersions =
   Parse.choice
     [ One <$> parseVersion,
-      Set
-        <$> Parse.braces
-          (Parse.sepBy parseVersion (Parse.token ","))
+      Set <$> Parse.braces (Parse.sepBy parseVersion $ Parse.token ",")
     ]
 
-renderVersions :: Versions -> PrettyPrint.Doc
+renderVersions :: Versions -> Pretty.Doc
 renderVersions x =
   case x of
     One v -> renderVersion v
     Set vs ->
-      PrettyPrint.braces
-        . PrettyPrint.hsep
-        . PrettyPrint.punctuate PrettyPrint.comma
+      Pretty.braces
+        . Pretty.hsep
+        . Pretty.punctuate Pretty.comma
         $ fmap renderVersion vs
 
 data Operator
@@ -110,75 +113,65 @@ parseOperator =
       Eq <$ Parse.token "=="
     ]
 
-renderOperator :: Operator -> PrettyPrint.Doc
+renderOperator :: Operator -> Pretty.Doc
 renderOperator x =
   case x of
-    Caret -> PrettyPrint.text "^>="
-    Ge -> PrettyPrint.text ">="
-    Gt -> PrettyPrint.char '>'
-    Le -> PrettyPrint.text "<="
-    Lt -> PrettyPrint.char '<'
-    Eq -> PrettyPrint.text "=="
+    Caret -> Pretty.text "^>="
+    Ge -> Pretty.text ">="
+    Gt -> Pretty.char '>'
+    Le -> Pretty.text "<="
+    Lt -> Pretty.char '<'
+    Eq -> Pretty.text "=="
 
-data SimpleConstraint
+data Simple
   = Any
   | None
   | Op Operator Versions
   deriving (Eq, Ord, Show)
 
-parseSimpleConstraint :: (Parsec.CabalParsing m) => m SimpleConstraint
-parseSimpleConstraint =
+parseSimple :: (Parsec.CabalParsing m) => m Simple
+parseSimple =
   Parse.choice
     [ Parse.try $ Any <$ Parse.token "-any",
       None <$ Parse.token "-none",
       Op <$> parseOperator <*> parseVersions
     ]
 
-renderSimpleConstraint :: SimpleConstraint -> PrettyPrint.Doc
-renderSimpleConstraint x =
+renderSimple :: Simple -> Pretty.Doc
+renderSimple x =
   case x of
-    Any -> PrettyPrint.text "-any"
-    None -> PrettyPrint.text "-none"
+    Any -> Pretty.text "-any"
+    None -> Pretty.text "-none"
     Op o vs -> renderOperator o <> renderVersions vs
 
-data Constraint a
-  = And a (Constraint a)
-  | Or a (Constraint a)
-  | Par a
+data Complex a
+  = Par (Complex a)
+  | And a (Complex a)
+  | Or a (Complex a)
   | Simple a
   deriving (Eq, Ord, Show)
 
-parseConstraint :: (Parsec.CabalParsing m) => m a -> m (Constraint a)
-parseConstraint p =
+parseComplex :: (Parsec.CabalParsing m) => m a -> m (Complex a)
+parseComplex p =
   Parse.choice
-    [ Parse.try $ And <$> p <* Parse.token "&&" <*> parseConstraint p,
-      Parse.try $ Or <$> p <* Parse.token "||" <*> parseConstraint p,
-      Par <$> Parse.parens p,
+    [ Par <$> Parse.parens (parseComplex p),
+      Parse.try $ And <$> p <* Parse.token "&&" <*> parseComplex p,
+      Parse.try $ Or <$> p <* Parse.token "||" <*> parseComplex p,
       Simple <$> p
     ]
 
-renderConstraint :: (a -> PrettyPrint.Doc) -> Constraint a -> PrettyPrint.Doc
-renderConstraint f x =
+renderComplex :: (a -> Pretty.Doc) -> Complex a -> Pretty.Doc
+renderComplex f x =
   case x of
-    And l r ->
-      PrettyPrint.hsep
-        [ f l,
-          PrettyPrint.text "&&",
-          renderConstraint f r
-        ]
-    Or l r ->
-      PrettyPrint.hsep
-        [ f l,
-          PrettyPrint.text "||",
-          renderConstraint f r
-        ]
-    Par y -> PrettyPrint.parens (f y)
+    Par y -> Pretty.parens $ renderComplex f y
+    And l r -> Pretty.hsep [f l, Pretty.text "&&", renderComplex f r]
+    Or l r -> Pretty.hsep [f l, Pretty.text "||", renderComplex f r]
     Simple y -> f y
 
-type VersionRange = Constraint SimpleConstraint
+type VersionRange = Complex Simple
 
 parseVersionRange :: (Parsec.CabalParsing m) => m VersionRange
-parseVersionRange = parseConstraint parseSimpleConstraint
+parseVersionRange = parseComplex parseSimple
 
-renderVersionRange :: VersionRange -> PrettyPrint.Doc
-renderVersionRange = renderConstraint renderSimpleConstraint
+renderVersionRange :: VersionRange -> Pretty.Doc
+renderVersionRange = renderComplex renderSimple
