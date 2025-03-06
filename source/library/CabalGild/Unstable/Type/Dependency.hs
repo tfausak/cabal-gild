@@ -16,7 +16,7 @@ import qualified Text.PrettyPrint as PrettyPrint
 data Dependency = MkDependency
   { packageName :: PackageName.PackageName,
     libraryNames :: Maybe (Either UnqualComponentName.UnqualComponentName (NonEmpty.NonEmpty UnqualComponentName.UnqualComponentName)),
-    versionRange :: Maybe VersionRange.Constraint
+    versionRange :: Maybe VersionRange.VersionRange
   }
   deriving (Eq, Ord, Show)
 
@@ -36,7 +36,7 @@ instance Parsec.Parsec Dependency where
               (Parsec.parsecCommaNonEmpty Parsec.parsec)
         ]
     Parse.spaces
-    versionRange <- Parse.optional VersionRange.parseConstraint
+    versionRange <- Parse.optional VersionRange.parseVersionRange
     pure MkDependency {packageName, libraryNames, versionRange}
 
 instance Pretty.Pretty Dependency where
@@ -54,5 +54,5 @@ instance Pretty.Pretty Dependency where
                   . fmap Pretty.pretty
                   . NonEmpty.toList
                   $ NonEmpty.sort ucns
-        ver = foldMap VersionRange.renderConstraint $ versionRange dependency
+        ver = foldMap VersionRange.renderVersionRange $ versionRange dependency
      in PrettyPrint.hsep [pkg <> libs, ver]

@@ -124,48 +124,65 @@ renderOperator x =
     Lt -> PrettyPrint.char '<'
     Eq -> PrettyPrint.text "=="
 
-data Constraint
+data SimpleConstraint
   = Any
   | None
   | Op Operator Versions
-  | Par Constraint
-  | And Constraint Constraint
-  | Or Constraint Constraint
   deriving (Eq, Ord, Show)
 
-parseConstraint :: (Parsec.CabalParsing m) => m Constraint
-parseConstraint =
-  Parse.choice
-    [ Parse.try $ And <$> parseSimpleConstraint <* parseToken "&&" <*> parseConstraint,
-      Parse.try $ Or <$> parseSimpleConstraint <* parseToken "||" <*> parseConstraint,
-      parseSimpleConstraint
-    ]
-
-parseSimpleConstraint :: (Parsec.CabalParsing m) => m Constraint
+parseSimpleConstraint :: (Parsec.CabalParsing m) => m SimpleConstraint
 parseSimpleConstraint =
   Parse.choice
     [ Parse.try $ Any <$ parseToken "-any",
       None <$ parseToken "-none",
-      Op <$> parseOperator <*> parseVersions,
-      Par <$> Parse.between (parseToken "(") (parseToken ")") parseConstraint
+      Op <$> parseOperator <*> parseVersions
     ]
 
-renderConstraint :: Constraint -> PrettyPrint.Doc
-renderConstraint x =
+renderSimpleConstraint :: SimpleConstraint -> PrettyPrint.Doc
+renderSimpleConstraint x =
   case x of
     Any -> PrettyPrint.text "-any"
     None -> PrettyPrint.text "-none"
     Op o vs -> renderOperator o <> renderVersions vs
-    Par y -> PrettyPrint.parens (renderConstraint y)
+
+data Constraint a
+  = And a (Constraint a)
+  | Or a (Constraint a)
+  | Par a
+  | Simple a
+  deriving (Eq, Ord, Show)
+
+parseConstraint :: (Parsec.CabalParsing m) => m a -> m (Constraint a)
+parseConstraint p =
+  Parse.choice
+    [ Parse.try $ And <$> p <* parseToken "&&" <*> parseConstraint p,
+      Parse.try $ Or <$> p <* parseToken "||" <*> parseConstraint p,
+      Par <$> Parse.between (parseToken "(") (parseToken ")") p,
+      Simple <$> p
+    ]
+
+renderConstraint :: (a -> PrettyPrint.Doc) -> Constraint a -> PrettyPrint.Doc
+renderConstraint f x =
+  case x of
     And l r ->
       PrettyPrint.hsep
-        [ renderConstraint l,
+        [ f l,
           PrettyPrint.text "&&",
-          renderConstraint r
+          renderConstraint f r
         ]
     Or l r ->
       PrettyPrint.hsep
-        [ renderConstraint l,
+        [ f l,
           PrettyPrint.text "||",
-          renderConstraint r
+          renderConstraint f r
         ]
+    Par y -> PrettyPrint.parens (f y)
+    Simple y -> f y
+
+type VersionRange = Constraint SimpleConstraint
+
+parseVersionRange :: (Parsec.CabalParsing m) => m VersionRange
+parseVersionRange = parseConstraint parseSimpleConstraint
+
+renderVersionRange :: VersionRange -> PrettyPrint.Doc
+renderVersionRange = renderConstraint renderSimpleConstraint
