@@ -635,7 +635,12 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     Hspec.it "formats impl without version range" $ do
       expectGilded
         "if impl ( ghc )"
-        "if impl(ghc >=0)\n"
+        "if impl(ghc)\n"
+
+    Hspec.it "formats complex impl version range" $ do
+      expectGilded
+        "if impl ( ghc > 8 && < 9 )"
+        "if impl(ghc >8 && <9)\n"
 
     Hspec.it "formats os" $ do
       expectGilded
