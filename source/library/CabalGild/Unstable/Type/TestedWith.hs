@@ -18,11 +18,11 @@ instance Parsec.Parsec TestedWith where
     MkTestedWith
       <$> Parsec.parsec
       <* Parse.spaces
-      <*> Parse.optional VersionRange.parse
+      <*> Parse.optional Parsec.parsec
 
 instance Pretty.Pretty TestedWith where
   pretty x =
     PrettyPrint.hsep
       [ Pretty.pretty $ compilerFlavor x,
-        foldMap VersionRange.pretty $ versionRange x
+        foldMap Pretty.pretty $ versionRange x
       ]

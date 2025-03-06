@@ -1,11 +1,14 @@
+{-# LANGUAGE FlexibleInstances #-}
+
 module CabalGild.Unstable.Type.VersionRange where
 
 import qualified CabalGild.Unstable.Extra.CharParsing as Parse
 import qualified Data.List.NonEmpty as NonEmpty
 import qualified Distribution.Compat.CharParsing as Parse
 import qualified Distribution.Parsec as Parsec
+import qualified Distribution.Pretty as Pretty
 import qualified Numeric.Natural as Natural
-import qualified Text.PrettyPrint as Pretty
+import qualified Text.PrettyPrint as PrettyPrint
 import qualified Text.Read as Read
 
 data Part
@@ -32,14 +35,14 @@ parseNonZero = do
     Nothing -> fail $ "invalid Natural: " <> show s
     Just n -> n <$ Parse.spaces
 
-renderNumeric :: Natural.Natural -> Pretty.Doc
-renderNumeric = Pretty.text . show
+renderNumeric :: Natural.Natural -> PrettyPrint.Doc
+renderNumeric = PrettyPrint.text . show
 
 parseWildcard :: (Parsec.CabalParsing m) => m ()
 parseWildcard = Parse.token "*"
 
-renderWildcard :: Pretty.Doc
-renderWildcard = Pretty.char '*'
+renderWildcard :: PrettyPrint.Doc
+renderWildcard = PrettyPrint.char '*'
 
 parsePart :: (Parsec.CabalParsing m) => m Part
 parsePart =
@@ -48,7 +51,7 @@ parsePart =
       Wildcard <$ parseWildcard
     ]
 
-renderPart :: Part -> Pretty.Doc
+renderPart :: Part -> PrettyPrint.Doc
 renderPart x =
   case x of
     Numeric n -> renderNumeric n
@@ -64,10 +67,10 @@ parseVersion =
     <$> Parse.sepByNonEmpty parsePart (Parse.char '.')
     <* Parse.spaces
 
-renderVersion :: Version -> Pretty.Doc
+renderVersion :: Version -> PrettyPrint.Doc
 renderVersion (MkVersion parts) =
   mconcat
-    . Pretty.punctuate (Pretty.char '.')
+    . PrettyPrint.punctuate (PrettyPrint.char '.')
     . fmap renderPart
     $ NonEmpty.toList parts
 
@@ -83,14 +86,14 @@ parseVersions =
       Set <$> Parse.braces (Parse.sepBy parseVersion $ Parse.token ",")
     ]
 
-renderVersions :: Versions -> Pretty.Doc
+renderVersions :: Versions -> PrettyPrint.Doc
 renderVersions x =
   case x of
     One v -> renderVersion v
     Set vs ->
-      Pretty.braces
-        . Pretty.hsep
-        . Pretty.punctuate Pretty.comma
+      PrettyPrint.braces
+        . PrettyPrint.hsep
+        . PrettyPrint.punctuate PrettyPrint.comma
         $ fmap renderVersion vs
 
 data Operator
@@ -113,15 +116,15 @@ parseOperator =
       Eq <$ Parse.token "=="
     ]
 
-renderOperator :: Operator -> Pretty.Doc
+renderOperator :: Operator -> PrettyPrint.Doc
 renderOperator x =
   case x of
-    Caret -> Pretty.text "^>="
-    Ge -> Pretty.text ">="
-    Gt -> Pretty.char '>'
-    Le -> Pretty.text "<="
-    Lt -> Pretty.char '<'
-    Eq -> Pretty.text "=="
+    Caret -> PrettyPrint.text "^>="
+    Ge -> PrettyPrint.text ">="
+    Gt -> PrettyPrint.char '>'
+    Le -> PrettyPrint.text "<="
+    Lt -> PrettyPrint.char '<'
+    Eq -> PrettyPrint.text "=="
 
 data Simple
   = Any
@@ -137,11 +140,11 @@ parseSimple =
       Op <$> parseOperator <*> parseVersions
     ]
 
-renderSimple :: Simple -> Pretty.Doc
+renderSimple :: Simple -> PrettyPrint.Doc
 renderSimple x =
   case x of
-    Any -> Pretty.text "-any"
-    None -> Pretty.text "-none"
+    Any -> PrettyPrint.text "-any"
+    None -> PrettyPrint.text "-none"
     Op o vs -> renderOperator o <> renderVersions vs
 
 data Complex a
@@ -160,18 +163,18 @@ parseComplex p =
       Simple <$> p
     ]
 
-renderComplex :: (a -> Pretty.Doc) -> Complex a -> Pretty.Doc
+renderComplex :: (a -> PrettyPrint.Doc) -> Complex a -> PrettyPrint.Doc
 renderComplex f x =
   case x of
-    Par y -> Pretty.parens $ renderComplex f y
-    And l r -> Pretty.hsep [f l, Pretty.text "&&", renderComplex f r]
-    Or l r -> Pretty.hsep [f l, Pretty.text "||", renderComplex f r]
+    Par y -> PrettyPrint.parens $ renderComplex f y
+    And l r -> PrettyPrint.hsep [f l, PrettyPrint.text "&&", renderComplex f r]
+    Or l r -> PrettyPrint.hsep [f l, PrettyPrint.text "||", renderComplex f r]
     Simple y -> f y
 
 type VersionRange = Complex Simple
 
-parse :: (Parsec.CabalParsing m) => m VersionRange
-parse = parseComplex parseSimple
+instance Parsec.Parsec VersionRange where
+  parsec = parseComplex parseSimple
 
-pretty :: VersionRange -> Pretty.Doc
-pretty = renderComplex renderSimple
+instance Pretty.Pretty VersionRange where
+  pretty = renderComplex renderSimple
