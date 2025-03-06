@@ -1,29 +1,28 @@
 module CabalGild.Unstable.Type.TestedWith where
 
-import qualified Data.Ord as Ord
-import qualified Distribution.FieldGrammar.Newtypes as Newtypes
+import qualified CabalGild.Unstable.Type.VersionRange as VersionRange
+import qualified Distribution.Compat.CharParsing as Parse
+import qualified Distribution.Compiler as Compiler
 import qualified Distribution.Parsec as Parsec
 import qualified Distribution.Pretty as Pretty
+import qualified Text.PrettyPrint as PrettyPrint
 
--- | This type exists to provide an 'Ord' instance for 'Newtypes.TestedWith'.
-newtype TestedWith = TestedWith
-  { unwrap :: Newtypes.TestedWith
+data TestedWith = MkTestedWith
+  { compilerFlavor :: Compiler.CompilerFlavor,
+    versionRange :: Maybe VersionRange.VersionRange
   }
-
-instance Eq TestedWith where
-  x == y = compare x y == EQ
-
-instance Ord TestedWith where
-  compare =
-    Ord.comparing $
-      Newtypes.getTestedWith
-        . unwrap
+  deriving (Eq, Ord, Show)
 
 instance Parsec.Parsec TestedWith where
-  parsec = TestedWith <$> Parsec.parsec
+  parsec =
+    MkTestedWith
+      <$> Parsec.parsec
+      <* Parse.spaces
+      <*> Parse.optional Parsec.parsec
 
 instance Pretty.Pretty TestedWith where
-  pretty = Pretty.pretty . unwrap
-
-instance Show TestedWith where
-  show = show . Newtypes.getTestedWith . unwrap
+  pretty x =
+    PrettyPrint.hsep
+      [ Pretty.pretty $ compilerFlavor x,
+        foldMap Pretty.pretty $ versionRange x
+      ]

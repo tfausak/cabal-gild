@@ -124,6 +124,7 @@ library
     CabalGild.Unstable.Type.SomeParsecParser
     CabalGild.Unstable.Type.TestedWith
     CabalGild.Unstable.Type.Variable
+    CabalGild.Unstable.Type.VersionRange
 
   hs-source-dirs: source/library
   other-modules: Paths_cabal_gild

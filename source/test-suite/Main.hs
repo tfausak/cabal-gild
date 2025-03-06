@@ -635,7 +635,12 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     Hspec.it "formats impl without version range" $ do
       expectGilded
         "if impl ( ghc )"
-        "if impl(ghc >=0)\n"
+        "if impl(ghc)\n"
+
+    Hspec.it "formats complex impl version range" $ do
+      expectGilded
+        "if impl ( ghc > 8 && < 9 )"
+        "if impl(ghc >8 && <9)\n"
 
     Hspec.it "formats os" $ do
       expectGilded
@@ -736,6 +741,11 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     expectGilded
       "tested-with: GHC == 9.8.1 , GHC == 9.6.4"
       "tested-with:\n  ghc ==9.6.4\n  ghc ==9.8.1\n"
+
+  Hspec.it "formats complex tested-with version range" $ do
+    expectGilded
+      "tested-with: GHC > 8 && < 9"
+      "tested-with: ghc >8 && <9\n"
 
   Hspec.it "sorts data-files" $ do
     expectGilded
@@ -1574,6 +1584,82 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     expectGilded
       "cabal-version: 3.0\nbuild-depends: x:{ x }"
       "cabal-version: 3.0\nbuild-depends: x:{x}\n"
+
+  Hspec.describe "version ranges" $ do
+    Hspec.it "implicit" $ do
+      expectGilded
+        "build-depends:  x"
+        "build-depends: x\n"
+
+    Hspec.it "any" $ do
+      expectGilded
+        "build-depends: x  -any"
+        "build-depends: x -any\n"
+
+    Hspec.it "none" $ do
+      expectGilded
+        "build-depends: x  -none"
+        "build-depends: x -none\n"
+
+    Hspec.it "this" $ do
+      expectGilded
+        "build-depends: x == 1"
+        "build-depends: x ==1\n"
+
+    Hspec.it "later" $ do
+      expectGilded
+        "build-depends: x > 1"
+        "build-depends: x >1\n"
+
+    Hspec.it "or later" $ do
+      expectGilded
+        "build-depends: x >= 1"
+        "build-depends: x >=1\n"
+
+    Hspec.it "earlier" $ do
+      expectGilded
+        "build-depends: x < 1"
+        "build-depends: x <1\n"
+
+    Hspec.it "or earlier" $ do
+      expectGilded
+        "build-depends: x <= 1"
+        "build-depends: x <=1\n"
+
+    Hspec.it "union" $ do
+      expectGilded
+        "build-depends: x > 1 || < 1"
+        "build-depends: x >1 || <1\n"
+
+    Hspec.it "intersect" $ do
+      expectGilded
+        "build-depends: x > 1 && < 2"
+        "build-depends: x >1 && <2\n"
+
+    Hspec.it "within" $ do
+      expectGilded
+        "build-depends: x == 1.*"
+        "build-depends: x ==1.*\n"
+
+    Hspec.it "major bound" $ do
+      expectGilded
+        "build-depends: x ^>= 1"
+        "build-depends: x ^>=1\n"
+
+    Hspec.it "set" $ do
+      expectGilded
+        "build-depends: x == { 1 , 2 }"
+        "build-depends: x =={1, 2}\n"
+
+    Hspec.it "sorts set" $ do
+      expectGilded
+        "build-depends: x == { 2, 1 }"
+        "build-depends: x =={1, 2}\n"
+
+    Hspec.it "paren" $ do
+      expectGilded
+        "build-depends: x ( == 1 )"
+        "build-depends: x (==1)\n"
 
   Hspec.around_ withTemporaryDirectory
     . Hspec.it "discovers modules on the file system"
