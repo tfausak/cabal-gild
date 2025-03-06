@@ -742,6 +742,11 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "tested-with: GHC == 9.8.1 , GHC == 9.6.4"
       "tested-with:\n  ghc ==9.6.4\n  ghc ==9.8.1\n"
 
+  Hspec.it "formats complex tested-with version range" $ do
+    expectGilded
+      "tested-with: GHC == { 9.8.1 , 9.6.4 }"
+      "tested-with: ghc =={9.8.1, 9.6.4}\n"
+
   Hspec.it "sorts data-files" $ do
     expectGilded
       "data-files: g f"
