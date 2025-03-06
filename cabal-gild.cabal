@@ -11,7 +11,7 @@ license-file: LICENSE.txt
 maintainer: Taylor Fausak
 name: cabal-gild
 synopsis: Formats package descriptions.
-version: 1.5.0.1
+version: 1.5.0.3
 
 source-repository head
   type: git
@@ -22,7 +22,7 @@ flag pedantic
   manual: True
 
 common library
-  build-depends: base ^>=4.18.0.0 || ^>=4.19.0.0 || ^>=4.20.0.0
+  build-depends: base ^>=4.19.0.0 || ^>=4.20.0.0 || ^>=4.21.0.0
   default-language: Haskell2010
   ghc-options:
     -Weverything
@@ -33,13 +33,11 @@ common library
     -Wno-missing-export-lists
     -Wno-missing-import-lists
     -Wno-missing-kind-signatures
+    -Wno-missing-role-annotations
     -Wno-missing-safe-haskell-mode
     -Wno-prepositive-qualified-module
     -Wno-safe
     -Wno-unsafe
-
-  if impl(ghc >=9.8)
-    ghc-options: -Wno-missing-role-annotations
 
   if flag(pedantic)
     ghc-options: -Werror
@@ -55,7 +53,7 @@ library
   import: library
   autogen-modules: Paths_cabal_gild
   build-depends:
-    Cabal-syntax ^>=3.10.1.0 || ^>=3.12.0.0,
+    Cabal-syntax ^>=3.10.1.0 || ^>=3.12.0.0 || ^>=3.14.0.0,
     bytestring ^>=0.11.4.0 || ^>=0.12.0.2,
     containers ^>=0.6.7 || ^>=0.7,
     exceptions ^>=0.10.7,
@@ -114,23 +112,16 @@ library
     CabalGild.Unstable.Type.Context
     CabalGild.Unstable.Type.Dependency
     CabalGild.Unstable.Type.DiscoverTarget
-    CabalGild.Unstable.Type.ExeDependency
     CabalGild.Unstable.Type.Extension
     CabalGild.Unstable.Type.Flag
-    CabalGild.Unstable.Type.ForeignLibOption
     CabalGild.Unstable.Type.Input
-    CabalGild.Unstable.Type.Language
-    CabalGild.Unstable.Type.LegacyExeDependency
     CabalGild.Unstable.Type.Leniency
     CabalGild.Unstable.Type.Line
     CabalGild.Unstable.Type.List
     CabalGild.Unstable.Type.Mixin
     CabalGild.Unstable.Type.Mode
-    CabalGild.Unstable.Type.ModuleReexport
     CabalGild.Unstable.Type.Optional
     CabalGild.Unstable.Type.Output
-    CabalGild.Unstable.Type.PkgconfigDependency
-    CabalGild.Unstable.Type.PkgconfigVersionRange
     CabalGild.Unstable.Type.Pragma
     CabalGild.Unstable.Type.Set
     CabalGild.Unstable.Type.SomeParsecParser

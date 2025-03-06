@@ -1,26 +1,58 @@
+{-# LANGUAGE NamedFieldPuns #-}
+
 module CabalGild.Unstable.Type.Dependency where
 
 import qualified CabalGild.Unstable.Type.VersionRange as VersionRange
-import qualified Data.Ord as Ord
+import qualified Control.Monad as Monad
+import qualified Data.List.NonEmpty as NonEmpty
+import qualified Distribution.CabalSpecVersion as CabalSpecVersion
+import qualified Distribution.Compat.CharParsing as Parse
 import qualified Distribution.Parsec as Parsec
 import qualified Distribution.Pretty as Pretty
-import qualified Distribution.Types.Dependency as Dependency
+import qualified Distribution.Types.PackageName as PackageName
+import qualified Distribution.Types.UnqualComponentName as UnqualComponentName
+import qualified Text.PrettyPrint as PrettyPrint
 
--- | This type exists to provide an 'Ord' instance for
--- 'Dependency.Dependency', which was added in @Cabal-syntax-3.10.1.0@.
-newtype Dependency = Dependency
-  { unwrap :: Dependency.Dependency
+data Dependency = MkDependency
+  { packageName :: PackageName.PackageName,
+    libraryNames :: Maybe (Either UnqualComponentName.UnqualComponentName (NonEmpty.NonEmpty UnqualComponentName.UnqualComponentName)),
+    versionRange :: Maybe VersionRange.VersionRange
   }
-  deriving (Eq, Show)
-
-instance Ord Dependency where
-  compare =
-    Ord.comparing $
-      (\(Dependency.Dependency pn vr lns) -> (pn, VersionRange.fromVersionRange vr, lns))
-        . unwrap
+  deriving (Eq, Ord, Show)
 
 instance Parsec.Parsec Dependency where
-  parsec = Dependency <$> Parsec.parsec
+  parsec = do
+    packageName <- Parsec.parsec
+    libraryNames <- Parse.optional $ do
+      Monad.void $ Parse.char ':'
+      csv <- Parsec.askCabalSpecVersion
+      Monad.guard $ csv >= CabalSpecVersion.CabalSpecV3_0
+      Monad.msum
+        [ Left <$> Parsec.parsec,
+          Right
+            <$> Parse.between
+              (Parse.char '{' *> Parse.spaces)
+              (Parse.spaces <* Parse.char '}')
+              (Parsec.parsecCommaNonEmpty Parsec.parsec)
+        ]
+    Parse.spaces
+    versionRange <- Parse.optional Parsec.parsec
+    pure MkDependency {packageName, libraryNames, versionRange}
 
 instance Pretty.Pretty Dependency where
-  pretty = Pretty.pretty . unwrap
+  pretty dependency =
+    let pkg = Pretty.pretty $ packageName dependency
+        libs = case libraryNames dependency of
+          Nothing -> mempty
+          Just e ->
+            PrettyPrint.char ':' <> case e of
+              Left ucn -> Pretty.pretty ucn
+              Right ucns ->
+                PrettyPrint.braces
+                  . PrettyPrint.hsep
+                  . PrettyPrint.punctuate PrettyPrint.comma
+                  . fmap Pretty.pretty
+                  . NonEmpty.toList
+                  $ NonEmpty.sort ucns
+        ver = foldMap Pretty.pretty $ versionRange dependency
+     in PrettyPrint.hsep [pkg <> libs, ver]
