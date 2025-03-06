@@ -76,9 +76,7 @@ parseVersions =
   Parse.choice
     [ One <$> parseVersion,
       Set
-        <$> Parse.between
-          (Parse.token "{")
-          (Parse.token "}")
+        <$> Parse.braces
           (Parse.sepBy parseVersion (Parse.token ","))
     ]
 
@@ -155,7 +153,7 @@ parseConstraint p =
   Parse.choice
     [ Parse.try $ And <$> p <* Parse.token "&&" <*> parseConstraint p,
       Parse.try $ Or <$> p <* Parse.token "||" <*> parseConstraint p,
-      Par <$> Parse.between (Parse.token "(") (Parse.token ")") p,
+      Par <$> Parse.parens p,
       Simple <$> p
     ]
 
