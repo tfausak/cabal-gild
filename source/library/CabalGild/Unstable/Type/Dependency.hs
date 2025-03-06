@@ -36,7 +36,7 @@ instance Parsec.Parsec Dependency where
               (Parsec.parsecCommaNonEmpty Parsec.parsec)
         ]
     Parse.spaces
-    versionRange <- Parse.optional VersionRange.parseVersionRange
+    versionRange <- Parse.optional VersionRange.parse
     pure MkDependency {packageName, libraryNames, versionRange}
 
 instance Pretty.Pretty Dependency where
@@ -54,5 +54,5 @@ instance Pretty.Pretty Dependency where
                   . fmap Pretty.pretty
                   . NonEmpty.toList
                   $ NonEmpty.sort ucns
-        ver = foldMap VersionRange.renderVersionRange $ versionRange dependency
+        ver = foldMap VersionRange.pretty $ versionRange dependency
      in PrettyPrint.hsep [pkg <> libs, ver]

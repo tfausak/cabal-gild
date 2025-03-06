@@ -170,8 +170,8 @@ renderComplex f x =
 
 type VersionRange = Complex Simple
 
-parseVersionRange :: (Parsec.CabalParsing m) => m VersionRange
-parseVersionRange = parseComplex parseSimple
+parse :: (Parsec.CabalParsing m) => m VersionRange
+parse = parseComplex parseSimple
 
-renderVersionRange :: VersionRange -> Pretty.Doc
-renderVersionRange = renderComplex renderSimple
+pretty :: VersionRange -> Pretty.Doc
+pretty = renderComplex renderSimple

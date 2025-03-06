@@ -48,7 +48,7 @@ parseImpl = do
     (,)
       <$> Parsec.parsec
       <* Parse.spaces
-      <*> Parse.optional VersionRange.parseVersionRange
+      <*> Parse.optional VersionRange.parse
       <* Parse.spaces
 
 -- | Parses an 'Os'.
@@ -77,7 +77,7 @@ prettyVariable x =
         <> PrettyPrint.parens (Pretty.pretty y)
     Impl y z ->
       PrettyPrint.text "impl"
-        <> PrettyPrint.parens (Pretty.pretty y PrettyPrint.<+> foldMap VersionRange.renderVersionRange z)
+        <> PrettyPrint.parens (Pretty.pretty y PrettyPrint.<+> foldMap VersionRange.pretty z)
     Os y ->
       PrettyPrint.text "os"
         <> PrettyPrint.parens (Pretty.pretty y)
