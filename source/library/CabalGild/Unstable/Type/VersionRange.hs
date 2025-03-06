@@ -1,14 +1,12 @@
 module CabalGild.Unstable.Type.VersionRange where
 
+import qualified CabalGild.Unstable.Extra.CharParsing as Parse
 import qualified Data.List.NonEmpty as NonEmpty
 import qualified Distribution.Compat.CharParsing as Parse
 import qualified Distribution.Parsec as Parsec
 import qualified Numeric.Natural as Natural
 import qualified Text.PrettyPrint as PrettyPrint
 import qualified Text.Read as Read
-
-parseToken :: (Parsec.CabalParsing m) => String -> m ()
-parseToken s = Parse.string s *> Parse.spaces
 
 data Part
   = Numeric Natural.Natural
@@ -18,7 +16,7 @@ data Part
 parseNumeric :: (Parsec.CabalParsing m) => m Natural.Natural
 parseNumeric =
   Parse.choice
-    [ 0 <$ parseToken "0",
+    [ 0 <$ Parse.token "0",
       do
         c <- Parse.satisfy $ \c -> '1' <= c && c <= '9'
         cs <- Parse.many Parse.digit
@@ -33,7 +31,7 @@ renderNumeric :: Natural.Natural -> PrettyPrint.Doc
 renderNumeric = PrettyPrint.text . show
 
 parseWildcard :: (Parsec.CabalParsing m) => m ()
-parseWildcard = parseToken "*"
+parseWildcard = Parse.token "*"
 
 renderWildcard :: PrettyPrint.Doc
 renderWildcard = PrettyPrint.char '*'
@@ -79,9 +77,9 @@ parseVersions =
     [ One <$> parseVersion,
       Set
         <$> Parse.between
-          (parseToken "{")
-          (parseToken "}")
-          (Parse.sepBy parseVersion (parseToken ","))
+          (Parse.token "{")
+          (Parse.token "}")
+          (Parse.sepBy parseVersion (Parse.token ","))
     ]
 
 renderVersions :: Versions -> PrettyPrint.Doc
@@ -106,12 +104,12 @@ data Operator
 parseOperator :: (Parsec.CabalParsing m) => m Operator
 parseOperator =
   Parse.choice
-    [ Caret <$ parseToken "^>=",
-      Parse.try $ Ge <$ parseToken ">=",
-      Gt <$ parseToken ">",
-      Parse.try $ Le <$ parseToken "<=",
-      Lt <$ parseToken "<",
-      Eq <$ parseToken "=="
+    [ Caret <$ Parse.token "^>=",
+      Parse.try $ Ge <$ Parse.token ">=",
+      Gt <$ Parse.token ">",
+      Parse.try $ Le <$ Parse.token "<=",
+      Lt <$ Parse.token "<",
+      Eq <$ Parse.token "=="
     ]
 
 renderOperator :: Operator -> PrettyPrint.Doc
@@ -133,8 +131,8 @@ data SimpleConstraint
 parseSimpleConstraint :: (Parsec.CabalParsing m) => m SimpleConstraint
 parseSimpleConstraint =
   Parse.choice
-    [ Parse.try $ Any <$ parseToken "-any",
-      None <$ parseToken "-none",
+    [ Parse.try $ Any <$ Parse.token "-any",
+      None <$ Parse.token "-none",
       Op <$> parseOperator <*> parseVersions
     ]
 
@@ -155,9 +153,9 @@ data Constraint a
 parseConstraint :: (Parsec.CabalParsing m) => m a -> m (Constraint a)
 parseConstraint p =
   Parse.choice
-    [ Parse.try $ And <$> p <* parseToken "&&" <*> parseConstraint p,
-      Parse.try $ Or <$> p <* parseToken "||" <*> parseConstraint p,
-      Par <$> Parse.between (parseToken "(") (parseToken ")") p,
+    [ Parse.try $ And <$> p <* Parse.token "&&" <*> parseConstraint p,
+      Parse.try $ Or <$> p <* Parse.token "||" <*> parseConstraint p,
+      Par <$> Parse.between (Parse.token "(") (Parse.token ")") p,
       Simple <$> p
     ]
 
