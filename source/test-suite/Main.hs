@@ -1,5 +1,6 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
+import qualified CabalGild.Unstable.Class.MonadHandle as MonadHandle
 import qualified CabalGild.Unstable.Class.MonadLog as MonadLog
 import qualified CabalGild.Unstable.Class.MonadRead as MonadRead
 import qualified CabalGild.Unstable.Class.MonadWalk as MonadWalk
@@ -7,6 +8,8 @@ import qualified CabalGild.Unstable.Class.MonadWrite as MonadWrite
 import qualified CabalGild.Unstable.Exception.CheckFailure as CheckFailure
 import qualified CabalGild.Unstable.Exception.DuplicateOption as DuplicateOption
 import qualified CabalGild.Unstable.Exception.InvalidOption as InvalidOption
+import qualified CabalGild.Unstable.Exception.MoreThanOneCabalFileFound as MoreThanOneCabalFileFound
+import qualified CabalGild.Unstable.Exception.NoCabalFileFound as NoCabalFileFound
 import qualified CabalGild.Unstable.Exception.SpecifiedOutputWithCheckMode as SpecifiedOutputWithCheckMode
 import qualified CabalGild.Unstable.Exception.SpecifiedStdinWithFileInput as SpecifiedStdinWithFileInput
 import qualified CabalGild.Unstable.Exception.UnexpectedArgument as UnexpectedArgument
@@ -35,13 +38,13 @@ import qualified Test.Hspec as Hspec
 main :: IO ()
 main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
   Hspec.it "shows the help" $ do
-    let (a, s, w) = runGild ["--help"] [] (".", [])
+    let (a, s, w) = runGild ["--help"] [] (".", []) False
     a `shouldBeFailure` Exit.ExitSuccess
     w `Hspec.shouldNotBe` []
     s `Hspec.shouldBe` Map.empty
 
   Hspec.it "shows the version" $ do
-    let (a, s, w) = runGild ["--version"] [] (".", [])
+    let (a, s, w) = runGild ["--version"] [] (".", []) False
     a `shouldBeFailure` Exit.ExitSuccess
     w `Hspec.shouldNotBe` []
     s `Hspec.shouldBe` Map.empty
@@ -68,6 +71,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             ["--crlf=strict", "--crlf=strict"]
             [(Input.Stdin, String.toUtf8 "")]
             (".", [])
+            False
     a `Hspec.shouldSatisfy` Either.isRight
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.singleton Output.Stdout (String.toUtf8 "")
@@ -102,6 +106,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             ["--input", "input.cabal"]
             [(Input.File "input.cabal", String.toUtf8 "")]
             (".", [])
+            False
     a `Hspec.shouldSatisfy` Either.isRight
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.singleton Output.Stdout (String.toUtf8 "")
@@ -112,6 +117,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             ["--output", "output.cabal"]
             [(Input.Stdin, String.toUtf8 "")]
             (".", [])
+            False
     a `Hspec.shouldSatisfy` Either.isRight
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.singleton (Output.File "output.cabal") (String.toUtf8 "")
@@ -122,6 +128,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             ["--mode", "check"]
             [(Input.Stdin, String.toUtf8 "pass: yes\n")]
             (".", [])
+            False
     a `Hspec.shouldSatisfy` Either.isRight
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
@@ -132,6 +139,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             ["--mode", "check"]
             [(Input.Stdin, String.toUtf8 "pass: no")]
             (".", [])
+            False
     a `shouldBeFailure` CheckFailure.CheckFailure
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
@@ -142,6 +150,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             ["--mode", "check"]
             [(Input.Stdin, String.toUtf8 "pass: yes\r\n")]
             (".", [])
+            False
     a `Hspec.shouldSatisfy` Either.isRight
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
@@ -152,6 +161,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             ["--crlf", "strict", "--mode", "check"]
             [(Input.Stdin, String.toUtf8 "pass: no\r\n")]
             (".", [])
+            False
     a `shouldBeFailure` CheckFailure.CheckFailure
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
@@ -162,6 +172,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             ["--input", "f", "--stdin", "g"]
             []
             (".", [])
+            False
     a `shouldBeFailure` SpecifiedStdinWithFileInput.SpecifiedStdinWithFileInput
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
@@ -172,6 +183,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             ["--mode", "check", "--output", "-"]
             []
             (".", [])
+            False
     a `shouldBeFailure` SpecifiedOutputWithCheckMode.SpecifiedOutputWithCheckMode
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
@@ -182,6 +194,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             ["--io", "io.cabal"]
             [(Input.File "io.cabal", String.toUtf8 "")]
             (".", [])
+            False
     a `Hspec.shouldSatisfy` Either.isRight
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
@@ -192,6 +205,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             ["--input", "p.cabal"]
             [(Input.File "p.cabal", String.toUtf8 "")]
             (".", [])
+            False
     a `Hspec.shouldSatisfy` Either.isRight
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.singleton Output.Stdout (String.toUtf8 "")
@@ -202,6 +216,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             ["--input", "p.cabal", "--output", "q.cabal"]
             [(Input.File "p.cabal", String.toUtf8 "")]
             (".", [])
+            False
     a `Hspec.shouldSatisfy` Either.isRight
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.singleton (Output.File "q.cabal") (String.toUtf8 "")
@@ -212,6 +227,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             ["--output", "q.cabal"]
             [(Input.Stdin, String.toUtf8 "")]
             (".", [])
+            False
     a `Hspec.shouldSatisfy` Either.isRight
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.singleton (Output.File "q.cabal") (String.toUtf8 "")
@@ -222,6 +238,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             ["--io", "io.cabal"]
             [(Input.File "io.cabal", String.toUtf8 "f:a")]
             (".", [])
+            False
     a `Hspec.shouldSatisfy` Either.isRight
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.singleton (Output.File "io.cabal") (String.toUtf8 "f: a\n")
@@ -232,6 +249,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             ["--io", "p.cabal"]
             [(Input.File "p.cabal", String.toUtf8 "s\r\n")]
             (".", [])
+            False
     a `Hspec.shouldSatisfy` Either.isRight
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
@@ -242,6 +260,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             ["--crlf", "strict", "--io", "p.cabal"]
             [(Input.File "p.cabal", String.toUtf8 "s\r\n")]
             (".", [])
+            False
     a `Hspec.shouldSatisfy` Either.isRight
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.singleton (Output.File "p.cabal") (String.toUtf8 "s\n")
@@ -252,6 +271,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             ["--stdin", "d/p.cabal"]
             [(Input.Stdin, String.toUtf8 "library\n -- cabal-gild: discover\n exposed-modules:")]
             ("d", [["M.hs"]])
+            False
     a `Hspec.shouldSatisfy` Either.isRight
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.singleton Output.Stdout (String.toUtf8 "library\n  -- cabal-gild: discover\n  exposed-modules: M\n")
@@ -1300,6 +1320,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             ["--input", FilePath.combine d "io.cabal"]
             [(Input.File $ FilePath.combine d "io.cabal", String.toUtf8 "library\n -- cabal-gild: discover src --exclude src/N.hs\n exposed-modules:")]
             (d, [["src", "M.hs"], ["src", "N.hs"]])
+            False
     a `Hspec.shouldSatisfy` Either.isRight
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.singleton Output.Stdout (String.toUtf8 "library\n  -- cabal-gild: discover src --exclude src/N.hs\n  exposed-modules: M\n")
@@ -1322,6 +1343,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             []
             [(Input.Stdin, String.toUtf8 "-- cabal-gild: discover --unknown\nsignatures:")]
             (".", [])
+            False
     a `shouldBeFailure` UnknownOption.UnknownOption "--unknown"
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
@@ -1332,6 +1354,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             []
             [(Input.Stdin, String.toUtf8 "-- cabal-gild: discover --exclude\nsignatures:")]
             (".", [])
+            False
     a `shouldBeFailure` InvalidOption.InvalidOption "option `--exclude' requires an argument PATTERN"
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
@@ -1495,6 +1518,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             ["--input", FilePath.combine d "io.cabal"]
             [(Input.File $ FilePath.combine d "io.cabal", String.toUtf8 "library\n -- cabal-gild: discover src --include src/M.hs\n exposed-modules:")]
             (d, [["src", "M.hs"], ["src", "N.hs"]])
+            False
     a `Hspec.shouldSatisfy` Either.isRight
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.singleton Output.Stdout (String.toUtf8 "library\n  -- cabal-gild: discover src --include src/M.hs\n  exposed-modules: M\n")
@@ -1698,6 +1722,31 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             "    N.M2"
           ]
 
+  Hspec.it "successfully determine that stdin is terminal and find/format the cabal file" $ do
+    let filePath = "stdin-is-terminal.cabal"
+        fileData = "FOO :  bar"
+        (a, s, w) =
+          runGild
+            []
+            [(Input.File "stdin-is-terminal.cabal", String.toUtf8 fileData)]
+            (".", [[filePath]])
+            True
+    a `Hspec.shouldSatisfy` Either.isRight
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.singleton (Output.File filePath) (String.toUtf8 "foo: bar\n")
+
+  Hspec.it "fails if no cabal file is found" $ do
+    let (a, s, w) = runGild [] [] (".", []) True
+    a `shouldBeFailure` NoCabalFileFound.NoCabalFileFound
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.empty
+
+  Hspec.it "fails if more than one cabal file is found" $ do
+    let (a, s, w) = runGild [] [] (".", [["0.cabal"], ["1.cabal"]]) True
+    a `shouldBeFailure` MoreThanOneCabalFileFound.MoreThanOneCabalFileFound
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.empty
+
 withTemporaryDirectory :: IO () -> IO ()
 withTemporaryDirectory =
   Temp.withSystemTempDirectory "cabal-gild"
@@ -1723,7 +1772,7 @@ expectStable ::
   ByteString.ByteString ->
   Hspec.Expectation
 expectStable files input = do
-  let (a, s, w) = runGild [] [(Input.Stdin, input)] files
+  let (a, s, w) = runGild [] [(Input.Stdin, input)] files False
   a `Hspec.shouldSatisfy` Either.isRight
   w `Hspec.shouldBe` []
   output <- case Map.toList s of
@@ -1738,7 +1787,7 @@ expectDiscover ::
   String ->
   Hspec.Expectation
 expectDiscover files input expected = do
-  let (a, s, w) = runGild [] [(Input.Stdin, String.toUtf8 input)] files
+  let (a, s, w) = runGild [] [(Input.Stdin, String.toUtf8 input)] files False
   a `Hspec.shouldSatisfy` Either.isRight
   w `Hspec.shouldBe` []
   actual <- case Map.toList s of
@@ -1751,20 +1800,25 @@ runGild ::
   [String] ->
   [(Input.Input, ByteString.ByteString)] ->
   (String, [[String]]) ->
+  Bool ->
   (Either E (), S, W)
-runGild arguments inputs files =
+runGild arguments inputs files tty =
   runTest
     (Gild.mainWith arguments)
-    ( Map.fromList inputs,
-      fmap FilePath.joinPath <$> uncurry Map.singleton files
+    ( ( Map.fromList inputs,
+        fmap FilePath.joinPath <$> uncurry Map.singleton files
+      ),
+      tty
     )
     Map.empty
 
 expectException ::
   (Stack.HasCallStack, Eq e, Exception.Exception e) =>
-  [String] -> e -> Hspec.Expectation
+  [String] ->
+  e ->
+  Hspec.Expectation
 expectException flags exception = do
-  let (a, s, w) = runGild flags [] (".", [])
+  let (a, s, w) = runGild flags [] (".", []) False
   a `shouldBeFailure` exception
   w `Hspec.shouldBe` []
   s `Hspec.shouldBe` Map.empty
@@ -1776,7 +1830,12 @@ runTest t r = Identity.runIdentity . RWST.runRWST (ExceptT.runExceptT $ runTestT
 
 type E = Exception.SomeException
 
-type R = (Map.Map Input.Input ByteString.ByteString, Map.Map FilePath [FilePath])
+type R =
+  ( ( Map.Map Input.Input ByteString.ByteString, -- For 'MonadRead'.
+      Map.Map FilePath [FilePath] -- For 'MonadWalk'.
+    ),
+    Bool -- For 'MonadHandle'.
+  )
 
 type S = Map.Map Output.Output ByteString.ByteString
 
@@ -1792,7 +1851,7 @@ instance (Monad m) => MonadLog.MonadLog (TestT m) where
 
 instance (Monad m) => MonadRead.MonadRead (TestT m) where
   read k = do
-    m <- TestT . Trans.lift . RWST.asks $ Map.lookup k . fst
+    m <- TestT . Trans.lift . RWST.asks $ Map.lookup k . fst . fst
     case m of
       Nothing -> Exception.throwM . userError $ "read " <> show k
       Just x -> pure x
@@ -1802,7 +1861,7 @@ instance (Monad m) => Exception.MonadThrow (TestT m) where
 
 instance (Monad m) => MonadWalk.MonadWalk (TestT m) where
   walk d i x = do
-    result <- TestT . Trans.lift . RWST.asks $ Map.lookup d . snd
+    result <- TestT . Trans.lift . RWST.asks $ Map.lookup d . snd . fst
     case result of
       Nothing -> Exception.throwM . userError $ "walk " <> show d
       Just fs ->
@@ -1813,3 +1872,6 @@ instance (Monad m) => MonadWalk.MonadWalk (TestT m) where
 
 instance (Monad m) => MonadWrite.MonadWrite (TestT m) where
   write k = TestT . Trans.lift . RWST.modify . Map.insert k
+
+instance (Monad m) => MonadHandle.MonadHandle (TestT m) where
+  isTerminalDevice = const . TestT . Trans.lift $ RWST.asks snd
