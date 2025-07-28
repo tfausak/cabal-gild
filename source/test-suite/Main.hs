@@ -501,7 +501,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
   Hspec.it "preserves indentation of comments at the end of a section" $ do
     expectGilded
       "source-repository-package\n  type: git\n  location: https://example.com/repo.git\n  tag: abc123\n  --sha256: deadbeef"
-      "source-repository-package\n  type: git\n  location: https://example.com/repo.git\n  tag: abc123\n\n    --sha256: deadbeef\n"
+      "source-repository-package\n  type: git\n  location: https://example.com/repo.git\n  tag: abc123\n  --sha256: deadbeef\n"
 
   Hspec.describe "description" $ do
     -- These tests apply to other "free text" fields as well. The description

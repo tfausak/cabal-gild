@@ -85,12 +85,12 @@ name :: Fields.Name a -> Chunk.Chunk
 name = Chunk.fromByteString . Name.value
 
 -- | Renders the given field lines to a block at the given indentation level.
-fieldLines :: Int -> [Fields.FieldLine (Position.Position, [Comment.Comment p])] -> Block.Block
+fieldLines :: Int -> [Fields.FieldLine (p, [Comment.Comment q])] -> Block.Block
 fieldLines = foldMap . fieldLineC
 
 -- | Renders the given field line and its comments to a block at the given
 -- indentation level.
-fieldLineC :: Int -> Fields.FieldLine (Position.Position, [Comment.Comment p]) -> Block.Block
+fieldLineC :: Int -> Fields.FieldLine (p, [Comment.Comment q]) -> Block.Block
 fieldLineC i fl =
   comments i (snd $ FieldLine.annotation fl)
     <> Block.fromLine (fieldLine i fl)
@@ -125,9 +125,8 @@ comments i cs = mempty {Block.lines = fmap (comment i) cs}
 
 -- | Renders the given comment to a line at the given indentation level.
 comment :: Int -> Comment.Comment a -> Line.Line
-comment i c = 
+comment i =
   Line.Line i
     . Chunk.fromByteString
     . mappend Comment.delimiter
     . Comment.value
-    $ c

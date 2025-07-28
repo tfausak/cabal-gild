@@ -10,7 +10,16 @@ run ::
   (Applicative m, Ord p) =>
   ([Fields.Field p], [Comment.Comment p]) ->
   m ([Fields.Field (p, [Comment.Comment p])], [Comment.Comment p])
-run (fs, cs) = pure $ StateT.runState (traverse field fs) cs
+run (fs, cs) = 
+  let (processedFields, remainingComments) = StateT.runState (traverse field fs) cs
+  in case (remainingComments, reverse processedFields) of
+    ([], _) -> pure (processedFields, remainingComments)
+    (_, []) -> pure (processedFields, remainingComments)
+    (danglingComments, lastField : restFields) ->
+      -- Attach dangling comments to the last field processed
+      let lastField' = attachDanglingCommentsToLastFieldLine danglingComments lastField
+          newProcessedFields = reverse (lastField' : restFields)
+      in pure (newProcessedFields, [])
 
 -- | Attaches comments to a single field. It is assumed that both the fields
 -- and comments are already sorted by their position @p@. This precondition is
@@ -31,6 +40,59 @@ field f = case f of
       <$> name n
       <*> traverse sectionArg sas
       <*> traverse field fs
+
+-- | Attaches dangling comments to the last field line of a field.
+-- This is used at the top level to attach remaining comments to the previous field.
+attachDanglingCommentsToLastFieldLine :: [Comment.Comment p] -> Fields.Field (p, [Comment.Comment p]) -> Fields.Field (p, [Comment.Comment p])
+attachDanglingCommentsToLastFieldLine newComments f = case f of
+  Fields.Field n fls -> case newComments of
+    [] -> f  -- No comments to attach
+    _ -> 
+      -- Create a synthetic field line that only contains comments
+      -- Use the position from the last field line or field name
+      let pos = case fls of
+            [] -> let Fields.Name (p, _) _ = n in p
+            _ -> let Fields.FieldLine (p, _) _ = last fls in p
+          commentOnlyFieldLine = Fields.FieldLine (pos, newComments) mempty
+          newFieldLines = fls ++ [commentOnlyFieldLine]
+      in Fields.Field n newFieldLines
+  Fields.Section n sas fs -> case newComments of
+    [] -> f  -- No comments to attach
+    _ -> case reverse fs of
+      [] -> 
+        -- No fields in section, attach to section name
+        let Fields.Name (pos, existingComments) fn = n
+            newName = Fields.Name (pos, existingComments ++ newComments) fn
+        in Fields.Section newName sas fs
+      (lastField : restFields) ->
+        -- Recursively attach to the last field within the section
+        let lastField' = attachDanglingCommentsToLastFieldLine newComments lastField
+        in Fields.Section n sas (reverse (lastField' : restFields))
+
+-- | Attaches comments to the last field line of a field.
+-- This ensures the comments appear after the field content.
+attachCommentsToLastFieldLine :: [Comment.Comment p] -> Fields.Field (p, [Comment.Comment p]) -> Fields.Field (p, [Comment.Comment p])
+attachCommentsToLastFieldLine newComments f = case f of
+  Fields.Field n fls -> case newComments of
+    [] -> f  -- No comments to attach
+    _ -> case reverse fls of
+      [] -> 
+        -- No field lines, attach to field name (fallback)
+        let Fields.Name (pos, existingComments) fn = n
+            newName = Fields.Name (pos, existingComments ++ newComments) fn
+        in Fields.Field newName fls
+      (lastFieldLine : restFieldLines) ->
+        -- Attach to the last field line
+        let Fields.FieldLine (pos, existingComments) bs = lastFieldLine
+            newLastFieldLine = Fields.FieldLine (pos, existingComments ++ newComments) bs
+            newFieldLines = reverse (newLastFieldLine : restFieldLines)
+        in Fields.Field n newFieldLines
+  Fields.Section n sas fs ->
+    -- For sections, attach to section name (fallback)
+    let Fields.Name (pos, existingComments) fn = n
+        newName = Fields.Name (pos, existingComments ++ newComments) fn
+    in Fields.Section newName sas fs
+
 
 -- | Attaches comments to a name. Note that this could be a field name or a
 -- section name.
