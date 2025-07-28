@@ -1,7 +1,7 @@
 -- | This module defines the main entry point for the application.
 module CabalGild.Unstable.Main where
 
-import qualified CabalGild.Unstable.Action.AttachComments as AttachComments
+import qualified CabalGild.Unstable.Action.AttachPositionComments as AttachPositionComments
 import qualified CabalGild.Unstable.Action.EvaluatePragmas as EvaluatePragmas
 import qualified CabalGild.Unstable.Action.ExtractComments as ExtractComments
 import qualified CabalGild.Unstable.Action.FormatFields as FormatFields
@@ -95,7 +95,7 @@ format filePath input = do
   let csv = GetCabalVersion.fromFields fields
       comments = ExtractComments.fromByteString input
   ( StripBlanks.run
-      Monad.>=> AttachComments.run
+      Monad.>=> AttachPositionComments.run
       Monad.>=> ReflowText.run csv
       Monad.>=> EvaluatePragmas.run filePath
       Monad.>=> FormatFields.run csv

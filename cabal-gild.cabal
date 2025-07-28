@@ -68,6 +68,7 @@ library
   exposed-modules:
     CabalGild
     CabalGild.Unstable.Action.AttachComments
+    CabalGild.Unstable.Action.AttachPositionComments
     CabalGild.Unstable.Action.EvaluatePragmas
     CabalGild.Unstable.Action.ExtractComments
     CabalGild.Unstable.Action.FormatFields
