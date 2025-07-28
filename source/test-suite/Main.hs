@@ -498,6 +498,11 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "s\n -- c\n f: 1"
       "s\n  -- c\n  f: 1\n"
 
+  Hspec.it "preserves indentation of comments at the end of a section" $ do
+    expectGilded
+      "source-repository-package\n  type: git\n  location: https://example.com/repo.git\n  tag: abc123\n  --sha256: deadbeef"
+      "source-repository-package\n  type: git\n  location: https://example.com/repo.git\n  tag: abc123\n\n    --sha256: deadbeef\n"
+
   Hspec.describe "description" $ do
     -- These tests apply to other "free text" fields as well. The description
     -- field is just a representative example.
