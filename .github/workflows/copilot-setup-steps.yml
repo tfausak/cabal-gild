@@ -17,6 +17,7 @@ jobs:
         with:
           ghc: '9.12'
           cabal: latest
+      - run: cabal update
       - run: cabal configure --enable-tests
       - run: cabal build --only-download
       - run: cabal build --only-dependencies
