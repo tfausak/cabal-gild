@@ -19,3 +19,5 @@ jobs:
       - uses: tfausak/cabal-gild-setup-action@v2
       - uses: haskell-actions/hlint-setup@v2
       - uses: haskell-actions/run-ormolu@v17
+        with:
+          pattern: do-not-run # https://github.com/haskell-actions/run-ormolu/issues/18
