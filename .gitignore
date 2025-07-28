@@ -1,3 +1,7 @@
 /.vscode/
 /cabal.project.*
 /dist-newstyle/
+
+/.direnv/
+/.envrc
+/default.nix
