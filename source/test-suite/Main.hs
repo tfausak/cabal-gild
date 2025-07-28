@@ -473,12 +473,32 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "f:\n 1\n -- c\n 2"
       "f:\n  -- c\n  1\n  2\n"
 
-  Hspec.it "formats a comment after a field's value" $ do
+  Hspec.it "keeps an indented comment with an inline field" $ do
+    expectGilded
+      "f: 1\n -- c"
+      "f:\n  1\n  -- c\n"
+
+  Hspec.it "separates a non-indented comment from an inline field" $ do
+    expectGilded
+      "f: 1\n-- c"
+      "f: 1\n-- c\n"
+
+  Hspec.it "keeps an indented comment with a one-line field" $ do
     expectGilded
       "f:\n 1\n -- c"
+      "f:\n  1\n  -- c\n"
+
+  Hspec.it "separates a non-indented comment from a one-line field" $ do
+    expectGilded
+      "f:\n 1\n-- c"
       "f:\n  1\n\n-- c\n"
 
-  Hspec.it "formats a comment after a field with multiple values" $ do
+  Hspec.it "keeps an indented comment with a multi-line field" $ do
+    expectGilded
+      "f: 1\n 2\n -- c"
+      "f:\n  1\n  2\n  -- c\n"
+
+  Hspec.it "separates a non-indented comment from a multi-line field" $ do
     expectGilded
       "f: 1\n 2\n-- c"
       "f:\n  1\n  2\n\n-- c\n"
@@ -488,7 +508,12 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "-- c\ns"
       "-- c\ns\n"
 
-  Hspec.it "formats a comment after a section" $ do
+  Hspec.it "keeps an indented comment with a section" $ do
+    expectGilded
+      "s\n -- c"
+      "s\n  -- c\n"
+
+  Hspec.it "separates a non-indented comment from a section" $ do
     expectGilded
       "s\n-- c"
       "s\n\n-- c\n"
@@ -497,6 +522,16 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     expectGilded
       "s\n -- c\n f: 1"
       "s\n  -- c\n  f: 1\n"
+
+  Hspec.it "keeps a trailing indented comment with a section" $ do
+    expectGilded
+      "s\n f: 1\n -- c"
+      "s\n  f: 1\n  -- c\n"
+
+  Hspec.it "separates a trailing non-indented comment from a section" $ do
+    expectGilded
+      "s\n f: 1\n-- c"
+      "s\n  f: 1\n\n-- c\n"
 
   Hspec.describe "description" $ do
     -- These tests apply to other "free text" fields as well. The description

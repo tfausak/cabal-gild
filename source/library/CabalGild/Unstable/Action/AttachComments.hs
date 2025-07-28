@@ -1,5 +1,7 @@
 module CabalGild.Unstable.Action.AttachComments where
 
+-- TODO: It's likely that fixing issue 122 will require _only_ changing this module.
+
 import qualified CabalGild.Unstable.Type.Comment as Comment
 import qualified Control.Monad.Trans.State as StateT
 import qualified Distribution.Fields as Fields
