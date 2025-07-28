@@ -12,8 +12,12 @@ jobs:
       - uses: haskell/ghcup-setup@v1
         with:
           ghc: '9.12'
-          cabal: latest
       - run: cabal update
       - run: cabal configure --enable-tests
       - run: cabal build --only-download
       - run: cabal build --only-dependencies
+      - uses: tfausak/cabal-gild-setup-action@v2
+      - uses: haskell-actions/hlint-setup@v2
+      - uses: haskell-actions/run-ormolu@v17
+        with:
+          pattern: do-not-run # https://github.com/haskell-actions/run-ormolu/issues/18
