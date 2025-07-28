@@ -1,0 +1,19 @@
+on:
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+jobs:
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: haskell/ghcup-setup@v1
+        with:
+          ghc: '9.12'
+          cabal: latest
+      - run: cabal update
+      - run: cabal configure --enable-tests
+      - run: cabal build --only-download
+      - run: cabal build --only-dependencies
