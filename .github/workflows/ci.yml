@@ -30,7 +30,7 @@ jobs:
       - run: cp dist-newstyle/cabal-gild-*-docs.tar.gz artifact
       - run: cp $( cabal list-bin cabal-gild ) artifact
       - run: tar --create --file artifact.tar --verbose artifact
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           name: cabal-gild-${{ github.sha }}-ghc-${{ matrix.ghc }}-${{ matrix.os }}
           path: artifact.tar
