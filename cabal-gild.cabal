@@ -22,7 +22,7 @@ flag pedantic
   manual: True
 
 common library
-  build-depends: base ^>=4.19.0.0 || ^>=4.20.0.0 || ^>=4.21.0.0
+  build-depends: base ^>=4.19.0.0 || ^>=4.20.0.0 || ^>=4.21.0.0 || ^>=4.22.0.0
   default-language: Haskell2010
   ghc-options:
     -Weverything
@@ -53,9 +53,9 @@ library
   import: library
   autogen-modules: Paths_cabal_gild
   build-depends:
-    Cabal-syntax ^>=3.10.1.0 || ^>=3.12.0.0 || ^>=3.14.0.0,
+    Cabal-syntax ^>=3.10.1.0 || ^>=3.12.0.0 || ^>=3.14.0.0 || ^>=3.16.0.0,
     bytestring ^>=0.11.4.0 || ^>=0.12.0.2,
-    containers ^>=0.6.7 || ^>=0.7,
+    containers ^>=0.6.7 || ^>=0.7 || ^>=0.8,
     exceptions ^>=0.10.7,
     filepath ^>=1.4.100.1 || ^>=1.5.2.0,
     filepattern ^>=0.1.3,
