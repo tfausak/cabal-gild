@@ -138,6 +138,7 @@ toPosition p = do
 -- | Check if a comment should be attached as a trailing comment to a field line.
 -- A comment is trailing if it appears on a later row and is indented more
 -- than the field line, and also meets the minimum indentation of column 3.
+-- The comment must also be within 2 rows to avoid attaching distant comments.
 shouldAttachToFieldLine ::
   (p ~ Position.Position) =>
   p ->
@@ -145,13 +146,16 @@ shouldAttachToFieldLine ::
   Bool
 shouldAttachToFieldLine flPos comment =
   let commentPos = Comment.annotation comment
-   in Position.positionRow commentPos > Position.positionRow flPos
+      rowDiff = Position.positionRow commentPos - Position.positionRow flPos
+   in rowDiff > 0
+        && rowDiff <= 2
         && Position.positionCol commentPos >= Position.positionCol flPos
         && Position.positionCol commentPos >= 3
 
 -- | Check if a comment should be attached as a trailing comment to a section.
 -- A comment is trailing if it appears on a later row and is indented more
 -- than the section, and also meets the minimum indentation of column 3.
+-- The comment must also be within 2 rows to avoid attaching distant comments.
 shouldAttachToSection ::
   (p ~ Position.Position) =>
   p ->
@@ -159,7 +163,9 @@ shouldAttachToSection ::
   Bool
 shouldAttachToSection secPos comment =
   let commentPos = Comment.annotation comment
-   in Position.positionRow commentPos > Position.positionRow secPos
+      rowDiff = Position.positionRow commentPos - Position.positionRow secPos
+   in rowDiff > 0
+        && rowDiff <= 2
         && Position.positionCol commentPos > Position.positionCol secPos
         && Position.positionCol commentPos >= 3
 
