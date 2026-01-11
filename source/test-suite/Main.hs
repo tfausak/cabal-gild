@@ -1,5 +1,6 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
+import qualified Data.List
 import qualified CabalGild.Unstable.Class.MonadHandle as MonadHandle
 import qualified CabalGild.Unstable.Class.MonadLog as MonadLog
 import qualified CabalGild.Unstable.Class.MonadRead as MonadRead
@@ -467,6 +468,25 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     expectGilded
       "f:\n -- c\n 1"
       "f:\n  -- c\n  1\n"
+
+  Hspec.describe "comments" $ do
+    let expectGildedLines i o = expectGilded (Data.List.intercalate "\n" i) (Data.List.intercalate "\n" o ++ "\n")
+    let expectRoundTrip i = expectGildedLines i i
+
+    Hspec.it "trailing indented comment on field" $ do
+      -- Note: Field-level trailing comments are not yet fully supported.
+      -- They don't attach and render as top-level comments. Section-level
+      -- trailing comments work correctly (see next tests).
+      expectGildedLines ["f:", "  1", "  -- c"] ["f:", "  1", "", "-- c"]
+
+    Hspec.it "non-indented comment after field" $ do
+      expectRoundTrip ["f:", "  1", "", "-- c"]
+
+    Hspec.it "trailing indented comment on section" $ do
+      expectRoundTrip ["s", "  -- c"]
+
+    Hspec.it "non-indented comment after section" $ do
+      expectRoundTrip ["s", "", "-- c"]
 
   Hspec.it "formats a comment in a field's value" $ do
     expectGilded

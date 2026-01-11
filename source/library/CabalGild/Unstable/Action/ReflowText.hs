@@ -6,6 +6,7 @@ import qualified CabalGild.Unstable.Extra.List as List
 import qualified CabalGild.Unstable.Extra.Name as Name
 import qualified CabalGild.Unstable.Extra.String as String
 import qualified CabalGild.Unstable.Type.Comment as Comment
+import qualified CabalGild.Unstable.Type.Comments as Comments
 import qualified Data.ByteString as ByteString
 import qualified Data.Set as Set
 import qualified Distribution.CabalSpecVersion as CabalSpecVersion
@@ -16,8 +17,8 @@ import qualified Distribution.Parsec.Position as Position
 run ::
   (Applicative m) =>
   CabalSpecVersion.CabalSpecVersion ->
-  ([Fields.Field (Position.Position, [Comment.Comment Position.Position])], cs) ->
-  m ([Fields.Field (Position.Position, [Comment.Comment Position.Position])], cs)
+  ([Fields.Field (Position.Position, Comments.Comments Position.Position)], cs) ->
+  m ([Fields.Field (Position.Position, Comments.Comments Position.Position)], cs)
 run csv (fs, cs) = pure (fields csv fs, cs)
 
 -- | Reflows the free text field values if the Cabal spec version is recent
@@ -28,8 +29,8 @@ run csv (fs, cs) = pure (fields csv fs, cs)
 -- insert.
 fields ::
   CabalSpecVersion.CabalSpecVersion ->
-  [Fields.Field (Position.Position, [Comment.Comment Position.Position])] ->
-  [Fields.Field (Position.Position, [Comment.Comment Position.Position])]
+  [Fields.Field (Position.Position, Comments.Comments Position.Position)] ->
+  [Fields.Field (Position.Position, Comments.Comments Position.Position)]
 fields csv fs =
   if csv >= CabalSpecVersion.CabalSpecV3_0
     then fmap field fs
@@ -39,8 +40,8 @@ fields csv fs =
 -- field as is. If the field is a section, the fields within the section will
 -- be recursively reflowed.
 field ::
-  Fields.Field (Position.Position, [Comment.Comment Position.Position]) ->
-  Fields.Field (Position.Position, [Comment.Comment Position.Position])
+  Fields.Field (Position.Position, Comments.Comments Position.Position) ->
+  Fields.Field (Position.Position, Comments.Comments Position.Position)
 field f = case f of
   Fields.Field n fls ->
     if Set.member (Name.value n) relevantFieldNames && List.compareLength fls 1 == GT
@@ -60,15 +61,15 @@ relevantFieldNames =
 -- | Reflows the field lines for the given field. This is just a wrapper around
 -- 'fixRows' and 'fixCols'.
 fieldLines ::
-  Fields.Field (Position.Position, [Comment.Comment Position.Position]) ->
-  [Fields.FieldLine (Position.Position, [Comment.Comment Position.Position])] ->
-  [Fields.FieldLine (Position.Position, [Comment.Comment Position.Position])]
+  Fields.Field (Position.Position, Comments.Comments Position.Position) ->
+  [Fields.FieldLine (Position.Position, Comments.Comments Position.Position)] ->
+  [Fields.FieldLine (Position.Position, Comments.Comments Position.Position)]
 fieldLines f = fixRows . fixCols f
 
 -- | Inserts blank lines between field lines if necessary.
 fixRows ::
-  [Fields.FieldLine (Position.Position, [Comment.Comment Position.Position])] ->
-  [Fields.FieldLine (Position.Position, [Comment.Comment Position.Position])]
+  [Fields.FieldLine (Position.Position, Comments.Comments Position.Position)] ->
+  [Fields.FieldLine (Position.Position, Comments.Comments Position.Position)]
 fixRows fls = case fls of
   x : y : zs ->
     x
@@ -80,9 +81,9 @@ fixRows fls = case fls of
 -- other lines relative to that one. Note that if the first field line is on
 -- the same line as the field itself, it will never be reindented.
 fixCols ::
-  Fields.Field (Position.Position, [Comment.Comment Position.Position]) ->
-  [Fields.FieldLine (Position.Position, [Comment.Comment Position.Position])] ->
-  [Fields.FieldLine (Position.Position, [Comment.Comment Position.Position])]
+  Fields.Field (Position.Position, Comments.Comments Position.Position) ->
+  [Fields.FieldLine (Position.Position, Comments.Comments Position.Position)] ->
+  [Fields.FieldLine (Position.Position, Comments.Comments Position.Position)]
 fixCols f fls = case fls of
   [] -> fls
   x : xs ->
@@ -98,12 +99,11 @@ fieldLineToCol = Position.positionCol . fst . FieldLine.annotation
 -- | Extracts the /first/ row number from a field line, which might belong to
 -- one of its comments.
 fieldLineToFirstRow ::
-  Fields.FieldLine (Position.Position, [Comment.Comment Position.Position]) ->
+  Fields.FieldLine (Position.Position, Comments.Comments Position.Position) ->
   Int
-fieldLineToFirstRow =
-  Position.positionRow
-    . uncurry (foldr (min . Comment.annotation))
-    . FieldLine.annotation
+fieldLineToFirstRow fl =
+  let (pos, cs) = FieldLine.annotation fl
+   in Position.positionRow $ foldr (min . Comment.annotation) pos (Comments.toList cs)
 
 -- | Extracts the /last/ row number from a field line, which will not belong to
 -- any of its comments.
@@ -125,5 +125,5 @@ reindent col (Fields.FieldLine (p, cs) b) =
 -- | Creates a blank field line at the given row number.
 rowToFieldLine ::
   Int ->
-  Fields.FieldLine (Position.Position, [c])
-rowToFieldLine r = Fields.FieldLine (Position.Position r 1, []) ByteString.empty
+  Fields.FieldLine (Position.Position, Comments.Comments c)
+rowToFieldLine r = Fields.FieldLine (Position.Position r 1, Comments.empty) ByteString.empty

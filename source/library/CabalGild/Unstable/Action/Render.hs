@@ -6,6 +6,7 @@ import qualified CabalGild.Unstable.Extra.SectionArg as SectionArg
 import qualified CabalGild.Unstable.Type.Block as Block
 import qualified CabalGild.Unstable.Type.Chunk as Chunk
 import qualified CabalGild.Unstable.Type.Comment as Comment
+import qualified CabalGild.Unstable.Type.Comments as Comments
 import qualified CabalGild.Unstable.Type.Line as Line
 import qualified Data.ByteString as ByteString
 import qualified Data.Function as Function
@@ -19,14 +20,14 @@ import qualified Distribution.Parsec.Position as Position
 run ::
   (Applicative m) =>
   CabalSpecVersion.CabalSpecVersion ->
-  ([Fields.Field (Position.Position, [Comment.Comment p])], [Comment.Comment p]) ->
+  ([Fields.Field (Position.Position, Comments.Comments p)], [Comment.Comment p]) ->
   m ByteString.ByteString
 run csv = pure . uncurry (toByteString csv)
 
 -- | Renders the given fields and comments to a byte string.
 toByteString ::
   CabalSpecVersion.CabalSpecVersion ->
-  [Fields.Field (Position.Position, [Comment.Comment p])] ->
+  [Fields.Field (Position.Position, Comments.Comments p)] ->
   [Comment.Comment p] ->
   ByteString.ByteString
 toByteString csv fs cs =
@@ -37,44 +38,48 @@ toByteString csv fs cs =
         $ fields csv i fs <> comments i cs
 
 -- | Renders the given fields to a block at the given indentation level.
-fields :: CabalSpecVersion.CabalSpecVersion -> Int -> [Fields.Field (Position.Position, [Comment.Comment p])] -> Block.Block
+fields :: CabalSpecVersion.CabalSpecVersion -> Int -> [Fields.Field (Position.Position, Comments.Comments p)] -> Block.Block
 fields csv = foldMap . field csv
 
 -- | Renders the given field to a block at the given indentation level.
 --
 -- If a field only has one line and no comments, then it can be rendered all on
 -- one line.
-field :: CabalSpecVersion.CabalSpecVersion -> Int -> Fields.Field (Position.Position, [Comment.Comment p]) -> Block.Block
+field :: CabalSpecVersion.CabalSpecVersion -> Int -> Fields.Field (Position.Position, Comments.Comments p) -> Block.Block
 field csv i f = case f of
   Fields.Field n fls -> case fls of
     [fl]
-      | null . snd $ FieldLine.annotation fl,
+      | Comments.isEmpty . snd $ FieldLine.annotation fl,
         sameRow (Name.annotation n) (FieldLine.annotation fl) ->
-          comments i (snd $ Name.annotation n)
+          comments i (Comments.before . snd $ Name.annotation n)
             <> ( Block.fromLine
                    . Lens.over Line.chunkLens (mappend $ name n <> Chunk.colon)
                    $ fieldLine i fl
                )
+            <> comments i (Comments.after . snd $ Name.annotation n)
     _ ->
       Lens.set Block.lineAfterLens (not $ null fls) $
-        comments i (snd $ Name.annotation n)
+        comments i (Comments.before . snd $ Name.annotation n)
           <> Block.fromLine
             Line.Line
               { Line.indent = i,
                 Line.chunk = name n <> Chunk.colon
               }
+          <> comments i (Comments.after . snd $ Name.annotation n)
           <> fieldLines (i + 1) fls
   Fields.Section n sas fs ->
     Lens.set Block.lineBeforeLens (not $ Name.isElif csv n || Name.isElse n)
       . Lens.set Block.lineAfterLens (not $ Name.isIf n || Name.isElif csv n)
-      $ comments i (snd $ Name.annotation n)
-        <> comments i (concatMap (snd . SectionArg.annotation) sas)
+      $ comments i (Comments.before . snd $ Name.annotation n)
+        <> comments i (concatMap (Comments.before . snd . SectionArg.annotation) sas)
         <> Block.fromLine
           Line.Line
             { Line.indent = i,
               Line.chunk = Lens.set Chunk.spaceAfterLens True (name n) <> sectionArgs sas
             }
         <> Lens.set Block.lineBeforeLens False (fields csv (i + 1) fs)
+        <> comments (i + 1) (Comments.after . snd $ Name.annotation n)
+        <> comments (i + 1) (concatMap (Comments.after . snd . SectionArg.annotation) sas)
 
 -- | Returns true if the two positions are on the same row.
 sameRow :: (Position.Position, cs) -> (Position.Position, cs) -> Bool
@@ -85,15 +90,16 @@ name :: Fields.Name a -> Chunk.Chunk
 name = Chunk.fromByteString . Name.value
 
 -- | Renders the given field lines to a block at the given indentation level.
-fieldLines :: Int -> [Fields.FieldLine (p, [Comment.Comment q])] -> Block.Block
+fieldLines :: Int -> [Fields.FieldLine (p, Comments.Comments q)] -> Block.Block
 fieldLines = foldMap . fieldLineC
 
 -- | Renders the given field line and its comments to a block at the given
 -- indentation level.
-fieldLineC :: Int -> Fields.FieldLine (p, [Comment.Comment q]) -> Block.Block
+fieldLineC :: Int -> Fields.FieldLine (p, Comments.Comments q) -> Block.Block
 fieldLineC i fl =
-  comments i (snd $ FieldLine.annotation fl)
+  comments i (Comments.before . snd $ FieldLine.annotation fl)
     <> Block.fromLine (fieldLine i fl)
+    <> comments i (Comments.after . snd $ FieldLine.annotation fl)
 
 -- | Renders the given field line to a line at the given indentation level.
 fieldLine :: Int -> Fields.FieldLine a -> Line.Line

@@ -107,6 +107,7 @@ library
     CabalGild.Unstable.Type.Block
     CabalGild.Unstable.Type.Chunk
     CabalGild.Unstable.Type.Comment
+    CabalGild.Unstable.Type.Comments
     CabalGild.Unstable.Type.Condition
     CabalGild.Unstable.Type.Config
     CabalGild.Unstable.Type.Context
