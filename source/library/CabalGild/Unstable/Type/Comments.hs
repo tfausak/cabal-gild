@@ -20,21 +20,13 @@ empty = Comments [] []
 isEmpty :: Comments a -> Bool
 isEmpty cs = null (before cs) && null (after cs)
 
--- | Check if there are no before comments
-isEmptyBefore :: Comments a -> Bool
-isEmptyBefore = null . before
-
--- | Check if there are no after comments
-isEmptyAfter :: Comments a -> Bool
-isEmptyAfter = null . after
-
 -- | Create Comments with only before comments
 onlyBefore :: [Comment.Comment a] -> Comments a
 onlyBefore cs = Comments cs []
 
 -- | Create Comments with only after comments
 onlyAfter :: [Comment.Comment a] -> Comments a
-onlyAfter cs = Comments [] cs
+onlyAfter = Comments []
 
 -- | Convert from a single list to Comments (all treated as before)
 fromList :: [Comment.Comment a] -> Comments a

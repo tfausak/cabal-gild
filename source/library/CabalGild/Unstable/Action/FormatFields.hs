@@ -6,7 +6,6 @@ import qualified CabalGild.Unstable.Extra.FieldLine as FieldLine
 import qualified CabalGild.Unstable.Extra.Name as Name
 import qualified CabalGild.Unstable.Extra.SectionArg as SectionArg
 import qualified CabalGild.Unstable.Extra.String as String
-import qualified CabalGild.Unstable.Type.Comments as Comments
 import qualified CabalGild.Unstable.Type.Condition as Condition
 import qualified CabalGild.Unstable.Type.Dependency as Dependency
 import qualified CabalGild.Unstable.Type.Extension as Extension
@@ -44,7 +43,7 @@ run csv (fs, cs) = pure (fmap (field csv) fs, cs)
 -- If the field is a section, the fields within the section will be recursively
 -- formatted.
 field ::
-  Monoid cs =>
+  (Monoid cs) =>
   CabalSpecVersion.CabalSpecVersion ->
   Fields.Field (p, cs) ->
   Fields.Field (p, cs)
@@ -90,7 +89,7 @@ isConditional csv n =
 -- fails, the field lines will be returned as is. Comments within the field
 -- lines will be preserved but "float" up to the top.
 fieldLines ::
-  Monoid cs =>
+  (Monoid cs) =>
   CabalSpecVersion.CabalSpecVersion ->
   p ->
   [Fields.FieldLine (p, cs)] ->
@@ -110,7 +109,7 @@ fieldLines csv position fls SPP.SomeParsecParser {SPP.parsec = parsec, SPP.prett
 -- | Collects comments from the given field lines (see 'collectComments') and
 -- attaches them all to the first one.
 floatComments ::
-  Monoid cs =>
+  (Monoid cs) =>
   p ->
   [Fields.FieldLine (p, cs)] ->
   [Fields.FieldLine (p, cs)]
@@ -122,7 +121,7 @@ floatComments p fls =
 
 -- | Collects all comments from the given field lines. Their relative order
 -- will be maintained.
-collectComments :: Monoid cs => [Fields.FieldLine (p, cs)] -> cs
+collectComments :: (Monoid cs) => [Fields.FieldLine (p, cs)] -> cs
 collectComments = mconcat . fmap (snd . FieldLine.annotation)
 
 -- | This style attempts to force everything to be on its own line.

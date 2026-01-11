@@ -1,6 +1,5 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
-import qualified Data.List
 import qualified CabalGild.Unstable.Class.MonadHandle as MonadHandle
 import qualified CabalGild.Unstable.Class.MonadLog as MonadLog
 import qualified CabalGild.Unstable.Class.MonadRead as MonadRead
@@ -26,6 +25,7 @@ import qualified Control.Monad.Trans.RWS as RWST
 import qualified Data.ByteString as ByteString
 import qualified Data.Either as Either
 import qualified Data.Functor.Identity as Identity
+import qualified Data.List as List
 import qualified Data.Map as Map
 import qualified Data.Maybe as Maybe
 import qualified GHC.Stack as Stack
@@ -470,7 +470,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "f:\n  -- c\n  1\n"
 
   Hspec.describe "comments" $ do
-    let expectGildedLines i o = expectGilded (Data.List.intercalate "\n" i) (Data.List.intercalate "\n" o ++ "\n")
+    let expectGildedLines i o = expectGilded (List.intercalate "\n" i) (List.intercalate "\n" o ++ "\n")
     let expectRoundTrip i = expectGildedLines i i
 
     Hspec.it "trailing indented comment on field" $ do
