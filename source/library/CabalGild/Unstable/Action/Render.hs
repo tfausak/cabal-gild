@@ -122,7 +122,7 @@ sectionArg sa = Lens.set Chunk.spaceBeforeLens True
 
 -- | Renders the given comments to a block at the given indentation level.
 comments :: Int -> Comments.Comments a -> Block.Block
-comments i cs = mempty {Block.lines = fmap (comment i) $ Comments.toList cs}
+comments i cs = mempty {Block.lines = comment i <$> Comments.toList cs}
 
 -- | Renders the given comment to a line at the given indentation level.
 comment :: Int -> Comment.Comment a -> Line.Line
