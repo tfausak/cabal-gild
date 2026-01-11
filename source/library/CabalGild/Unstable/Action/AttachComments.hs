@@ -1,6 +1,7 @@
 module CabalGild.Unstable.Action.AttachComments where
 
 import qualified CabalGild.Unstable.Type.Comment as Comment
+import qualified CabalGild.Unstable.Type.Comments as Comments
 import qualified Control.Monad.Trans.State as StateT
 import qualified Distribution.Fields as Fields
 
@@ -8,8 +9,8 @@ import qualified Distribution.Fields as Fields
 -- with other actions.
 run ::
   (Applicative m, Ord p) =>
-  ([Fields.Field p], [Comment.Comment p]) ->
-  m ([Fields.Field (p, [Comment.Comment p])], [Comment.Comment p])
+  ([Fields.Field p], Comments.Comments p) ->
+  m ([Fields.Field (p, Comments.Comments p)], Comments.Comments p)
 run (fs, cs) = pure $ StateT.runState (traverse field fs) cs
 
 -- | Attaches comments to a single field. It is assumed that both the fields
@@ -20,7 +21,7 @@ run (fs, cs) = pure $ StateT.runState (traverse field fs) cs
 field ::
   (Ord p) =>
   Fields.Field p ->
-  StateT.State [Comment.Comment p] (Fields.Field (p, [Comment.Comment p]))
+  StateT.State (Comments.Comments p) (Fields.Field (p, Comments.Comments p))
 field f = case f of
   Fields.Field n fls ->
     Fields.Field
@@ -37,7 +38,7 @@ field f = case f of
 name ::
   (Ord p) =>
   Fields.Name p ->
-  StateT.State [Comment.Comment p] (Fields.Name (p, [Comment.Comment p]))
+  StateT.State (Comments.Comments p) (Fields.Name (p, Comments.Comments p))
 name (Fields.Name p fn) =
   Fields.Name
     <$> toPosition p
@@ -47,7 +48,7 @@ name (Fields.Name p fn) =
 fieldLine ::
   (Ord p) =>
   Fields.FieldLine p ->
-  StateT.State [Comment.Comment p] (Fields.FieldLine (p, [Comment.Comment p]))
+  StateT.State (Comments.Comments p) (Fields.FieldLine (p, Comments.Comments p))
 fieldLine (Fields.FieldLine p bs) =
   Fields.FieldLine
     <$> toPosition p
@@ -60,7 +61,7 @@ fieldLine (Fields.FieldLine p bs) =
 sectionArg ::
   (Ord p) =>
   Fields.SectionArg p ->
-  StateT.State [Comment.Comment p] (Fields.SectionArg (p, [Comment.Comment p]))
+  StateT.State (Comments.Comments p) (Fields.SectionArg (p, Comments.Comments p))
 sectionArg sa = case sa of
   Fields.SecArgName p bs ->
     Fields.SecArgName
@@ -81,9 +82,9 @@ sectionArg sa = case sa of
 toPosition ::
   (Ord p) =>
   p ->
-  StateT.State [Comment.Comment p] (p, [Comment.Comment p])
+  StateT.State (Comments.Comments p) (p, Comments.Comments p)
 toPosition p = do
   cs <- StateT.get
-  let (xs, ys) = span ((<= p) . Comment.annotation) cs
-  StateT.put ys
-  pure (p, xs)
+  let (xs, ys) = span ((<= p) . Comment.annotation) $ Comments.toList cs
+  StateT.put $ Comments.fromList ys
+  pure (p, Comments.fromList xs)
