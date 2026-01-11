@@ -1,6 +1,7 @@
 module CabalGild.Unstable.Action.ExtractComments where
 
 import qualified CabalGild.Unstable.Type.Comment as Comment
+import qualified CabalGild.Unstable.Type.Comments as Comments
 import qualified Control.Applicative as Applicative
 import qualified Control.Monad as Monad
 import qualified Data.ByteString as ByteString
@@ -12,9 +13,10 @@ import qualified Distribution.Parsec.Position as Position
 
 -- | Extracts comments from the given byte string. This is a wrapper around
 -- 'fromLine', where lines are split using 'Latin1.lines'.
-fromByteString :: ByteString.ByteString -> [Comment.Comment Position.Position]
+fromByteString :: ByteString.ByteString -> Comments.Comments Position.Position
 fromByteString =
-  Maybe.mapMaybe (uncurry fromLine)
+  Comments.fromList
+    . Maybe.mapMaybe (uncurry fromLine)
     . zip [1 ..]
     . Latin1.lines
 
