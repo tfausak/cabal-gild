@@ -474,10 +474,9 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     let expectRoundTrip i = expectGildedLines i i
 
     Hspec.it "trailing indented comment on field" $ do
-      -- Note: Field-level trailing comments are not yet fully supported.
-      -- They don't attach and render as top-level comments. Section-level
-      -- trailing comments work correctly (see next tests).
-      expectGildedLines ["f:", "  1", "  -- c"] ["f:", "  1", "", "-- c"]
+      -- Field-level trailing comments are now fully supported.
+      -- They attach and render at the end of the field's content.
+      expectRoundTrip ["f:", "  1", "  -- c"]
 
     Hspec.it "non-indented comment after field" $ do
       expectRoundTrip ["f:", "  1", "", "-- c"]

@@ -66,10 +66,11 @@ field ::
   Fields.Field p ->
   StateT.State [Comment.Comment p] (Fields.Field (p, Comments.Comments p))
 field f = case f of
-  Fields.Field n fls ->
-    Fields.Field
-      <$> name n
-      <*> traverse fieldLine fls
+  Fields.Field n fls -> do
+    n' <- name n
+    fls' <- traverse fieldLine fls
+    fls'' <- attachTrailingToLastFieldLine fls'
+    pure $ Fields.Field n' fls''
   Fields.Section n sas fs -> do
     n' <- name n
     sas' <- traverse sectionArg sas
@@ -135,8 +136,8 @@ toPosition p = do
   pure (p, Comments.onlyBefore xs)
 
 -- | Check if a comment should be attached as a trailing comment to a field line.
--- A comment is trailing if it appears on a later row and is indented at least
--- as much as the field line, and also meets the minimum indentation of column 3.
+-- A comment is trailing if it appears on a later row and is indented more
+-- than the field line, and also meets the minimum indentation of column 3.
 shouldAttachToFieldLine ::
   (p ~ Position.Position) =>
   p ->
@@ -145,6 +146,7 @@ shouldAttachToFieldLine ::
 shouldAttachToFieldLine flPos comment =
   let commentPos = Comment.annotation comment
    in Position.positionRow commentPos > Position.positionRow flPos
+        && Position.positionCol commentPos >= Position.positionCol flPos
         && Position.positionCol commentPos >= 3
 
 -- | Check if a comment should be attached as a trailing comment to a section.
