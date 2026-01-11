@@ -104,6 +104,7 @@ library
     CabalGild.Unstable.Extra.SectionArg
     CabalGild.Unstable.Extra.String
     CabalGild.Unstable.Main
+    CabalGild.Unstable.Type.BlankLines
     CabalGild.Unstable.Type.Block
     CabalGild.Unstable.Type.Chunk
     CabalGild.Unstable.Type.Comment
@@ -124,6 +125,7 @@ library
     CabalGild.Unstable.Type.Optional
     CabalGild.Unstable.Type.Output
     CabalGild.Unstable.Type.Pragma
+    CabalGild.Unstable.Type.ScopeInfo
     CabalGild.Unstable.Type.Set
     CabalGild.Unstable.Type.SomeParsecParser
     CabalGild.Unstable.Type.TestedWith

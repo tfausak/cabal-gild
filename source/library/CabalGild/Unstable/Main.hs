@@ -95,7 +95,7 @@ format filePath input = do
   let csv = GetCabalVersion.fromFields fields
       comments = ExtractComments.fromByteString input
   ( StripBlanks.run
-      Monad.>=> AttachComments.run
+      Monad.>=> AttachComments.run input
       Monad.>=> ReflowText.run csv
       Monad.>=> EvaluatePragmas.run filePath
       Monad.>=> FormatFields.run csv
