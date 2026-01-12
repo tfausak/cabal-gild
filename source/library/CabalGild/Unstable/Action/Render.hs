@@ -49,7 +49,7 @@ field :: CabalSpecVersion.CabalSpecVersion -> Int -> Fields.Field (Position.Posi
 field csv i f = case f of
   Fields.Field n fls -> case fls of
     [fl]
-      | Comments.isEmpty . snd $ FieldLine.annotation fl,
+      | null . Comments.toList . snd $ FieldLine.annotation fl,
         sameRow (Name.annotation n) (FieldLine.annotation fl) ->
           comments i (snd $ Name.annotation n)
             <> ( Block.fromLine

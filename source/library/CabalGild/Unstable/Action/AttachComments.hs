@@ -86,5 +86,5 @@ toPosition ::
 toPosition p = do
   cs <- StateT.get
   let (xs, ys) = span ((<= p) . Comment.annotation) $ Comments.toList cs
-  StateT.put $ Comments.fromList ys
-  pure (p, Comments.fromList xs)
+  StateT.put Comments.MkComments {Comments.before = ys, Comments.after = []}
+  pure (p, Comments.MkComments {Comments.before = xs, Comments.after = []})

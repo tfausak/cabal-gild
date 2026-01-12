@@ -4,24 +4,24 @@ module CabalGild.Unstable.Type.Comments where
 import qualified CabalGild.Unstable.Type.Comment as Comment
 import qualified Data.Function as Function
 
-newtype Comments p
-  = MkComments [Comment.Comment p]
+data Comments p = MkComments
+  { before :: [Comment.Comment p],
+    after :: [Comment.Comment p]
+  }
   deriving (Eq, Show)
 
 instance Semigroup (Comments p) where
-  xs <> ys = fromList $ Function.on (<>) toList xs ys
+  xs <> ys =
+    MkComments
+      { before = before xs <> before ys,
+        after = after xs <> after ys
+      }
 
 instance Monoid (Comments p) where
   mempty = empty
 
-fromList :: [Comment.Comment p] -> Comments p
-fromList = MkComments
-
 toList :: Comments p -> [Comment.Comment p]
-toList (MkComments xs) = xs
+toList x = before x <> after x
 
 empty :: Comments p
-empty = fromList []
-
-isEmpty :: Comments p -> Bool
-isEmpty = null . toList
+empty = MkComments {before = [], after = []}
