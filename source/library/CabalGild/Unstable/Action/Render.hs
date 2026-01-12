@@ -49,14 +49,14 @@ field :: CabalSpecVersion.CabalSpecVersion -> Int -> Fields.Field (Position.Posi
 field csv i f = case f of
   Fields.Field n fls -> case fls of
     [fl]
-      | null . Comments.toList . snd $ FieldLine.annotation fl,
+      | null . Comments.after . snd $ Name.annotation n,
+        null . Comments.toList . snd $ FieldLine.annotation fl,
         sameRow (Name.annotation n) (FieldLine.annotation fl) ->
           comments i (Comments.before . snd $ Name.annotation n)
             <> ( Block.fromLine
                    . Lens.over Line.chunkLens (mappend $ name n <> Chunk.colon)
                    $ fieldLine i fl
                )
-               <> comments (i + 1) (Comments.after . snd $ Name.annotation n)
     _ ->
       Lens.set Block.lineAfterLens (not $ null fls) $
         comments i (Comments.before . snd $ Name.annotation n)
