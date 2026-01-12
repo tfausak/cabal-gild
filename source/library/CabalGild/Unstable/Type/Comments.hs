@@ -14,7 +14,7 @@ instance Semigroup (Comments p) where
   xs <> ys =
     MkComments
       { before = before xs <> before ys,
-        after = after xs <> after ys
+        after = after ys <> after xs
       }
 
 instance Monoid (Comments p) where
