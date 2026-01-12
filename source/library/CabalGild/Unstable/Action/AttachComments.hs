@@ -9,8 +9,8 @@ import qualified Distribution.Fields as Fields
 -- with other actions.
 run ::
   (Applicative m, Ord p) =>
-  ([Fields.Field p], Comments.Comments p) ->
-  m ([Fields.Field (p, Comments.Comments p)], Comments.Comments p)
+  ([Fields.Field p], [Comment.Comment p]) ->
+  m ([Fields.Field (p, Comments.Comments p)], [Comment.Comment p])
 run (fs, cs) = pure $ StateT.runState (traverse field fs) cs
 
 -- | Attaches comments to a single field. It is assumed that both the fields
@@ -21,7 +21,7 @@ run (fs, cs) = pure $ StateT.runState (traverse field fs) cs
 field ::
   (Ord p) =>
   Fields.Field p ->
-  StateT.State (Comments.Comments p) (Fields.Field (p, Comments.Comments p))
+  StateT.State [Comment.Comment p] (Fields.Field (p, Comments.Comments p))
 field f = case f of
   Fields.Field n fls ->
     Fields.Field
@@ -38,7 +38,7 @@ field f = case f of
 name ::
   (Ord p) =>
   Fields.Name p ->
-  StateT.State (Comments.Comments p) (Fields.Name (p, Comments.Comments p))
+  StateT.State [Comment.Comment p] (Fields.Name (p, Comments.Comments p))
 name (Fields.Name p fn) =
   Fields.Name
     <$> toPosition p
@@ -48,7 +48,7 @@ name (Fields.Name p fn) =
 fieldLine ::
   (Ord p) =>
   Fields.FieldLine p ->
-  StateT.State (Comments.Comments p) (Fields.FieldLine (p, Comments.Comments p))
+  StateT.State [Comment.Comment p] (Fields.FieldLine (p, Comments.Comments p))
 fieldLine (Fields.FieldLine p bs) =
   Fields.FieldLine
     <$> toPosition p
@@ -61,7 +61,7 @@ fieldLine (Fields.FieldLine p bs) =
 sectionArg ::
   (Ord p) =>
   Fields.SectionArg p ->
-  StateT.State (Comments.Comments p) (Fields.SectionArg (p, Comments.Comments p))
+  StateT.State [Comment.Comment p] (Fields.SectionArg (p, Comments.Comments p))
 sectionArg sa = case sa of
   Fields.SecArgName p bs ->
     Fields.SecArgName
@@ -82,9 +82,9 @@ sectionArg sa = case sa of
 toPosition ::
   (Ord p) =>
   p ->
-  StateT.State (Comments.Comments p) (p, Comments.Comments p)
+  StateT.State [Comment.Comment p] (p, Comments.Comments p)
 toPosition p = do
   cs <- StateT.get
-  let (xs, ys) = span ((<= p) . Comment.annotation) $ Comments.toList cs
-  StateT.put Comments.MkComments {Comments.before = ys, Comments.after = []}
+  let (xs, ys) = span ((<= p) . Comment.annotation) cs
+  StateT.put ys
   pure (p, Comments.MkComments {Comments.before = xs, Comments.after = []})

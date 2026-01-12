@@ -6,6 +6,7 @@ import qualified CabalGild.Unstable.Extra.FieldLine as FieldLine
 import qualified CabalGild.Unstable.Extra.Name as Name
 import qualified CabalGild.Unstable.Extra.SectionArg as SectionArg
 import qualified CabalGild.Unstable.Extra.String as String
+import qualified CabalGild.Unstable.Type.Comment as Comment
 import qualified CabalGild.Unstable.Type.Comments as Comments
 import qualified CabalGild.Unstable.Type.Condition as Condition
 import qualified CabalGild.Unstable.Type.Dependency as Dependency
@@ -36,8 +37,8 @@ import qualified Text.PrettyPrint as PrettyPrint
 run ::
   (Applicative m) =>
   CabalSpecVersion.CabalSpecVersion ->
-  ([Fields.Field (p, Comments.Comments q)], Comments.Comments q) ->
-  m ([Fields.Field (p, Comments.Comments q)], Comments.Comments q)
+  ([Fields.Field (p, Comments.Comments q)], [Comment.Comment q]) ->
+  m ([Fields.Field (p, Comments.Comments q)], [Comment.Comment q])
 run csv (fs, cs) = pure (fmap (field csv) fs, cs)
 
 -- | Formats the given field, if applicable. Otherwise returns the field as is.

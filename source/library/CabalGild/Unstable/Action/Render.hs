@@ -20,7 +20,7 @@ import qualified Distribution.Parsec.Position as Position
 run ::
   (Applicative m) =>
   CabalSpecVersion.CabalSpecVersion ->
-  ([Fields.Field (Position.Position, Comments.Comments p)], Comments.Comments p) ->
+  ([Fields.Field (Position.Position, Comments.Comments p)], [Comment.Comment p]) ->
   m ByteString.ByteString
 run csv = pure . uncurry (toByteString csv)
 
@@ -28,7 +28,7 @@ run csv = pure . uncurry (toByteString csv)
 toByteString ::
   CabalSpecVersion.CabalSpecVersion ->
   [Fields.Field (Position.Position, Comments.Comments p)] ->
-  Comments.Comments p ->
+  [Comment.Comment p] ->
   ByteString.ByteString
 toByteString csv fs cs =
   let i = 0 :: Int
@@ -51,31 +51,35 @@ field csv i f = case f of
     [fl]
       | null . Comments.toList . snd $ FieldLine.annotation fl,
         sameRow (Name.annotation n) (FieldLine.annotation fl) ->
-          comments i (snd $ Name.annotation n)
+          comments i (Comments.before . snd $ Name.annotation n)
             <> ( Block.fromLine
                    . Lens.over Line.chunkLens (mappend $ name n <> Chunk.colon)
                    $ fieldLine i fl
                )
+               <> comments (i + 1) (Comments.after . snd $ Name.annotation n)
     _ ->
       Lens.set Block.lineAfterLens (not $ null fls) $
-        comments i (snd $ Name.annotation n)
+        comments i (Comments.before . snd $ Name.annotation n)
           <> Block.fromLine
             Line.Line
               { Line.indent = i,
                 Line.chunk = name n <> Chunk.colon
               }
           <> fieldLines (i + 1) fls
+          <> comments (i + 1) (Comments.after . snd $ Name.annotation n)
   Fields.Section n sas fs ->
     Lens.set Block.lineBeforeLens (not $ Name.isElif csv n || Name.isElse n)
       . Lens.set Block.lineAfterLens (not $ Name.isIf n || Name.isElif csv n)
-      $ comments i (snd $ Name.annotation n)
-        <> comments i (foldMap (snd . SectionArg.annotation) sas)
+      $ comments i (Comments.before . snd $ Name.annotation n)
+        <> comments i (Comments.before $ foldMap (snd . SectionArg.annotation) sas)
         <> Block.fromLine
           Line.Line
             { Line.indent = i,
               Line.chunk = Lens.set Chunk.spaceAfterLens True (name n) <> sectionArgs sas
             }
         <> Lens.set Block.lineBeforeLens False (fields csv (i + 1) fs)
+        <> comments (i + 1) (Comments.after . snd $ Name.annotation n)
+        <> comments (i + 1) (Comments.after $ foldMap (snd . SectionArg.annotation) sas)
 
 -- | Returns true if the two positions are on the same row.
 sameRow :: (Position.Position, cs) -> (Position.Position, cs) -> Bool
@@ -93,8 +97,9 @@ fieldLines = foldMap . fieldLineC
 -- indentation level.
 fieldLineC :: Int -> Fields.FieldLine (p, Comments.Comments q) -> Block.Block
 fieldLineC i fl =
-  comments i (snd $ FieldLine.annotation fl)
+  comments i (Comments.before . snd $ FieldLine.annotation fl)
     <> Block.fromLine (fieldLine i fl)
+    <> comments (i + 1) (Comments.after . snd $ FieldLine.annotation fl)
 
 -- | Renders the given field line to a line at the given indentation level.
 fieldLine :: Int -> Fields.FieldLine a -> Line.Line
@@ -121,8 +126,8 @@ sectionArg sa = Lens.set Chunk.spaceBeforeLens True
     Fields.SecArgOther _ bs -> bs
 
 -- | Renders the given comments to a block at the given indentation level.
-comments :: Int -> Comments.Comments a -> Block.Block
-comments i cs = mempty {Block.lines = comment i <$> Comments.toList cs}
+comments :: Int -> [Comment.Comment a] -> Block.Block
+comments i cs = mempty {Block.lines = fmap (comment i) cs}
 
 -- | Renders the given comment to a line at the given indentation level.
 comment :: Int -> Comment.Comment a -> Line.Line

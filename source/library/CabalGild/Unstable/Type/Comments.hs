@@ -2,7 +2,6 @@
 module CabalGild.Unstable.Type.Comments where
 
 import qualified CabalGild.Unstable.Type.Comment as Comment
-import qualified Data.Function as Function
 
 data Comments p = MkComments
   { before :: [Comment.Comment p],
