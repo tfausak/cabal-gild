@@ -13,9 +13,10 @@ import qualified Distribution.Parsec.Position as Position
 -- | Extracts comments from the given byte string. This is a wrapper around
 -- 'fromLine', where lines are split using 'Latin1.lines'.
 fromByteString :: ByteString.ByteString -> [Comment.Comment Position.Position]
-fromByteString = Maybe.mapMaybe (uncurry fromLine)
-          . zip [1 ..]
-          . Latin1.lines
+fromByteString =
+  Maybe.mapMaybe (uncurry fromLine)
+    . zip [1 ..]
+    . Latin1.lines
 
 -- | Extracts a comment from the given line. If the line does not contain a
 -- comment, the result will be 'Alternative.empty'.

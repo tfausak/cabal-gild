@@ -2,6 +2,7 @@
 module CabalGild.Unstable.Type.Comments where
 
 import qualified CabalGild.Unstable.Type.Comment as Comment
+import qualified Distribution.Compat.Lens as Lens
 
 data Comments p = MkComments
   { before :: [Comment.Comment p],
@@ -24,3 +25,6 @@ toList x = before x <> after x
 
 empty :: Comments p
 empty = MkComments {before = [], after = []}
+
+afterLens :: Lens.Lens' (Comments p) [Comment.Comment p]
+afterLens f s = fmap (\x -> s {after = x}) . f $ after s
