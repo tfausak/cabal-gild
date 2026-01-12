@@ -286,45 +286,193 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "\t\r\n \r\n"
       ""
 
-  Hspec.it "formats a comment" $ do
-    expectGilded
-      "-- c"
-      "-- c\n"
+  Hspec.describe "comments" $ do
+    Hspec.it "formats a comment" $ do
+      expectGilded
+        "-- c"
+        "-- c\n"
 
-  Hspec.it "keeps a blank comment" $ do
-    expectGilded
-      "--"
-      "--\n"
+    Hspec.it "keeps a blank comment" $ do
+      expectGilded
+        "--"
+        "--\n"
 
-  Hspec.it "formats multiple comments" $ do
-    expectGilded
-      "-- c\n-- d"
-      "-- c\n-- d\n"
+    Hspec.it "formats multiple comments" $ do
+      expectGilded
+        "-- c\n-- d"
+        "-- c\n-- d\n"
 
-  Hspec.it "removes blank lines between comments" $ do
-    expectGilded
-      "-- c\n\n-- d"
-      "-- c\n-- d\n"
+    Hspec.it "removes blank lines between comments" $ do
+      expectGilded
+        "-- c\n\n-- d"
+        "-- c\n-- d\n"
 
-  Hspec.it "does not require a space after the comment start" $ do
-    expectGilded
-      "--c"
-      "--c\n"
+    Hspec.it "does not require a space after the comment start" $ do
+      expectGilded
+        "--c"
+        "--c\n"
 
-  Hspec.it "leaves leading blank space in comments" $ do
-    expectGilded
-      "--\t c"
-      "--\t c\n"
+    Hspec.it "leaves leading blank space in comments" $ do
+      expectGilded
+        "--\t c"
+        "--\t c\n"
 
-  Hspec.it "trims trailing blank space from comments" $ do
-    expectGilded
-      "-- c\t \n"
-      "-- c\n"
+    Hspec.it "trims trailing blank space from comments" $ do
+      expectGilded
+        "-- c\t \n"
+        "-- c\n"
 
-  Hspec.it "normalizes Windows line endings in comments" $ do
-    expectGilded
-      "-- c\r\n"
-      "-- c\n"
+    Hspec.it "normalizes Windows line endings in comments" $ do
+      expectGilded
+        "-- c\r\n"
+        "-- c\n"
+
+    Hspec.it "formats a comment before a field" $ do
+      expectGilded
+        "-- c\nf: 1"
+        "-- c\nf: 1\n"
+
+    Hspec.it "formats a comment after a field" $ do
+      expectGilded
+        "f: 1\n-- c"
+        "f: 1\n-- c\n"
+
+    Hspec.it "formats a comment before a field's value" $ do
+      expectGilded
+        "f:\n -- c\n 1"
+        "f:\n  -- c\n  1\n"
+
+    Hspec.it "formats a comment in a field's value" $ do
+      expectGilded
+        "f:\n 1\n -- c\n 2"
+        "f:\n  -- c\n  1\n  2\n"
+
+    Hspec.it "formats a comment trailing an inline field's value" $ do
+      -- This comment is indented beyond the beginning of the field, so it
+      -- belongs to the field. That forces the field value into block mode,
+      -- even though the input was inline.
+      expectGilded
+        "f: 1\n -- c"
+        "f:\n  1\n  -- c\n"
+
+    Hspec.it "formats a comment trailing an inline field's value with an extra blank line" $ do
+      -- Even though there's an extra blank line separating the field from the
+      -- comment, the comment is still indented past the field.
+      expectGilded
+        "f: 1\n\n -- c"
+        "f:\n  1\n  -- c\n"
+
+    Hspec.it "formats a comment after an inline field's value" $ do
+      expectGilded
+        "f: 1\n-- c"
+        "f: 1\n-- c\n"
+
+    Hspec.it "formats a comment trailing a block field's value" $ do
+      expectGilded
+        "f:\n 1\n -- c"
+        "f:\n  1\n  -- c\n"
+
+    Hspec.it "formats a comment trailing a block field's value with an extra blank line" $ do
+      -- Same as above, but there's an extra blank line.
+      expectGilded
+        "f:\n 1\n\n -- c"
+        "f:\n  1\n  -- c\n"
+
+    Hspec.it "formats a comment after a block field's value" $ do
+      expectGilded
+        "f:\n 1\n-- c"
+        "f:\n  1\n\n-- c\n"
+
+    Hspec.it "formats a comment trailing a field with multiple values" $ do
+      expectGilded
+        "f: 1\n 2\n -- c"
+        "f:\n  1\n  2\n  -- c\n"
+
+    Hspec.it "formats a comment trailing a field with multiple values with an extra blank line" $ do
+      -- Same as above, but there's an extra blank line.
+      expectGilded
+        "f: 1\n 2\n\n -- c"
+        "f:\n  1\n  2\n  -- c\n"
+
+    Hspec.it "formats a comment after a field with multiple values" $ do
+      expectGilded
+        "f: 1\n 2\n-- c"
+        "f:\n  1\n  2\n\n-- c\n"
+
+    Hspec.it "formats a comment before a section" $ do
+      expectGilded
+        "-- c\ns"
+        "-- c\ns\n"
+
+    Hspec.it "formats a comment trailing a section" $ do
+      -- This comment is indented beyond the beginning of the section, so it
+      -- belongs to the section.
+      expectGilded
+        "s\n -- c"
+        "s\n  -- c\n"
+
+    Hspec.it "formats a comment trailing a section with extra blank line" $ do
+      -- Same as above, but there's an extra blank line.
+      expectGilded
+        "s\n\n -- c"
+        "s\n  -- c\n"
+
+    Hspec.it "formats a comment after a section's value" $ do
+      -- This is a minimal reproduction of the issue reported here:
+      -- <https://github.com/tfausak/cabal-gild/issues/122>.
+      expectGilded
+        "s\n f: 1\n -- c"
+        "s\n  f: 1\n  -- c\n"
+
+    Hspec.it "formats a comment after a section" $ do
+      expectGilded
+        "s\n-- c"
+        "s\n\n-- c\n"
+
+    Hspec.it "correctly indents a comment in a section" $ do
+      expectGilded
+        "s\n -- c\n f: 1"
+        "s\n  -- c\n  f: 1\n"
+
+    Hspec.it "floats comments on unknown fields" $ do
+      expectGilded
+        "unknown-field:\n the\n -- some comment\n value"
+        "unknown-field:\n  -- some comment\n  the\n  value\n"
+
+    Hspec.it "floats comments when parsing field fails" $ do
+      expectGilded
+        "build-depends:\n >> no\n -- comment\n parse"
+        "build-depends:\n  -- comment\n  >> no\n  parse\n"
+
+    Hspec.it "does not move an indented comment inside a field" $ do
+      -- Even though the comment is indented beyond the beginning of the field,
+      -- it does not belong to the field because it comes before the field.
+      expectGilded
+        " -- c\nf: 1"
+        "-- c\nf: 1\n"
+
+    Hspec.it "does not move an indented comment inside a section" $ do
+      -- Even though the comment is indented beyond the beginning of the
+      -- section, it does not belong to the section because it comes before the
+      -- section.
+      expectGilded
+        " -- c\ns"
+        "-- c\ns\n"
+
+    Hspec.it "sorts inline field comments correctly" $ do
+      expectGilded
+        "-- a\n-- b\nf: 1\n -- c\n -- d"
+        "-- a\n-- b\nf:\n  1\n  -- c\n  -- d\n"
+
+    Hspec.it "sorts block field comments correctly" $ do
+      expectGilded
+        "-- a\n-- b\nf:\n -- c\n -- d\n 1\n -- e\n -- f\n 2\n -- g\n -- h"
+        "-- a\n-- b\nf:\n  -- c\n  -- d\n  -- e\n  -- f\n  1\n  2\n  -- g\n  -- h\n"
+
+    Hspec.it "sorts section comments correctly" $ do
+      expectGilded
+        "-- a\n-- b\ns\n -- c\n -- d"
+        "-- a\n-- b\ns\n  -- c\n  -- d\n"
 
   Hspec.it "formats a field without a value" $ do
     expectGilded
@@ -452,51 +600,6 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     expectGilded
       "s\n f:\n  1\n  2"
       "s\n  f:\n    1\n    2\n"
-
-  Hspec.it "formats a comment before a field" $ do
-    expectGilded
-      "-- c\nf: 1"
-      "-- c\nf: 1\n"
-
-  Hspec.it "formats a comment after a field" $ do
-    expectGilded
-      "f: 1\n-- c"
-      "f: 1\n-- c\n"
-
-  Hspec.it "formats a comment before a field's value" $ do
-    expectGilded
-      "f:\n -- c\n 1"
-      "f:\n  -- c\n  1\n"
-
-  Hspec.it "formats a comment in a field's value" $ do
-    expectGilded
-      "f:\n 1\n -- c\n 2"
-      "f:\n  -- c\n  1\n  2\n"
-
-  Hspec.it "formats a comment after a field's value" $ do
-    expectGilded
-      "f:\n 1\n -- c"
-      "f:\n  1\n\n-- c\n"
-
-  Hspec.it "formats a comment after a field with multiple values" $ do
-    expectGilded
-      "f: 1\n 2\n-- c"
-      "f:\n  1\n  2\n\n-- c\n"
-
-  Hspec.it "formats a comment before a section" $ do
-    expectGilded
-      "-- c\ns"
-      "-- c\ns\n"
-
-  Hspec.it "formats a comment after a section" $ do
-    expectGilded
-      "s\n-- c"
-      "s\n\n-- c\n"
-
-  Hspec.it "correctly indents a comment in a section" $ do
-    expectGilded
-      "s\n -- c\n f: 1"
-      "s\n  -- c\n  f: 1\n"
 
   Hspec.describe "description" $ do
     -- These tests apply to other "free text" fields as well. The description
@@ -1582,16 +1685,6 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       (".", [["example.txt"]])
       "-- cabal-gild: discover\nlicense-files:"
       "-- cabal-gild: discover\nlicense-files: example.txt\n"
-
-  Hspec.it "floats comments on unknown fields" $ do
-    expectGilded
-      "unknown-field:\n the\n -- some comment\n value"
-      "unknown-field:\n  -- some comment\n  the\n  value\n"
-
-  Hspec.it "floats comments when parsing field fails" $ do
-    expectGilded
-      "build-depends:\n >> no\n -- comment\n parse"
-      "build-depends:\n  -- comment\n  >> no\n  parse\n"
 
   Hspec.it "only discovers modules in given directories" $ do
     expectDiscover

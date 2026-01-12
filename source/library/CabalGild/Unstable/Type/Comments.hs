@@ -2,26 +2,29 @@
 module CabalGild.Unstable.Type.Comments where
 
 import qualified CabalGild.Unstable.Type.Comment as Comment
-import qualified Data.Function as Function
+import qualified Distribution.Compat.Lens as Lens
 
-newtype Comments p
-  = MkComments [Comment.Comment p]
+data Comments p = MkComments
+  { before :: [Comment.Comment p],
+    after :: [Comment.Comment p]
+  }
   deriving (Eq, Show)
 
 instance Semigroup (Comments p) where
-  xs <> ys = fromList $ Function.on (<>) toList xs ys
+  xs <> ys =
+    MkComments
+      { before = before xs <> before ys,
+        after = after ys <> after xs
+      }
 
 instance Monoid (Comments p) where
   mempty = empty
 
-fromList :: [Comment.Comment p] -> Comments p
-fromList = MkComments
-
 toList :: Comments p -> [Comment.Comment p]
-toList (MkComments xs) = xs
+toList x = before x <> after x
 
 empty :: Comments p
-empty = fromList []
+empty = MkComments {before = [], after = []}
 
-isEmpty :: Comments p -> Bool
-isEmpty = null . toList
+afterLens :: Lens.Lens' (Comments p) [Comment.Comment p]
+afterLens f s = fmap (\x -> s {after = x}) . f $ after s
