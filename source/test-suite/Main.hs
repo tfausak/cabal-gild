@@ -459,6 +459,21 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
         " -- c\ns"
         "-- c\ns\n"
 
+    Hspec.it "sorts inline field comments correctly" $ do
+      expectGilded
+        "-- a\n-- b\nf: 1\n -- c\n -- d"
+        "-- a\n-- b\nf:\n  1\n  -- c\n  -- d\n"
+
+    Hspec.it "sorts block field comments correctly" $ do
+      expectGilded
+        "-- a\n-- b\nf:\n -- c\n -- d\n 1\n -- e\n -- f\n 2\n -- g\n -- h"
+        "-- a\n-- b\nf:\n  -- c\n  -- d\n  -- e\n  -- f\n  1\n  2\n  -- g\n  -- h\n"
+
+    Hspec.it "sorts section comments correctly" $ do
+      expectGilded
+        "-- a\n-- b\ns\n -- c\n -- d"
+        "-- a\n-- b\ns\n  -- c\n  -- d\n"
+
   Hspec.it "formats a field without a value" $ do
     expectGilded
       "f:"
