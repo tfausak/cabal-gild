@@ -765,6 +765,16 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
         "if impl ( ghc > 8 && < 9 )"
         "if impl(ghc >8 && <9)\n"
 
+    Hspec.it "formats impl with wildcard version" $ do
+      expectGilded
+        "if impl ( ghc == 9.10. * )"
+        "if impl(ghc ==9.10.*)\n"
+
+    Hspec.it "formats complex condition with wildcard version" $ do
+      expectGilded
+        "if ( ! flag ( hlint ) ) || ( impl ( ghc == 9.10. * ) || impl ( ghc >= 9.14 ) )"
+        "if (!flag(hlint)) || (impl(ghc ==9.10.*) || impl(ghc >=9.14))\n"
+
     Hspec.it "formats os" $ do
       expectGilded
         "if os ( osx )"

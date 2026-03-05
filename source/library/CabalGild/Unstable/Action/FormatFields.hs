@@ -16,6 +16,7 @@ import qualified CabalGild.Unstable.Type.SomeParsecParser as SPP
 import qualified CabalGild.Unstable.Type.TestedWith as TestedWith
 import qualified CabalGild.Unstable.Type.Variable as Variable
 import qualified Data.ByteString as ByteString
+import qualified Data.Function as Function
 import qualified Data.Functor.Identity as Identity
 import qualified Data.Map as Map
 import qualified Data.Maybe as Maybe
@@ -60,7 +61,7 @@ field csv f = case f of
     let result =
           Parsec.runParsecParser' csv (Condition.parseCondition Variable.parseVariable) "<conditional>"
             . FieldLineStream.fieldLineStreamFromBS
-            . ByteString.intercalate (ByteString.singleton 0x20)
+            . joinSectionArgs
             $ fmap SectionArg.value sas
         position =
           fst
@@ -78,6 +79,23 @@ field csv f = case f of
                   $ Condition.prettyCondition Variable.prettyVariable c
             else sas
      in Fields.Section n newSas $ fmap (field csv) fs
+
+-- | Joins section argument values with spaces, but concatenates a @*@ wildcard
+-- directly onto a preceding token that ends with @.@ to preserve version
+-- wildcards like @9.10.*@.
+joinSectionArgs :: [ByteString.ByteString] -> ByteString.ByteString
+joinSectionArgs =
+  let space = ByteString.singleton 0x20
+      asterisk = ByteString.singleton 0x2a
+      fullStop = ByteString.singleton 0x2e
+      merge = Function.fix $ \rec xs -> case xs of
+        x : y : ys
+          | ByteString.isSuffixOf fullStop x,
+            y == asterisk ->
+              (x <> y) : rec ys
+          | otherwise -> x : rec (y : ys)
+        _ -> xs
+   in ByteString.intercalate space . merge
 
 -- | Returns 'True' if the field name is a conditional. @if@ is always one, and
 -- @elif@ is one for Cabal versions 2.2 and later.
