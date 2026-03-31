@@ -2,7 +2,6 @@ module CabalGild.Unstable.Extra.ModuleName where
 
 import qualified CabalGild.Unstable.Extra.String as String
 import qualified Data.List as List
-import qualified Data.Text as Text
 import qualified Distribution.Fields as Fields
 import qualified Distribution.ModuleName as ModuleName
 import qualified Distribution.Parsec as Parsec

@@ -2,7 +2,6 @@ module CabalGild.Unstable.Type.Extension where
 
 import qualified CabalGild.Unstable.Extra.String as String
 import qualified Data.Ord as Ord
-import qualified Data.Text as Text
 import qualified Distribution.Parsec as Parsec
 import qualified Distribution.Pretty as Pretty
 import qualified Language.Haskell.Extension as Extension
