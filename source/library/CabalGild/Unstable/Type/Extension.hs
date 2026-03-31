@@ -15,7 +15,8 @@ newtype Extension = Extension
   deriving (Eq, Show)
 
 instance Ord Extension where
-  compare = Ord.comparing $ String.toCaseFold . Pretty.prettyShow
+  compare = Ord.comparing $ \x ->
+    let y = Pretty.prettyShow x in (String.toCaseFold y, y)
 
 instance Parsec.Parsec Extension where
   parsec = Extension <$> Parsec.parsec

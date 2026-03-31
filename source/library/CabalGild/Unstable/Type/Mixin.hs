@@ -14,7 +14,8 @@ newtype Mixin = Mixin
   deriving (Eq, Show)
 
 instance Ord Mixin where
-  compare = Ord.comparing $ Mixin.toCaseFold . unwrap
+  compare = Ord.comparing $ \x ->
+    let y = unwrap x in (Mixin.toCaseFold y, y)
 
 instance Parsec.Parsec Mixin where
   parsec = Mixin <$> Parsec.parsec
