@@ -17,7 +17,7 @@ toCaseFold :: ModuleName.ModuleName -> ModuleName.ModuleName
 toCaseFold =
   ModuleName.fromString
     . List.intercalate "."
-    . fmap (Text.unpack . Text.toCaseFold . Text.pack)
+    . fmap String.toCaseFold
     . ModuleName.components
 
 -- | Converts a 'ModuleName.ModuleName' into a 'Fields.FieldLine'.
