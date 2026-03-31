@@ -2,6 +2,7 @@
 
 module CabalGild.Unstable.Type.Dependency where
 
+import qualified CabalGild.Unstable.Extra.UnqualComponentName as UnqualComponentName
 import qualified CabalGild.Unstable.Type.VersionRange as VersionRange
 import qualified Control.Monad as Monad
 import qualified Data.List.NonEmpty as NonEmpty
@@ -53,6 +54,6 @@ instance Pretty.Pretty Dependency where
                   . PrettyPrint.punctuate PrettyPrint.comma
                   . fmap Pretty.pretty
                   . NonEmpty.toList
-                  $ NonEmpty.sort ucns
+                  $ NonEmpty.sortOn UnqualComponentName.toCaseFold ucns
         ver = foldMap Pretty.pretty $ versionRange dependency
      in PrettyPrint.hsep [pkg <> libs, ver]

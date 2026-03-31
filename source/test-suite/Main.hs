@@ -1002,6 +1002,11 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "library\n default-extensions: b a"
       "library\n  default-extensions:\n    a\n    b\n"
 
+  Hspec.it "sorts default-extensions case insensitively" $ do
+    expectGilded
+      "library\n default-extensions: B a"
+      "library\n  default-extensions:\n    a\n    B\n"
+
   Hspec.it "sorts known extensions by name" $ do
     expectGilded
       "library\n default-extensions: DerivingVia BlockArguments"
@@ -1032,10 +1037,20 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "library\n other-extensions: b a"
       "library\n  other-extensions:\n    a\n    b\n"
 
+  Hspec.it "sorts other-extensions case insensitively" $ do
+    expectGilded
+      "library\n other-extensions: B a"
+      "library\n  other-extensions:\n    a\n    B\n"
+
   Hspec.it "sorts extensions" $ do
     expectGilded
       "library\n extensions: b a"
       "library\n  extensions:\n    a\n    b\n"
+
+  Hspec.it "sorts extensions case insensitively" $ do
+    expectGilded
+      "library\n extensions: B a"
+      "library\n  extensions:\n    a\n    B\n"
 
   Hspec.it "sorts build-depends" $ do
     expectGilded
@@ -1056,6 +1071,11 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     expectGilded
       "cabal-version: 3.0\nlibrary\n build-depends: p:{b,a}"
       "cabal-version: 3.0\n\nlibrary\n  build-depends: p:{a, b}\n"
+
+  Hspec.it "sorts sub-libraries case insensitively in build-depends" $ do
+    expectGilded
+      "cabal-version: 3.0\nlibrary\n build-depends: p:{B,a}"
+      "cabal-version: 3.0\n\nlibrary\n  build-depends: p:{a, B}\n"
 
   Hspec.it "removes duplicate options" $ do
     -- This is kind of silly because there's only one possible foreign library
@@ -1184,25 +1204,55 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "library\n mixins: q (M, N as O), p"
       "library\n  mixins:\n    p,\n    q (M, N as O)\n"
 
+  Hspec.it "sorts mixins case insensitively" $ do
+    expectGilded
+      "library\n mixins: B, a"
+      "library\n  mixins:\n    a,\n    B\n"
+
+  Hspec.it "sorts mixin sub-libraries case insensitively" $ do
+    expectGilded
+      "cabal-version: 3.4\nlibrary\n mixins: p:B, p:a"
+      "cabal-version: 3.4\n\nlibrary\n  mixins:\n    p:a,\n    p:B,\n"
+
   Hspec.it "sorts hiding in mixins" $ do
     expectGilded
       "library\n mixins: p hiding (N, M)"
       "library\n  mixins: p hiding (M, N)\n"
+
+  Hspec.it "sorts hiding in mixins case insensitively" $ do
+    expectGilded
+      "library\n mixins: p hiding (MB, Ma)"
+      "library\n  mixins: p hiding (Ma, MB)\n"
 
   Hspec.it "sorts modules in mixins" $ do
     expectGilded
       "library\n mixins: p (N, M)"
       "library\n  mixins: p (M, N)\n"
 
+  Hspec.it "sorts modules in mixins case insensitively" $ do
+    expectGilded
+      "library\n mixins: p (MB, Ma)"
+      "library\n  mixins: p (Ma, MB)\n"
+
   Hspec.it "sorts hiding in mixins requires" $ do
     expectGilded
       "library\n mixins: p requires hiding (N, M)"
       "library\n  mixins: p requires hiding (M, N)\n"
 
+  Hspec.it "sorts hiding in mixins requires case insensitively" $ do
+    expectGilded
+      "library\n mixins: p requires hiding (MB, Ma)"
+      "library\n  mixins: p requires hiding (Ma, MB)\n"
+
   Hspec.it "sorts modules in mixins requires" $ do
     expectGilded
       "library\n mixins: p requires (N, M)"
       "library\n  mixins: p requires (M, N)\n"
+
+  Hspec.it "sorts modules in mixins requires case insensitively" $ do
+    expectGilded
+      "library\n mixins: p requires (MB, Ma)"
+      "library\n  mixins: p requires (Ma, MB)\n"
 
   Hspec.it "does not sort ghc-options" $ do
     expectGilded
@@ -1243,6 +1293,11 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     expectGilded
       "cabal-version: 3.0\ncustom-setup\n setup-depends: p:{b,a}"
       "cabal-version: 3.0\n\ncustom-setup\n  setup-depends: p:{a, b}\n"
+
+  Hspec.it "sorts sub-libraries case insensitively in setup-depends" $ do
+    expectGilded
+      "cabal-version: 3.0\ncustom-setup\n setup-depends: p:{B,a}"
+      "cabal-version: 3.0\n\ncustom-setup\n  setup-depends: p:{a, B}\n"
 
   Hspec.it "discovers an exposed module" $ do
     expectDiscover

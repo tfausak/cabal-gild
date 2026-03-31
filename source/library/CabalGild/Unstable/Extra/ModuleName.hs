@@ -2,6 +2,7 @@ module CabalGild.Unstable.Extra.ModuleName where
 
 import qualified CabalGild.Unstable.Extra.String as String
 import qualified Data.List as List
+import qualified Data.Text as Text
 import qualified Distribution.Fields as Fields
 import qualified Distribution.ModuleName as ModuleName
 import qualified Distribution.Parsec as Parsec
@@ -11,6 +12,13 @@ import qualified System.FilePath as FilePath
 -- | Parses a 'FilePath' as a 'ModuleName.ModuleName'.
 fromFilePath :: FilePath -> Maybe ModuleName.ModuleName
 fromFilePath = Parsec.simpleParsec . List.intercalate "." . FilePath.splitDirectories
+
+toCaseFold :: ModuleName.ModuleName -> ModuleName.ModuleName
+toCaseFold =
+  ModuleName.fromString
+    . List.intercalate "."
+    . fmap (Text.unpack . Text.toCaseFold . Text.pack)
+    . ModuleName.components
 
 -- | Converts a 'ModuleName.ModuleName' into a 'Fields.FieldLine'.
 toFieldLine :: a -> ModuleName.ModuleName -> Fields.FieldLine a

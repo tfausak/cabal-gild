@@ -1,5 +1,9 @@
 module CabalGild.Unstable.Type.Mixin where
 
+import qualified CabalGild.Unstable.Extra.LibraryName as LibraryName
+import qualified CabalGild.Unstable.Extra.ModuleName as ModuleName
+import qualified CabalGild.Unstable.Extra.PackageName as PackageName
+import qualified Data.Bifunctor as Bifunctor
 import qualified Data.List as List
 import qualified Data.Ord as Ord
 import qualified Distribution.Parsec as Parsec
@@ -16,7 +20,15 @@ newtype Mixin = Mixin
   deriving (Eq, Show)
 
 instance Ord Mixin where
-  compare = Ord.comparing unwrap
+  compare =
+    Ord.comparing $
+      ( \m ->
+          m
+            { Mixin.mixinPackageName = PackageName.toCaseFold $ Mixin.mixinPackageName m,
+              Mixin.mixinLibraryName = LibraryName.toCaseFold $ Mixin.mixinLibraryName m
+            }
+      )
+        . unwrap
 
 instance Parsec.Parsec Mixin where
   parsec = Mixin . sortMixin <$> Parsec.parsec
@@ -47,5 +59,5 @@ sortIncludeRenaming x =
 sortModuleRenaming :: ModuleRenaming.ModuleRenaming -> ModuleRenaming.ModuleRenaming
 sortModuleRenaming x = case x of
   ModuleRenaming.DefaultRenaming -> ModuleRenaming.DefaultRenaming
-  ModuleRenaming.HidingRenaming ys -> ModuleRenaming.HidingRenaming $ List.sort ys
-  ModuleRenaming.ModuleRenaming ys -> ModuleRenaming.ModuleRenaming $ List.sort ys
+  ModuleRenaming.HidingRenaming ys -> ModuleRenaming.HidingRenaming $ List.sortOn ModuleName.toCaseFold ys
+  ModuleRenaming.ModuleRenaming ys -> ModuleRenaming.ModuleRenaming $ List.sortOn (Bifunctor.bimap ModuleName.toCaseFold ModuleName.toCaseFold) ys
