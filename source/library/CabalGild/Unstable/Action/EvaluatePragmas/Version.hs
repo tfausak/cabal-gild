@@ -52,7 +52,7 @@ generatedComment pragma =
 
 -- | The full text of a generated version comment (without the @--@ delimiter).
 generatedText :: String
-generatedText = generatedPrefix ++ Version.showVersion This.version
+generatedText = generatedPrefix <> Version.showVersion This.version
 
 -- | The prefix used to identify generated version comments.
 generatedPrefix :: String

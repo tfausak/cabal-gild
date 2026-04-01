@@ -1572,8 +1572,8 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
 
   Hspec.it "does not remove a generated comment without a preceding pragma" $ do
     expectGilded
-      (concat [versionComment, "\nname: p"])
-      (concat [versionComment, "\nname: p\n"])
+      (versionComment <> "\nname: p")
+      (versionComment <> "\nname: p\n")
 
   Hspec.it "parses an empty brace section" $ do
     expectGilded
@@ -1956,7 +1956,7 @@ expectGilded :: (Stack.HasCallStack) => String -> String -> Hspec.Expectation
 expectGilded = expectDiscover (".", [])
 
 versionComment :: String
-versionComment = "--" ++ Version.generatedText
+versionComment = "--" <> Version.generatedText
 
 expectStable ::
   (Stack.HasCallStack) =>
