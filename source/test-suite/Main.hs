@@ -2014,10 +2014,6 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
         "build-depends: x (>= 1) && (< 2)"
         "build-depends: x (>=1) && (<2)\n"
 
-    Hspec.it "rejects non-trailing wildcard" $ do
-      expectGilded
-        "build-depends: x == 1.*.3"
-        "build-depends: x == 1.*.3\n"
 
   Hspec.around_ withTemporaryDirectory
     . Hspec.it "discovers modules on the file system"

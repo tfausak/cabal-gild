@@ -12,10 +12,17 @@ data Complex a
   | Simple a
   deriving (Eq, Ord, Show)
 
+-- | Parses with @||@ at lower precedence than @&&@, matching Cabal.
 parse :: (Parsec.CabalParsing m) => m a -> m (Complex a)
 parse p = do
+  lhs <- andExpr p
+  orRest p lhs
+
+-- | Parses a chain of @&&@-separated atoms.
+andExpr :: (Parsec.CabalParsing m) => m a -> m (Complex a)
+andExpr p = do
   lhs <- atom p
-  rest p lhs
+  andRest p lhs
 
 atom :: (Parsec.CabalParsing m) => m a -> m (Complex a)
 atom p =
@@ -24,11 +31,17 @@ atom p =
       Simple <$> p
     ]
 
-rest :: (Parsec.CabalParsing m) => m a -> Complex a -> m (Complex a)
-rest p lhs =
+andRest :: (Parsec.CabalParsing m) => m a -> Complex a -> m (Complex a)
+andRest p lhs =
   Parse.choice
-    [ Parse.try $ do Parse.token "&&"; rhs <- parse p; pure $ And lhs rhs,
-      Parse.try $ do Parse.token "||"; rhs <- parse p; pure $ Or lhs rhs,
+    [ Parse.try $ do Parse.token "&&"; rhs <- atom p; andRest p (And lhs rhs),
+      pure lhs
+    ]
+
+orRest :: (Parsec.CabalParsing m) => m a -> Complex a -> m (Complex a)
+orRest p lhs =
+  Parse.choice
+    [ Parse.try $ do Parse.token "||"; rhs <- andExpr p; orRest p (Or lhs rhs),
       pure lhs
     ]
 
