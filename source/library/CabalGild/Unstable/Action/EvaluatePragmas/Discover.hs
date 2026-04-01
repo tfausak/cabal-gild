@@ -32,6 +32,13 @@ import qualified Distribution.Utils.Generic as Utils
 import qualified System.Console.GetOpt as GetOpt
 import qualified System.FilePath as FilePath
 
+run ::
+  (Exception.MonadThrow m, MonadWalk.MonadWalk m) =>
+  FilePath ->
+  ([Fields.Field (p, Comments.Comments q)], [Comment.Comment q]) ->
+  m ([Fields.Field (p, Comments.Comments q)], [Comment.Comment q])
+run p (fs, cs) = (,) <$> traverse (field p) fs <*> pure cs
+
 -- | Evaluates pragmas within the given field. Or, if the field is a section,
 -- evaluates pragmas recursively within the fields of the section.
 field ::
@@ -58,7 +65,6 @@ instance Parsec.Parsec Discover where
       Monad.mplus
         (CharParsing.skipSpaces1 *> CharParsing.sepBy Parsec.parsec CharParsing.skipSpaces1)
         ([] <$ CharParsing.spaces)
-    CharParsing.eof
     pure . Discover $ fmap Newtypes.getToken' arguments
 
 -- | If modules are discovered for a field, that fields lines are completely

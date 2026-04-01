@@ -1,10 +1,12 @@
 module CabalGild.Unstable.Action.EvaluatePragmas where
 
 import qualified CabalGild.Unstable.Action.EvaluatePragmas.Discover as EvaluateDiscover
+import qualified CabalGild.Unstable.Action.EvaluatePragmas.Require as EvaluateRequire
 import qualified CabalGild.Unstable.Action.EvaluatePragmas.Version as EvaluateVersion
 import qualified CabalGild.Unstable.Class.MonadWalk as MonadWalk
 import qualified CabalGild.Unstable.Type.Comment as Comment
 import qualified CabalGild.Unstable.Type.Comments as Comments
+import qualified Control.Monad as Monad
 import qualified Control.Monad.Catch as Exception
 import qualified Distribution.Fields as Fields
 
@@ -15,4 +17,7 @@ run ::
   FilePath ->
   ([Fields.Field (p, Comments.Comments q)], [Comment.Comment q]) ->
   m ([Fields.Field (p, Comments.Comments q)], [Comment.Comment q])
-run p (fs, cs) = (,) <$> traverse (EvaluateDiscover.field p . EvaluateVersion.field) fs <*> pure (EvaluateVersion.expandVersion cs)
+run p =
+  EvaluateRequire.run
+    Monad.>=> EvaluateVersion.run
+    Monad.>=> EvaluateDiscover.run p

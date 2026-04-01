@@ -70,6 +70,7 @@ library
     CabalGild.Unstable.Action.AttachComments
     CabalGild.Unstable.Action.EvaluatePragmas
     CabalGild.Unstable.Action.EvaluatePragmas.Discover
+    CabalGild.Unstable.Action.EvaluatePragmas.Require
     CabalGild.Unstable.Action.EvaluatePragmas.Version
     CabalGild.Unstable.Action.ExtractComments
     CabalGild.Unstable.Action.FormatFields
@@ -94,6 +95,7 @@ library
     CabalGild.Unstable.Exception.SpecifiedStdinWithFileInput
     CabalGild.Unstable.Exception.UnexpectedArgument
     CabalGild.Unstable.Exception.UnknownOption
+    CabalGild.Unstable.Exception.UnsatisfiedRequire
     CabalGild.Unstable.Extra.ByteString
     CabalGild.Unstable.Extra.CharParsing
     CabalGild.Unstable.Extra.Either
@@ -137,6 +139,12 @@ library
     CabalGild.Unstable.Type.TestedWith
     CabalGild.Unstable.Type.Variable
     CabalGild.Unstable.Type.VersionRange
+    CabalGild.Unstable.Type.VersionRange.Complex
+    CabalGild.Unstable.Type.VersionRange.Operator
+    CabalGild.Unstable.Type.VersionRange.Part
+    CabalGild.Unstable.Type.VersionRange.Simple
+    CabalGild.Unstable.Type.VersionRange.Version
+    CabalGild.Unstable.Type.VersionRange.Versions
 
   hs-source-dirs: source/library
   other-modules: Paths_cabal_gild
