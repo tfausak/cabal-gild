@@ -71,7 +71,7 @@ mainWith arguments = do
   config <- Config.fromFlags flags positionalArgs
   context <- Context.fromConfig config
 
-  case Context.files context of
+  case Config.files config of
     [] -> processOne context
     fps -> mapM_ (processFile context) fps
 

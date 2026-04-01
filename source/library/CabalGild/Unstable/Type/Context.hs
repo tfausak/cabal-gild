@@ -31,7 +31,6 @@ import qualified System.IO as IO
 -- simplified 'Config.Config'.
 data Context = Context
   { crlf :: Leniency.Leniency,
-    files :: [FilePath],
     input :: Input.Input,
     mode :: Mode.Mode,
     output :: Output.Output,
@@ -101,23 +100,19 @@ fromConfig config = do
         Input.Stdin -> "."
         Input.File f -> f
       preOutput = Maybe.fromMaybe Output.Stdout . Optional.toMaybe $ Config.output config
-  (theInput, theOutput) <- case Config.files config of
-    [fp] -> pure (Input.File fp, Output.File fp)
-    (_ : _) -> pure (Input.Stdin, Output.Stdout)
-    [] -> do
-      isTerm <- MonadHandle.isTerminalDevice IO.stdin
-      if preInput == Input.Stdin && preOutput == Output.Stdout && isTerm
-        then do
-          cabalFiles <- MonadWalk.walk "." ["*.cabal"] []
-          case cabalFiles of
-            [fp] -> pure (Input.File fp, Output.File fp)
-            [] -> Exception.throwM NoCabalFileFound.NoCabalFileFound
-            _ -> Exception.throwM MoreThanOneCabalFileFound.MoreThanOneCabalFileFound
-        else pure (preInput, preOutput)
+  (theInput, theOutput) <- do
+    isTerm <- MonadHandle.isTerminalDevice IO.stdin
+    if null (Config.files config) && preInput == Input.Stdin && preOutput == Output.Stdout && isTerm
+      then do
+        cabalFiles <- MonadWalk.walk "." ["*.cabal"] []
+        case cabalFiles of
+          [fp] -> pure (Input.File fp, Output.File fp)
+          [] -> Exception.throwM NoCabalFileFound.NoCabalFileFound
+          _ -> Exception.throwM MoreThanOneCabalFileFound.MoreThanOneCabalFileFound
+      else pure (preInput, preOutput)
   pure
     Context
       { crlf = Maybe.fromMaybe Leniency.Lenient . Optional.toMaybe $ Config.crlf config,
-        files = Config.files config,
         input = theInput,
         mode = Maybe.fromMaybe Mode.Format . Optional.toMaybe $ Config.mode config,
         output = theOutput,
