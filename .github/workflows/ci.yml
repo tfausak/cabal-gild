@@ -1,14 +1,24 @@
+name: CI
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  release:
+    types:
+      - created
 jobs:
   build:
     name: GHC ${{ matrix.ghc }} on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}-latest
     steps:
       - uses: actions/checkout@v6
       - run: mkdir artifact
-      - uses: haskell/ghcup-setup@v1
+      - uses: haskell-actions/setup@v2
         with:
-          ghc: ${{ matrix.ghc }}
-          cabal: latest
+          ghc-version: ${{ matrix.ghc }}
       - run: ghc-pkg list
       - run: cabal sdist --output-dir artifact
       - run: cabal configure --enable-documentation --enable-optimization=2 --enable-tests --flags=pedantic --haddock-for-hackage --jobs
@@ -40,15 +50,15 @@ jobs:
       matrix:
         include:
           - ghc: 9.12
-            os: macos-14
+            os: macos
           - ghc: '9.10'
-            os: ubuntu-24.04
+            os: ubuntu
           - ghc: 9.12
-            os: ubuntu-24.04
+            os: ubuntu
           - ghc: 9.14
-            os: ubuntu-24.04
+            os: ubuntu
           - ghc: 9.12
-            os: windows-2022
+            os: windows
   cabal:
     name: Cabal
     runs-on: ubuntu-latest
@@ -69,7 +79,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: haskell-actions/run-ormolu@v17
+      - uses: tfausak/ormolu-setup-action@v1
+      - run: ormolu --mode check $( git ls-files '*.hs' )
   release:
     env:
       PREFIX: cabal-gild-${{ github.event.release.tag_name }}
@@ -80,26 +91,15 @@ jobs:
     steps:
       - uses: actions/download-artifact@v8
       - run: sh -exc 'for d in *; do cd $d; tar --extract --file artifact.tar --verbose; cd ..; done'
-      - run: cp cabal-gild-${{ github.sha }}-ghc-9.12-ubuntu-24.04/artifact/${{ env.PREFIX }}.tar.gz .
+      - run: cp cabal-gild-${{ github.sha }}-ghc-9.12-ubuntu/artifact/${{ env.PREFIX }}.tar.gz .
       - run: tar --auto-compress --create --file ../../${{ env.PREFIX }}-darwin-arm64.tar.gz --verbose cabal-gild
-        working-directory: cabal-gild-${{ github.sha }}-ghc-9.12-macos-14/artifact
+        working-directory: cabal-gild-${{ github.sha }}-ghc-9.12-macos/artifact
       - run: tar --auto-compress --create --file ../../${{ env.PREFIX }}-linux-x64.tar.gz --verbose cabal-gild
-        working-directory: cabal-gild-${{ github.sha }}-ghc-9.12-ubuntu-24.04/artifact
+        working-directory: cabal-gild-${{ github.sha }}-ghc-9.12-ubuntu/artifact
       - run: tar --auto-compress --create --file ../../${{ env.PREFIX }}-win32-x64.tar.gz --verbose cabal-gild.exe
-        working-directory: cabal-gild-${{ github.sha }}-ghc-9.12-windows-2022/artifact
+        working-directory: cabal-gild-${{ github.sha }}-ghc-9.12-windows/artifact
       - uses: softprops/action-gh-release@v2
         with:
           files: ${{ env.PREFIX }}*.tar.gz
       - run: cabal upload --publish --username '${{ secrets.HACKAGE_USERNAME }}' --password '${{ secrets.HACKAGE_PASSWORD }}' ${{ env.PREFIX }}.tar.gz
-      - run: cabal --http-transport=plain-http upload --documentation --publish --username '${{ secrets.HACKAGE_USERNAME }}' --password '${{ secrets.HACKAGE_PASSWORD }}' cabal-gild-${{ github.sha }}-ghc-9.12-ubuntu-24.04/artifact/${{ env.PREFIX }}-docs.tar.gz
-name: CI
-on:
-  pull_request:
-    branches:
-      - main
-  push:
-    branches:
-      - main
-  release:
-    types:
-      - created
+      - run: cabal --http-transport=plain-http upload --documentation --publish --username '${{ secrets.HACKAGE_USERNAME }}' --password '${{ secrets.HACKAGE_PASSWORD }}' cabal-gild-${{ github.sha }}-ghc-9.12-ubuntu/artifact/${{ env.PREFIX }}-docs.tar.gz
