@@ -3,9 +3,9 @@
 import qualified CabalGild.Unstable.Action.EvaluatePragmas.Version as Version
 import qualified CabalGild.Unstable.Class.MonadHandle as MonadHandle
 import qualified CabalGild.Unstable.Class.MonadLog as MonadLog
-import qualified CabalGild.Unstable.Class.MonadWarn as MonadWarn
 import qualified CabalGild.Unstable.Class.MonadRead as MonadRead
 import qualified CabalGild.Unstable.Class.MonadWalk as MonadWalk
+import qualified CabalGild.Unstable.Class.MonadWarn as MonadWarn
 import qualified CabalGild.Unstable.Class.MonadWrite as MonadWrite
 import qualified CabalGild.Unstable.Exception.CheckFailure as CheckFailure
 import qualified CabalGild.Unstable.Exception.DuplicateOption as DuplicateOption
