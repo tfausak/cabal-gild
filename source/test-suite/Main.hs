@@ -1425,6 +1425,16 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     a `Hspec.shouldSatisfy` Either.isRight
     w `Hspec.shouldBe` []
 
+  Hspec.it "warns on empty pragma" $ do
+    let (a, _s, w) = runGild [] [(Input.Stdin, String.toUtf8 "-- cabal-gild:\nname: p")] (".", []) False
+    a `Hspec.shouldSatisfy` Either.isRight
+    w `Hspec.shouldBe` ["warning: invalid pragma \"\""]
+
+  Hspec.it "warns on invalid pragma" $ do
+    let (a, _s, w) = runGild [] [(Input.Stdin, String.toUtf8 "-- cabal-gild: require broken\nname: p")] (".", []) False
+    a `Hspec.shouldSatisfy` Either.isRight
+    w `Hspec.shouldBe` ["warning: invalid pragma \"require broken\""]
+
   Hspec.it "discovers from the currently directory explicitly" $ do
     expectDiscover
       (".", [["M.hs"]])
@@ -1710,10 +1720,14 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
               False
       a `Hspec.shouldSatisfy` Either.isLeft
 
-    Hspec.it "ignores require pragma with trailing garbage" $ do
-      expectGilded
-        "-- cabal-gild: require < 0 trailing-garbage"
-        "-- cabal-gild: require < 0 trailing-garbage\n"
+    Hspec.it "warns on require pragma with trailing garbage" $ do
+      let (a, s, w) = runGild [] [(Input.Stdin, String.toUtf8 "-- cabal-gild: require < 0 trailing-garbage")] (".", []) False
+      a `Hspec.shouldSatisfy` Either.isRight
+      w `Hspec.shouldBe` ["warning: invalid pragma \"require < 0 trailing-garbage\""]
+      actual <- case Map.toList s of
+        [(Output.Stdout, x)] -> pure x
+        _ -> fail $ "impossible: " <> show s
+      actual `Hspec.shouldBe` String.toUtf8 "-- cabal-gild: require < 0 trailing-garbage\n"
 
   Hspec.it "parses an empty brace section" $ do
     expectGilded
