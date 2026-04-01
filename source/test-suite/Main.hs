@@ -2305,6 +2305,15 @@ instance (Monad m) => MonadRead.MonadRead (TestT m) where
 instance (Monad m) => Exception.MonadThrow (TestT m) where
   throwM = TestT . ExceptT.throwE . Exception.toException
 
+instance (Monad m) => Exception.MonadCatch (TestT m) where
+  catch (TestT m) h = TestT $ ExceptT.ExceptT $ do
+    result <- ExceptT.runExceptT m
+    case result of
+      Left e -> case Exception.fromException e of
+        Just e' -> ExceptT.runExceptT . runTestT $ h e'
+        Nothing -> pure (Left e)
+      Right a -> pure (Right a)
+
 instance (Monad m) => MonadWalk.MonadWalk (TestT m) where
   walk d i x = do
     result <- TestT . Trans.lift . RWST.asks $ Map.lookup d . snd . fst

@@ -59,7 +59,7 @@ mainWith ::
   ( MonadHandle.MonadHandle m,
     MonadLog.MonadLog m,
     MonadRead.MonadRead m,
-    Exception.MonadThrow m,
+    Exception.MonadCatch m,
     MonadWalk.MonadWalk m,
     MonadWarn.MonadWarn m,
     MonadWrite.MonadWrite m
@@ -73,7 +73,28 @@ mainWith arguments = do
 
   case Config.files config of
     [] -> processOne context
-    fps -> mapM_ (processFile context) fps
+    fps -> processFiles context fps
+
+processFiles ::
+  ( MonadRead.MonadRead m,
+    Exception.MonadCatch m,
+    MonadWalk.MonadWalk m,
+    MonadWarn.MonadWarn m,
+    MonadWrite.MonadWrite m
+  ) =>
+  Context.Context ->
+  [FilePath] ->
+  m ()
+processFiles context = go False
+  where
+    go anyFail [] =
+      Monad.when anyFail $ Exception.throwM CheckFailure.CheckFailure
+    go anyFail (fp : fps) = do
+      result <- Exception.try (processFile context fp)
+      let anyFail' = case (result :: Either CheckFailure.CheckFailure ()) of
+            Left _ -> True
+            Right _ -> anyFail
+      go anyFail' fps
 
 processFile ::
   ( MonadRead.MonadRead m,
