@@ -3,6 +3,7 @@ module CabalGild.Unstable.Type.Context where
 import qualified CabalGild.Unstable.Class.MonadHandle as MonadHandle
 import qualified CabalGild.Unstable.Class.MonadLog as MonadLog
 import qualified CabalGild.Unstable.Class.MonadWalk as MonadWalk
+import qualified CabalGild.Unstable.Class.MonadWarn as MonadWarn
 import qualified CabalGild.Unstable.Exception.MixedArgumentStyles as MixedArgumentStyles
 import qualified CabalGild.Unstable.Exception.MoreThanOneCabalFileFound as MoreThanOneCabalFileFound
 import qualified CabalGild.Unstable.Exception.NoCabalFileFound as NoCabalFileFound
@@ -44,6 +45,7 @@ data Context = Context
 fromConfig ::
   ( MonadHandle.MonadHandle m,
     MonadLog.MonadLog m,
+    MonadWarn.MonadWarn m,
     Exception.MonadThrow m,
     MonadWalk.MonadWalk m
   ) =>
@@ -67,6 +69,16 @@ fromConfig config = do
   Monad.when (Maybe.fromMaybe False . Optional.toMaybe $ Config.version config) $ do
     MonadLog.logLn version
     Exception.throwM Exit.ExitSuccess
+
+  Monad.when (null (Config.files config)) $ do
+    case Config.input config of
+      Optional.Specific _ ->
+        MonadWarn.warnLn "warning: --input is deprecated, use a positional argument instead"
+      _ -> pure ()
+    case Config.output config of
+      Optional.Specific _ ->
+        MonadWarn.warnLn "warning: --output is deprecated, use piping instead"
+      _ -> pure ()
 
   Monad.unless (null $ Config.files config) $ do
     case Config.input config of
