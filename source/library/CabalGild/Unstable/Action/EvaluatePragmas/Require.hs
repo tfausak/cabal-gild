@@ -20,6 +20,12 @@ import qualified Distribution.Types.VersionRange as CabalVR
 import qualified Numeric.Natural as Natural
 import qualified Paths_cabal_gild as This
 
+run ::
+  (Exception.MonadThrow m) =>
+  ([Fields.Field (p, Comments.Comments q)], [Comment.Comment q]) ->
+  m ([Fields.Field (p, Comments.Comments q)], [Comment.Comment q])
+run (fs, cs) = (,) <$> traverse field fs <*> checkRequire cs
+
 field ::
   (Exception.MonadThrow m) =>
   Fields.Field (p, Comments.Comments q) ->

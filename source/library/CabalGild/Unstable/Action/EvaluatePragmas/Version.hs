@@ -11,6 +11,12 @@ import qualified Distribution.Fields as Fields
 import qualified Distribution.Parsec as Parsec
 import qualified Paths_cabal_gild as This
 
+run ::
+  (Applicative m) =>
+  ([Fields.Field (p, Comments.Comments q)], [Comment.Comment q]) ->
+  m ([Fields.Field (p, Comments.Comments q)], [Comment.Comment q])
+run (fs, cs) = pure (map field fs, expandVersion cs)
+
 field ::
   Fields.Field (p, Comments.Comments q) ->
   Fields.Field (p, Comments.Comments q)
