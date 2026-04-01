@@ -72,25 +72,19 @@ fromConfig config = do
     MonadLog.logLn version
     Exception.throwM Exit.ExitSuccess
 
-  Monad.when (null (Config.files config)) $ do
-    case Config.input config of
-      Optional.Specific _ ->
-        MonadWarn.warnLn "warning: --input is deprecated, use a positional argument instead"
-      _ -> pure ()
-    case Config.output config of
-      Optional.Specific _ ->
-        MonadWarn.warnLn "warning: --output is deprecated, use piping instead"
-      _ -> pure ()
-
-  Monad.unless (null $ Config.files config) $ do
-    case Config.input config of
-      Optional.Specific _ ->
-        Exception.throwM $ MixedArgumentStyles.MixedArgumentStyles Flag.inputOption
-      _ -> pure ()
-    case Config.output config of
-      Optional.Specific _ ->
-        Exception.throwM $ MixedArgumentStyles.MixedArgumentStyles Flag.outputOption
-      _ -> pure ()
+  case (Config.files config, Config.input config, Config.output config) of
+    (_ : _, Optional.Specific _, _) ->
+      Exception.throwM $ MixedArgumentStyles.MixedArgumentStyles Flag.inputOption
+    (_ : _, _, Optional.Specific _) ->
+      Exception.throwM $ MixedArgumentStyles.MixedArgumentStyles Flag.outputOption
+    ([], Optional.Specific _, Optional.Specific _) -> do
+      MonadWarn.warnLn "warning: --input is deprecated, use a positional argument instead"
+      MonadWarn.warnLn "warning: --output is deprecated, use piping instead"
+    ([], Optional.Specific _, _) ->
+      MonadWarn.warnLn "warning: --input is deprecated, use a positional argument instead"
+    ([], _, Optional.Specific _) ->
+      MonadWarn.warnLn "warning: --output is deprecated, use piping instead"
+    _ -> pure ()
 
   case (Config.input config, Config.stdin config) of
     (Optional.Specific (Input.File _), Optional.Specific _) ->
