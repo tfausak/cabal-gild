@@ -86,12 +86,13 @@ processFile ::
   FilePath ->
   m ()
 processFile context fp =
-  let ctx = context
-        { Context.input = Input.File fp,
-          Context.output = Output.File fp,
-          Context.stdin = fp
-        }
-  in processOne ctx
+  let ctx =
+        context
+          { Context.input = Input.File fp,
+            Context.output = Output.File fp,
+            Context.stdin = fp
+          }
+   in processOne ctx
 
 processOne ::
   ( MonadRead.MonadRead m,

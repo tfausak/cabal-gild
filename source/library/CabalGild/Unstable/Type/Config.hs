@@ -64,4 +64,4 @@ applyFlag config flag = case flag of
 fromFlags :: (Exception.MonadThrow m) => [Flag.Flag] -> [String] -> m Config
 fromFlags flags args = do
   config <- Monad.foldM applyFlag initial flags
-  pure config { files = args }
+  pure config {files = args}

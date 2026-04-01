@@ -2152,10 +2152,11 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             False
     a `Hspec.shouldSatisfy` Either.isRight
     w `Hspec.shouldBe` []
-    s `Hspec.shouldBe` Map.fromList
-      [ (Output.File "a.cabal", String.toUtf8 "f: a\n"),
-        (Output.File "b.cabal", String.toUtf8 "g: b\n")
-      ]
+    s
+      `Hspec.shouldBe` Map.fromList
+        [ (Output.File "a.cabal", String.toUtf8 "f: a\n"),
+          (Output.File "b.cabal", String.toUtf8 "g: b\n")
+        ]
 
   Hspec.it "checks multiple positional files" $ do
     let (a, s, w) =
