@@ -1,5 +1,3 @@
-{-# LANGUAGE FlexibleInstances #-}
-
 module CabalGild.Unstable.Type.VersionRange where
 
 import qualified CabalGild.Unstable.Type.VersionRange.Complex as Complex
@@ -13,52 +11,55 @@ import qualified Data.Set as Set
 import qualified Distribution.Parsec as Parsec
 import qualified Distribution.Pretty as Pretty
 import qualified Distribution.Types.Version as CabalVersion
-import qualified Distribution.Types.VersionRange as CabalVR
+import qualified Distribution.Types.VersionRange as CabalRange
 import qualified Numeric.Natural as Natural
 
-type VersionRange = Complex.Complex Simple.Simple
+newtype VersionRange = VersionRange
+  { unwrap :: Complex.Complex Simple.Simple
+  }
+  deriving (Eq, Ord, Show)
 
 instance Parsec.Parsec VersionRange where
-  parsec = Complex.parseComplex Simple.parseSimple
+  parsec = VersionRange <$> Complex.parse Simple.parse
 
 instance Pretty.Pretty VersionRange where
-  pretty = Complex.renderComplex Simple.renderSimple
+  pretty = Complex.render Simple.render . unwrap
 
--- | Converts a 'VersionRange' to Cabal-syntax's 'CabalVR.VersionRange' for
--- evaluation with 'CabalVR.withinRange'.
-toCabalVersionRange :: VersionRange -> CabalVR.VersionRange
-toCabalVersionRange = toCabalComplex
+-- | Converts a 'VersionRange' to Cabal-syntax's 'CabalRange.VersionRange' for
+-- evaluation with 'CabalRange.withinRange'.
+toCabalVersionRange :: VersionRange -> CabalRange.VersionRange
+toCabalVersionRange = toCabalComplex . unwrap
 
-toCabalComplex :: Complex.Complex Simple.Simple -> CabalVR.VersionRange
+toCabalComplex :: Complex.Complex Simple.Simple -> CabalRange.VersionRange
 toCabalComplex x = case x of
   Complex.Par c -> toCabalComplex c
-  Complex.And l r -> CabalVR.intersectVersionRanges (toCabalSimple l) (toCabalComplex r)
-  Complex.Or l r -> CabalVR.unionVersionRanges (toCabalSimple l) (toCabalComplex r)
+  Complex.And l r -> CabalRange.intersectVersionRanges (toCabalSimple l) (toCabalComplex r)
+  Complex.Or l r -> CabalRange.unionVersionRanges (toCabalSimple l) (toCabalComplex r)
   Complex.Simple s -> toCabalSimple s
 
-toCabalSimple :: Simple.Simple -> CabalVR.VersionRange
+toCabalSimple :: Simple.Simple -> CabalRange.VersionRange
 toCabalSimple x = case x of
-  Simple.Any -> CabalVR.anyVersion
-  Simple.None -> CabalVR.noVersion
+  Simple.Any -> CabalRange.anyVersion
+  Simple.None -> CabalRange.noVersion
   Simple.Op op vs -> toCabalOp op vs
 
-toCabalOp :: Operator.Operator -> Versions.Versions -> CabalVR.VersionRange
+toCabalOp :: Operator.Operator -> Versions.Versions -> CabalRange.VersionRange
 toCabalOp op vs = case vs of
   Versions.One v -> toCabalOpOne op v
   Versions.Set s -> case Set.toList s of
-    [] -> CabalVR.noVersion
-    v : rest -> foldr (CabalVR.unionVersionRanges . toCabalOpOne op) (toCabalOpOne op v) rest
+    [] -> CabalRange.noVersion
+    v : rest -> foldr (CabalRange.unionVersionRanges . toCabalOpOne op) (toCabalOpOne op v) rest
 
-toCabalOpOne :: Operator.Operator -> Version.Version -> CabalVR.VersionRange
+toCabalOpOne :: Operator.Operator -> Version.Version -> CabalRange.VersionRange
 toCabalOpOne op v = case op of
-  Operator.Caret -> CabalVR.majorBoundVersion cv
-  Operator.Ge -> CabalVR.orLaterVersion cv
-  Operator.Gt -> CabalVR.laterVersion cv
-  Operator.Le -> CabalVR.orEarlierVersion cv
-  Operator.Lt -> CabalVR.earlierVersion cv
+  Operator.Caret -> CabalRange.majorBoundVersion cv
+  Operator.Ge -> CabalRange.orLaterVersion cv
+  Operator.Gt -> CabalRange.laterVersion cv
+  Operator.Le -> CabalRange.orEarlierVersion cv
+  Operator.Lt -> CabalRange.earlierVersion cv
   Operator.Eq
-    | hasWildcard v -> CabalVR.withinVersion cv
-    | otherwise -> CabalVR.thisVersion cv
+    | hasWildcard v -> CabalRange.withinVersion cv
+    | otherwise -> CabalRange.thisVersion cv
   where
     cv = toCabalVersion v
 
@@ -71,7 +72,7 @@ hasWildcard (Version.MkVersion parts) = any isWildcard $ NonEmpty.toList parts
 toCabalVersion :: Version.Version -> CabalVersion.Version
 toCabalVersion (Version.MkVersion parts) =
   CabalVersion.mkVersion
-    . map fromIntegral
+    . fmap fromIntegral
     . concatMap toNumbers
     $ NonEmpty.toList parts
   where

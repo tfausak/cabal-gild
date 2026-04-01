@@ -13,17 +13,17 @@ data Simple
   | Op Operator.Operator Versions.Versions
   deriving (Eq, Ord, Show)
 
-parseSimple :: (Parsec.CabalParsing m) => m Simple
-parseSimple =
+parse :: (Parsec.CabalParsing m) => m Simple
+parse =
   Parse.choice
     [ Parse.try $ Any <$ Parse.token "-any",
       None <$ Parse.token "-none",
-      Op <$> Operator.parseOperator <*> Versions.parseVersions
+      Op <$> Operator.parse <*> Versions.parse
     ]
 
-renderSimple :: Simple -> PrettyPrint.Doc
-renderSimple x =
+render :: Simple -> PrettyPrint.Doc
+render x =
   case x of
     Any -> PrettyPrint.text "-any"
     None -> PrettyPrint.text "-none"
-    Op o vs -> Operator.renderOperator o <> Versions.renderVersions vs
+    Op o vs -> Operator.render o <> Versions.render vs

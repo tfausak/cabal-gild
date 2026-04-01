@@ -10,15 +10,15 @@ newtype Version
   = MkVersion (NonEmpty.NonEmpty Part.Part)
   deriving (Eq, Ord, Show)
 
-parseVersion :: (Parsec.CabalParsing m) => m Version
-parseVersion =
+parse :: (Parsec.CabalParsing m) => m Version
+parse =
   MkVersion
-    <$> Parse.sepByNonEmpty Part.parsePart (Parse.char '.')
+    <$> Parse.sepByNonEmpty Part.parse (Parse.char '.')
     <* Parse.spaces
 
-renderVersion :: Version -> PrettyPrint.Doc
-renderVersion (MkVersion parts) =
+render :: Version -> PrettyPrint.Doc
+render (MkVersion parts) =
   mconcat
     . PrettyPrint.punctuate (PrettyPrint.char '.')
-    . fmap Part.renderPart
+    . fmap Part.render
     $ NonEmpty.toList parts

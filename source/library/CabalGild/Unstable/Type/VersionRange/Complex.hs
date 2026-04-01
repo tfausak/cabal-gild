@@ -12,19 +12,19 @@ data Complex a
   | Simple a
   deriving (Eq, Ord, Show)
 
-parseComplex :: (Parsec.CabalParsing m) => m a -> m (Complex a)
-parseComplex p =
+parse :: (Parsec.CabalParsing m) => m a -> m (Complex a)
+parse p =
   Parse.choice
-    [ Par <$> Parse.parens (parseComplex p),
-      Parse.try $ And <$> p <* Parse.token "&&" <*> parseComplex p,
-      Parse.try $ Or <$> p <* Parse.token "||" <*> parseComplex p,
+    [ Par <$> Parse.parens (parse p),
+      Parse.try $ And <$> p <* Parse.token "&&" <*> parse p,
+      Parse.try $ Or <$> p <* Parse.token "||" <*> parse p,
       Simple <$> p
     ]
 
-renderComplex :: (a -> PrettyPrint.Doc) -> Complex a -> PrettyPrint.Doc
-renderComplex f x =
+render :: (a -> PrettyPrint.Doc) -> Complex a -> PrettyPrint.Doc
+render f x =
   case x of
-    Par y -> PrettyPrint.parens $ renderComplex f y
-    And l r -> PrettyPrint.hsep [f l, PrettyPrint.text "&&", renderComplex f r]
-    Or l r -> PrettyPrint.hsep [f l, PrettyPrint.text "||", renderComplex f r]
+    Par y -> PrettyPrint.parens $ render f y
+    And l r -> PrettyPrint.hsep [f l, PrettyPrint.text "&&", render f r]
+    Or l r -> PrettyPrint.hsep [f l, PrettyPrint.text "||", render f r]
     Simple y -> f y

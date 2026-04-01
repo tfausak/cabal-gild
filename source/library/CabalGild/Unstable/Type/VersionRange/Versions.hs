@@ -12,20 +12,20 @@ data Versions
   | Set (Set.Set Version.Version)
   deriving (Eq, Ord, Show)
 
-parseVersions :: (Parsec.CabalParsing m) => m Versions
-parseVersions =
+parse :: (Parsec.CabalParsing m) => m Versions
+parse =
   Parse.choice
-    [ One <$> Version.parseVersion,
-      Set . Set.fromList <$> Parse.braces (Parse.sepBy Version.parseVersion $ Parse.token ",")
+    [ One <$> Version.parse,
+      Set . Set.fromList <$> Parse.braces (Parse.sepBy Version.parse $ Parse.token ",")
     ]
 
-renderVersions :: Versions -> PrettyPrint.Doc
-renderVersions x =
+render :: Versions -> PrettyPrint.Doc
+render x =
   case x of
-    One v -> Version.renderVersion v
+    One v -> Version.render v
     Set vs ->
       PrettyPrint.braces
         . PrettyPrint.hsep
         . PrettyPrint.punctuate PrettyPrint.comma
-        . fmap Version.renderVersion
+        . fmap Version.render
         $ Set.toAscList vs

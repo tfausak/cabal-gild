@@ -15,7 +15,7 @@ run ::
   (Applicative m) =>
   ([Fields.Field (p, Comments.Comments q)], [Comment.Comment q]) ->
   m ([Fields.Field (p, Comments.Comments q)], [Comment.Comment q])
-run (fs, cs) = pure (map field fs, expandVersion cs)
+run (fs, cs) = pure (fmap field fs, expandVersion cs)
 
 field ::
   Fields.Field (p, Comments.Comments q) ->

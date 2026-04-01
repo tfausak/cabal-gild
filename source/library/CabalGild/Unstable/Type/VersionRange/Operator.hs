@@ -14,8 +14,8 @@ data Operator
   | Eq
   deriving (Eq, Ord, Show)
 
-parseOperator :: (Parsec.CabalParsing m) => m Operator
-parseOperator =
+parse :: (Parsec.CabalParsing m) => m Operator
+parse =
   Parse.choice
     [ Caret <$ Parse.token "^>=",
       Parse.try $ Ge <$ Parse.token ">=",
@@ -25,8 +25,8 @@ parseOperator =
       Eq <$ Parse.token "=="
     ]
 
-renderOperator :: Operator -> PrettyPrint.Doc
-renderOperator x =
+render :: Operator -> PrettyPrint.Doc
+render x =
   case x of
     Caret -> PrettyPrint.text "^>="
     Ge -> PrettyPrint.text ">="

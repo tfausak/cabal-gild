@@ -12,6 +12,13 @@ data Part
   | Wildcard
   deriving (Eq, Ord, Show)
 
+parse :: (Parsec.CabalParsing m) => m Part
+parse =
+  Parse.choice
+    [ Numeric <$> parseNumeric,
+      Wildcard <$ parseWildcard
+    ]
+
 parseNumeric :: (Parsec.CabalParsing m) => m Natural.Natural
 parseNumeric =
   Parse.choice
@@ -31,24 +38,17 @@ parseNonZero = do
     Nothing -> fail $ "invalid Natural: " <> show s
     Just n -> n <$ Parse.spaces
 
-renderNumeric :: Natural.Natural -> PrettyPrint.Doc
-renderNumeric = PrettyPrint.text . show
-
 parseWildcard :: (Parsec.CabalParsing m) => m ()
 parseWildcard = Parse.token "*"
 
-renderWildcard :: PrettyPrint.Doc
-renderWildcard = PrettyPrint.char '*'
-
-parsePart :: (Parsec.CabalParsing m) => m Part
-parsePart =
-  Parse.choice
-    [ Numeric <$> parseNumeric,
-      Wildcard <$ parseWildcard
-    ]
-
-renderPart :: Part -> PrettyPrint.Doc
-renderPart x =
+render :: Part -> PrettyPrint.Doc
+render x =
   case x of
     Numeric n -> renderNumeric n
     Wildcard -> renderWildcard
+
+renderNumeric :: Natural.Natural -> PrettyPrint.Doc
+renderNumeric = PrettyPrint.text . show
+
+renderWildcard :: PrettyPrint.Doc
+renderWildcard = PrettyPrint.char '*'
