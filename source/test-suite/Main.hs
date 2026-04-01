@@ -1545,35 +1545,77 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "library\n -- cabal-gild: discover\n exposed-modules:\n  -- c\n  N"
       "library\n  -- c\n  -- cabal-gild: discover\n  exposed-modules:\n"
 
-  Hspec.it "inserts version comment below version pragma" $ do
-    expectGilded
-      "-- cabal-gild: version\nname: p"
-      (concat ["-- cabal-gild: version\n", versionComment, "\nname: p\n"])
+  Hspec.describe "pragma" $ do
+    Hspec.describe "version" $ do
+      Hspec.it "works without any fields" $ do
+        expectGilded
+          "-- cabal-gild: version"
+          ("-- cabal-gild: version\n" <> versionComment <> "\n")
 
-  Hspec.it "inserts version comment inside a section" $ do
-    expectGilded
-      "library\n -- cabal-gild: version\n build-depends: base"
-      (concat ["library\n  -- cabal-gild: version\n  ", versionComment, "\n  build-depends: base\n"])
+      Hspec.it "works before a field" $ do
+        expectGilded
+          "-- cabal-gild: version\nfld: val"
+          ("-- cabal-gild: version\n" <> versionComment <> "\nfld: val\n")
 
-  Hspec.it "updates an existing generated version comment" $ do
-    expectGilded
-      "-- cabal-gild: version\n-- Generated with cabal-gild version 0.0.0.0\nname: p"
-      (concat ["-- cabal-gild: version\n", versionComment, "\nname: p\n"])
+      Hspec.it "works within a field" $ do
+        expectGilded
+          "fld:\n a\n -- cabal-gild: version\n b"
+          ("fld:\n  -- cabal-gild: version\n  " <> versionComment <> "\n  a\n  b\n")
 
-  Hspec.it "does not modify non-pragma comments" $ do
-    expectGilded
-      "-- just a comment\nname: p"
-      "-- just a comment\nname: p\n"
+      Hspec.it "works after a field" $ do
+        expectGilded
+          "fld: val\n-- cabal-gild: version"
+          ("fld: val\n-- cabal-gild: version\n" <> versionComment <> "\n")
 
-  Hspec.it "evaluates version pragma on multiple fields" $ do
-    expectGilded
-      "-- cabal-gild: version\nname: p\n-- cabal-gild: version\nversion: 0"
-      (concat ["-- cabal-gild: version\n", versionComment, "\nname: p\n-- cabal-gild: version\n", versionComment, "\nversion: 0\n"])
+      Hspec.it "works before a section" $ do
+        expectGilded
+          "-- cabal-gild: version\nsec"
+          ("-- cabal-gild: version\n" <> versionComment <> "\nsec\n")
 
-  Hspec.it "does not remove a generated comment without a preceding pragma" $ do
-    expectGilded
-      (versionComment <> "\nname: p")
-      (versionComment <> "\nname: p\n")
+      Hspec.it "works within a section" $ do
+        expectGilded
+          "sec\n -- cabal-gild: version"
+          ("sec\n  -- cabal-gild: version\n  " <> versionComment <> "\n")
+
+      Hspec.it "works after a section" $ do
+        expectGilded
+          "sec\n-- cabal-gild: version"
+          ("sec\n\n-- cabal-gild: version\n" <> versionComment <> "\n")
+
+      Hspec.it "works twice in a row" $ do
+        expectGilded
+          "-- cabal-gild: version\n-- cabal-gild: version"
+          ("-- cabal-gild: version\n" <> versionComment <> "\n-- cabal-gild: version\n" <> versionComment <> "\n")
+
+      Hspec.it "works before a comment" $ do
+        expectGilded
+          "-- cabal-gild: version\n-- cmt"
+          ("-- cabal-gild: version\n" <> versionComment <> "\n-- cmt\n")
+
+      Hspec.it "does not replace a standalone version comment" $ do
+        expectGilded
+          versionComment
+          (versionComment <> "\n")
+
+      Hspec.it "replaces a version comment after the pragma" $ do
+        expectGilded
+          "-- cabal-gild: version\n-- Generated with cabal-gild version 0"
+          ("-- cabal-gild: version\n" <> versionComment <> "\n")
+
+      Hspec.it "replaces a version comment after the pragma with a blank line" $ do
+        expectGilded
+          "-- cabal-gild: version\n\n-- Generated with cabal-gild version 0"
+          ("-- cabal-gild: version\n" <> versionComment <> "\n")
+
+      Hspec.it "does not replace a distant version comment" $ do
+        expectGilded
+          "-- cabal-gild: version\n-- cmt\n-- Generated with cabal-gild version 0"
+          ("-- cabal-gild: version\n" <> versionComment <> "\n-- cmt\n-- Generated with cabal-gild version 0\n")
+
+      Hspec.it "only replaces a single version comment" $ do
+        expectGilded
+          "-- cabal-gild: version\n-- Generated with cabal-gild version 0\n-- Generated with cabal-gild version 1"
+          ("-- cabal-gild: version\n" <> versionComment <> "\n-- Generated with cabal-gild version 1\n")
 
   Hspec.it "parses an empty brace section" $ do
     expectGilded
