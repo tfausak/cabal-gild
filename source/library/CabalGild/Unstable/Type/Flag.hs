@@ -2,7 +2,6 @@ module CabalGild.Unstable.Type.Flag where
 
 import qualified CabalGild.Unstable.Exception.DuplicateOption as DuplicateOption
 import qualified CabalGild.Unstable.Exception.InvalidOption as InvalidOption
-import qualified CabalGild.Unstable.Exception.UnexpectedArgument as UnexpectedArgument
 import qualified CabalGild.Unstable.Exception.UnknownOption as UnknownOption
 import qualified Control.Monad.Catch as Exception
 import qualified Data.Foldable as Foldable
@@ -97,17 +96,16 @@ outputOption = "output"
 stdinOption :: String
 stdinOption = "stdin"
 
--- | Converts a list of command line arguments into a list of flags. If there
--- are any unexpected arguments, invalid options, or unknown options, an
+-- | Converts a list of command line arguments into a list of flags and
+-- positional arguments. If there are any invalid options or unknown options, an
 -- exception will be thrown.
-fromArguments :: (Exception.MonadThrow m) => [String] -> m [Flag]
+fromArguments :: (Exception.MonadThrow m) => [String] -> m ([Flag], [String])
 fromArguments arguments = do
   let (flgs, args, opts, errs) = GetOpt.getOpt' GetOpt.Permute options arguments
-  Foldable.traverse_ (Exception.throwM . UnexpectedArgument.fromString) args
   Foldable.traverse_ (Exception.throwM . InvalidOption.fromString) errs
   Foldable.traverse_ (Exception.throwM . UnknownOption.fromString) opts
   detectDuplicateOptions flgs
-  pure flgs
+  pure (flgs, args)
 
 detectDuplicateOptions :: (Exception.MonadThrow m) => [Flag] -> m ()
 detectDuplicateOptions =

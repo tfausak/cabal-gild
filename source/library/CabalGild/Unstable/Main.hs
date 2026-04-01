@@ -67,7 +67,7 @@ mainWith ::
   [String] ->
   m ()
 mainWith arguments = do
-  flags <- Flag.fromArguments arguments
+  (flags, _positionalArgs) <- Flag.fromArguments arguments
   config <- Config.fromFlags flags
   context <- Context.fromConfig config
 

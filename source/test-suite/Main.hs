@@ -14,7 +14,6 @@ import qualified CabalGild.Unstable.Exception.MoreThanOneCabalFileFound as MoreT
 import qualified CabalGild.Unstable.Exception.NoCabalFileFound as NoCabalFileFound
 import qualified CabalGild.Unstable.Exception.SpecifiedOutputWithCheckMode as SpecifiedOutputWithCheckMode
 import qualified CabalGild.Unstable.Exception.SpecifiedStdinWithFileInput as SpecifiedStdinWithFileInput
-import qualified CabalGild.Unstable.Exception.UnexpectedArgument as UnexpectedArgument
 import qualified CabalGild.Unstable.Exception.UnknownOption as UnknownOption
 import qualified CabalGild.Unstable.Extra.String as String
 import qualified CabalGild.Unstable.Main as Gild
@@ -59,9 +58,15 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     expectException ["--help=invalid"] $
       InvalidOption.fromString "option `--help' doesn't allow an argument"
 
-  Hspec.it "fails with an unexpected argument" $ do
-    expectException ["unexpected"] $
-      UnexpectedArgument.fromString "unexpected"
+  Hspec.it "accepts a positional argument" $ do
+    let (a, s, _w) =
+          runGild
+            ["p.cabal"]
+            [(Input.File "p.cabal", String.toUtf8 "")]
+            (".", [])
+            False
+    a `Hspec.shouldSatisfy` Either.isRight
+    s `Hspec.shouldBe` Map.singleton (Output.File "p.cabal") (String.toUtf8 "")
 
   Hspec.it "fails when --crlf is given twice" $ do
     expectException ["--crlf=strict", "--crlf=lenient"] $
