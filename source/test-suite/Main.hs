@@ -1406,10 +1406,14 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "-- cabal-gild: discover\nname: p"
       "-- cabal-gild: discover\nname: p\n"
 
-  Hspec.it "ignores unknown pragma" $ do
-    expectGilded
-      "-- cabal-gild: unknown"
-      "-- cabal-gild: unknown\n"
+  Hspec.it "warns on unknown pragma" $ do
+    let (a, s, w) = runGild [] [(Input.Stdin, String.toUtf8 "-- cabal-gild: unknown")] (".", []) False
+    a `Hspec.shouldSatisfy` Either.isRight
+    w `Hspec.shouldBe` ["warning: unknown pragma \"unknown\""]
+    actual <- case Map.toList s of
+      [(Output.Stdout, x)] -> pure x
+      _ -> fail $ "impossible: " <> show s
+    actual `Hspec.shouldBe` String.toUtf8 "-- cabal-gild: unknown\n"
 
   Hspec.it "discovers from the currently directory explicitly" $ do
     expectDiscover

@@ -13,6 +13,7 @@ import qualified CabalGild.Unstable.Class.MonadHandle as MonadHandle
 import qualified CabalGild.Unstable.Class.MonadLog as MonadLog
 import qualified CabalGild.Unstable.Class.MonadRead as MonadRead
 import qualified CabalGild.Unstable.Class.MonadWalk as MonadWalk
+import qualified CabalGild.Unstable.Class.MonadWarn as MonadWarn
 import qualified CabalGild.Unstable.Class.MonadWrite as MonadWrite
 import qualified CabalGild.Unstable.Exception.CheckFailure as CheckFailure
 import qualified CabalGild.Unstable.Exception.ParseError as ParseError
@@ -60,6 +61,7 @@ mainWith ::
     MonadRead.MonadRead m,
     Exception.MonadThrow m,
     MonadWalk.MonadWalk m,
+    MonadWarn.MonadWarn m,
     MonadWrite.MonadWrite m
   ) =>
   [String] ->
@@ -84,7 +86,7 @@ mainWith arguments = do
 -- is invalid. The 'MonadWalk.MonadWalk' constraint is used to discover modules
 -- on the file system. Typically @m@ will be 'IO'.
 format ::
-  (Exception.MonadThrow m, MonadWalk.MonadWalk m) =>
+  (Exception.MonadThrow m, MonadWalk.MonadWalk m, MonadWarn.MonadWarn m) =>
   FilePath ->
   ByteString.ByteString ->
   m ByteString.ByteString
