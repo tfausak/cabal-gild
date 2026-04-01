@@ -2111,6 +2111,48 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
 
+  Hspec.it "formats multiple positional files in-place" $ do
+    let (a, s, w) =
+          runGild
+            ["a.cabal", "b.cabal"]
+            [ (Input.File "a.cabal", String.toUtf8 "f:a"),
+              (Input.File "b.cabal", String.toUtf8 "g:b")
+            ]
+            (".", [])
+            False
+    a `Hspec.shouldSatisfy` Either.isRight
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.fromList
+      [ (Output.File "a.cabal", String.toUtf8 "f: a\n"),
+        (Output.File "b.cabal", String.toUtf8 "g: b\n")
+      ]
+
+  Hspec.it "checks multiple positional files" $ do
+    let (a, s, w) =
+          runGild
+            ["--mode", "check", "a.cabal", "b.cabal"]
+            [ (Input.File "a.cabal", String.toUtf8 "f: a\n"),
+              (Input.File "b.cabal", String.toUtf8 "g: b\n")
+            ]
+            (".", [])
+            False
+    a `Hspec.shouldSatisfy` Either.isRight
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.empty
+
+  Hspec.it "fails check when any positional file is unformatted" $ do
+    let (a, s, w) =
+          runGild
+            ["--mode", "check", "a.cabal", "b.cabal"]
+            [ (Input.File "a.cabal", String.toUtf8 "f: a\n"),
+              (Input.File "b.cabal", String.toUtf8 "g:b")
+            ]
+            (".", [])
+            False
+    a `shouldBeFailure` CheckFailure.CheckFailure
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.empty
+
   Hspec.it "fails when positional args are mixed with --input" $ do
     let (a, s, w) =
           runGild

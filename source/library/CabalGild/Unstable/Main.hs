@@ -71,6 +71,38 @@ mainWith arguments = do
   config <- Config.fromFlags flags positionalArgs
   context <- Context.fromConfig config
 
+  case Context.files context of
+    [] -> processOne context
+    fps -> mapM_ (processFile context) fps
+
+processFile ::
+  ( MonadRead.MonadRead m,
+    Exception.MonadThrow m,
+    MonadWalk.MonadWalk m,
+    MonadWarn.MonadWarn m,
+    MonadWrite.MonadWrite m
+  ) =>
+  Context.Context ->
+  FilePath ->
+  m ()
+processFile context fp =
+  let ctx = context
+        { Context.input = Input.File fp,
+          Context.output = Output.File fp,
+          Context.stdin = fp
+        }
+  in processOne ctx
+
+processOne ::
+  ( MonadRead.MonadRead m,
+    Exception.MonadThrow m,
+    MonadWalk.MonadWalk m,
+    MonadWarn.MonadWarn m,
+    MonadWrite.MonadWrite m
+  ) =>
+  Context.Context ->
+  m ()
+processOne context = do
   input <- MonadRead.read $ Context.input context
   output <- format (Context.stdin context) input
 
