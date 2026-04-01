@@ -9,7 +9,6 @@ import qualified CabalGild.Unstable.Extra.Name as Name
 import qualified CabalGild.Unstable.Type.Comment as Comment
 import qualified CabalGild.Unstable.Type.Comments as Comments
 import qualified CabalGild.Unstable.Type.Pragma as Pragma
-import qualified Control.Monad as Monad
 import qualified Data.ByteString as ByteString
 import qualified Data.Maybe as Maybe
 import qualified Distribution.Compat.CharParsing as CharParsing
@@ -55,14 +54,8 @@ warnComment c =
         Nothing -> pure ()
         Just (Pragma.Pragma (PragmaBody body))
           | isKnownPragma bs -> pure ()
-          | otherwise -> case Parsec.simpleParsecBS bs :: Maybe (Pragma.Pragma PragmaName) of
-              Just (Pragma.Pragma (PragmaName name))
-                | name `elem` knownPragmaNames ->
-                    MonadWarn.warnLn $ "warning: invalid pragma \"" <> body <> "\""
-                | otherwise ->
-                    MonadWarn.warnLn $ "warning: unknown pragma \"" <> name <> "\""
-              Nothing ->
-                MonadWarn.warnLn "warning: invalid pragma \"\""
+          | otherwise ->
+              MonadWarn.warnLn $ "warning: unknown pragma \"" <> body <> "\""
 
 -- | Checks whether a comment parses as any known pragma type.
 isKnownPragma :: ByteString.ByteString -> Bool
@@ -76,16 +69,3 @@ newtype PragmaBody = PragmaBody String
 
 instance Parsec.Parsec PragmaBody where
   parsec = PragmaBody <$> CharParsing.many CharParsing.anyChar
-
--- | Captures just the first word after the "cabal-gild:" prefix.
-newtype PragmaName = PragmaName String
-
-instance Parsec.Parsec PragmaName where
-  parsec = do
-    cs <- CharParsing.some (CharParsing.satisfy $ \c -> c /= ' ' && c /= '\t' && c /= '\n')
-    Monad.void $ CharParsing.many CharParsing.anyChar
-    pure $ PragmaName cs
-
--- | The set of known pragma names.
-knownPragmaNames :: [String]
-knownPragmaNames = ["discover", "require", "version"]
