@@ -1,3 +1,5 @@
+{-# LANGUAGE ScopedTypeVariables #-}
+
 -- | This module defines the main entry point for the application.
 module CabalGild.Unstable.Main where
 
@@ -76,6 +78,7 @@ mainWith arguments = do
     fps -> processFiles context fps
 
 processFiles ::
+  forall m.
   ( MonadRead.MonadRead m,
     Exception.MonadCatch m,
     MonadWalk.MonadWalk m,
@@ -87,6 +90,7 @@ processFiles ::
   m ()
 processFiles context = go False
   where
+    go :: Bool -> [FilePath] -> m ()
     go anyFail [] =
       Monad.when anyFail $ Exception.throwM CheckFailure.CheckFailure
     go anyFail (fp : fps) = do
