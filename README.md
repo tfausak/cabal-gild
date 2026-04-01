@@ -117,9 +117,23 @@ $ stack install cabal-gild
 
 ## Usage
 
-Gild is a command line utility named `cabal-gild`. By default it reads from
-standard input (STDIN) and writes to standard output (STDOUT). Its behavior can
-be modified with command line options, which are described below.
+Gild is a command line utility named `cabal-gild`. Pass one or more files as
+arguments to format them in-place:
+
+``` sh
+$ cabal-gild p.cabal
+$ cabal-gild a.cabal b.cabal
+```
+
+When no files are given, Gild reads from standard input (STDIN) and writes to
+standard output (STDOUT):
+
+``` sh
+$ cabal-gild < p.cabal > q.cabal
+```
+
+When run interactively with no arguments, Gild will look for a `*.cabal` file
+in the current directory and format it in-place.
 
 ### Options
 
@@ -136,30 +150,12 @@ Run `cabal-gild --help` to see the options that Gild supports. They are:
   to the expected output. (Note that Gild will never produce CRLF line endings
   when formatting.)
 
-- `--input=FILE`: Uses `FILE` as the input. If this is `-` (which is the
-  default), then the input will be read from STDIN.
-
-- `--io=FILE`: Shortcut for setting both `--input=FILE` and `--output=FILE` at
-  the same time. This is useful for formatting a file in-place.
-
 - `--mode=MODE`: Sets the mode to `MODE`, which must be either `format` (the
   default) or `check`. When the mode is `format`, Gild will output the
   formatted package description. When the mode is `check`, Gild will exit
   successfully if the input is already formatted, otherwise it will exit
-  unsuccessfully.
-
-- `--output=FILE`: Uses `FILE` as the output. If this is `-` (which is the
-  default), then the output will be written to STDOUT. To modify a file in
-  place, use the same file as both input and output. For example:
-
-  ``` sh
-  $ cabal-gild --input p.cabal --output p.cabal
-  ```
-
-  If the output is the same file as the input and the input is already
-  formatted, then nothing will happen. The output will not be modified.
-
-  It is an error to provide a value for this option when the mode is `check`.
+  unsuccessfully. When checking multiple files, all files are checked before
+  exiting.
 
 - `--stdin=FILE`: When reading input from STDIN, use `FILE` as the effective
   input file. This is useful when a file's contents are already available, like
@@ -169,7 +165,22 @@ Run `cabal-gild --help` to see the options that Gild supports. They are:
   $ cabal-gild --stdin p.cabal < p.cabal
   ```
 
-  It is an error to provide a value for this option unless the input is `-`.
+  It is an error to provide a value for this option when a file argument is
+  given.
+
+### Deprecated Options
+
+The following options are deprecated and will be removed in a future version.
+Use positional file arguments instead.
+
+- `--input=FILE`: Uses `FILE` as the input. Use a positional argument instead.
+
+- `--output=FILE`: Uses `FILE` as the output. Use piping instead.
+
+- `--io=FILE`: Shortcut for setting both `--input` and `--output`. Use a
+  positional argument instead.
+
+It is an error to combine these options with positional file arguments.
 
 ### Pragmas
 

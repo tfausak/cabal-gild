@@ -59,7 +59,9 @@ fromConfig config = do
           unlines
             [ "cabal-gild version " <> version,
               "",
-              "<https://github.com/tfausak/cabal-gild>"
+              "<https://github.com/tfausak/cabal-gild>",
+              "",
+              "Usage: cabal-gild [OPTIONS] [FILE ...]"
             ]
     MonadLog.logLn
       . List.dropWhileEnd Char.isSpace
