@@ -139,6 +139,12 @@ library
     CabalGild.Unstable.Type.TestedWith
     CabalGild.Unstable.Type.Variable
     CabalGild.Unstable.Type.VersionRange
+    CabalGild.Unstable.Type.VersionRange.Complex
+    CabalGild.Unstable.Type.VersionRange.Operator
+    CabalGild.Unstable.Type.VersionRange.Part
+    CabalGild.Unstable.Type.VersionRange.Simple
+    CabalGild.Unstable.Type.VersionRange.Version
+    CabalGild.Unstable.Type.VersionRange.Versions
 
   hs-source-dirs: source/library
   other-modules: Paths_cabal_gild
