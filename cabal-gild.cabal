@@ -98,11 +98,17 @@ library
     CabalGild.Unstable.Extra.Field
     CabalGild.Unstable.Extra.FieldLine
     CabalGild.Unstable.Extra.FilePath
+    CabalGild.Unstable.Extra.IncludeRenaming
+    CabalGild.Unstable.Extra.LibraryName
     CabalGild.Unstable.Extra.List
+    CabalGild.Unstable.Extra.Mixin
     CabalGild.Unstable.Extra.ModuleName
+    CabalGild.Unstable.Extra.ModuleRenaming
     CabalGild.Unstable.Extra.Name
+    CabalGild.Unstable.Extra.PackageName
     CabalGild.Unstable.Extra.SectionArg
     CabalGild.Unstable.Extra.String
+    CabalGild.Unstable.Extra.UnqualComponentName
     CabalGild.Unstable.Main
     CabalGild.Unstable.Type.Block
     CabalGild.Unstable.Type.Chunk
