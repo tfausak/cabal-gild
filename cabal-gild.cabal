@@ -90,6 +90,7 @@ library
     CabalGild.Unstable.Exception.InvalidLeniency
     CabalGild.Unstable.Exception.InvalidMode
     CabalGild.Unstable.Exception.InvalidOption
+    CabalGild.Unstable.Exception.MixedArgumentStyles
     CabalGild.Unstable.Exception.MoreThanOneCabalFileFound
     CabalGild.Unstable.Exception.NoCabalFileFound
     CabalGild.Unstable.Exception.ParseError

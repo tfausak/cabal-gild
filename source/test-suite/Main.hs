@@ -10,6 +10,7 @@ import qualified CabalGild.Unstable.Class.MonadWrite as MonadWrite
 import qualified CabalGild.Unstable.Exception.CheckFailure as CheckFailure
 import qualified CabalGild.Unstable.Exception.DuplicateOption as DuplicateOption
 import qualified CabalGild.Unstable.Exception.InvalidOption as InvalidOption
+import qualified CabalGild.Unstable.Exception.MixedArgumentStyles as MixedArgumentStyles
 import qualified CabalGild.Unstable.Exception.MoreThanOneCabalFileFound as MoreThanOneCabalFileFound
 import qualified CabalGild.Unstable.Exception.NoCabalFileFound as NoCabalFileFound
 import qualified CabalGild.Unstable.Exception.SpecifiedOutputWithCheckMode as SpecifiedOutputWithCheckMode
@@ -66,7 +67,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             (".", [])
             False
     a `Hspec.shouldSatisfy` Either.isRight
-    s `Hspec.shouldBe` Map.singleton (Output.File "p.cabal") (String.toUtf8 "")
+    s `Hspec.shouldBe` Map.empty
 
   Hspec.it "fails when --crlf is given twice" $ do
     expectException ["--crlf=strict", "--crlf=lenient"] $
@@ -2107,6 +2108,39 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
   Hspec.it "fails if more than one cabal file is found" $ do
     let (a, s, w) = runGild [] [] (".", [["0.cabal"], ["1.cabal"]]) True
     a `shouldBeFailure` MoreThanOneCabalFileFound.MoreThanOneCabalFileFound
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.empty
+
+  Hspec.it "fails when positional args are mixed with --input" $ do
+    let (a, s, w) =
+          runGild
+            ["--input", "a.cabal", "b.cabal"]
+            []
+            (".", [])
+            False
+    a `shouldBeFailure` MixedArgumentStyles.MixedArgumentStyles "input"
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.empty
+
+  Hspec.it "fails when positional args are mixed with --output" $ do
+    let (a, s, w) =
+          runGild
+            ["--output", "a.cabal", "b.cabal"]
+            []
+            (".", [])
+            False
+    a `shouldBeFailure` MixedArgumentStyles.MixedArgumentStyles "output"
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.empty
+
+  Hspec.it "fails when positional args are mixed with --io" $ do
+    let (a, s, w) =
+          runGild
+            ["--io", "a.cabal", "b.cabal"]
+            []
+            (".", [])
+            False
+    a `shouldBeFailure` MixedArgumentStyles.MixedArgumentStyles "input"
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
 

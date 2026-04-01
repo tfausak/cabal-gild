@@ -67,8 +67,8 @@ mainWith ::
   [String] ->
   m ()
 mainWith arguments = do
-  (flags, _positionalArgs) <- Flag.fromArguments arguments
-  config <- Config.fromFlags flags
+  (flags, positionalArgs) <- Flag.fromArguments arguments
+  config <- Config.fromFlags flags positionalArgs
   context <- Context.fromConfig config
 
   input <- MonadRead.read $ Context.input context

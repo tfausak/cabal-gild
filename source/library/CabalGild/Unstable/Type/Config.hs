@@ -14,6 +14,7 @@ import qualified Control.Monad.Catch as Exception
 -- Each field typically corresponds to a flag.
 data Config = Config
   { crlf :: Optional.Optional Leniency.Leniency,
+    files :: [FilePath],
     help :: Optional.Optional Bool,
     input :: Optional.Optional Input.Input,
     mode :: Optional.Optional Mode.Mode,
@@ -28,6 +29,7 @@ initial :: Config
 initial =
   Config
     { crlf = Optional.Default,
+      files = [],
       help = Optional.Default,
       input = Optional.Default,
       mode = Optional.Default,
@@ -59,5 +61,7 @@ applyFlag config flag = case flag of
 
 -- | Converts a list of flags into a config by starting with 'initial' and
 -- repeatedly calling 'applyFlag'.
-fromFlags :: (Exception.MonadThrow m) => [Flag.Flag] -> m Config
-fromFlags = Monad.foldM applyFlag initial
+fromFlags :: (Exception.MonadThrow m) => [Flag.Flag] -> [String] -> m Config
+fromFlags flags args = do
+  config <- Monad.foldM applyFlag initial flags
+  pure config { files = args }
