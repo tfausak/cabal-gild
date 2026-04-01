@@ -1415,6 +1415,16 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       _ -> fail $ "impossible: " <> show s
     actual `Hspec.shouldBe` String.toUtf8 "-- cabal-gild: unknown\n"
 
+  Hspec.it "does not warn on valid pragmas" $ do
+    let (a, _s, w) = runGild [] [(Input.Stdin, String.toUtf8 "-- cabal-gild: version\nname: p")] (".", []) False
+    a `Hspec.shouldSatisfy` Either.isRight
+    w `Hspec.shouldBe` []
+
+  Hspec.it "does not warn on regular comments" $ do
+    let (a, _s, w) = runGild [] [(Input.Stdin, String.toUtf8 "-- just a comment\nname: p")] (".", []) False
+    a `Hspec.shouldSatisfy` Either.isRight
+    w `Hspec.shouldBe` []
+
   Hspec.it "discovers from the currently directory explicitly" $ do
     expectDiscover
       (".", [["M.hs"]])
