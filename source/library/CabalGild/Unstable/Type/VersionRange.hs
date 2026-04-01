@@ -33,8 +33,8 @@ toCabalVersionRange = toCabalComplex . unwrap
 toCabalComplex :: Complex.Complex Simple.Simple -> CabalRange.VersionRange
 toCabalComplex x = case x of
   Complex.Par c -> toCabalComplex c
-  Complex.And l r -> CabalRange.intersectVersionRanges (toCabalSimple l) (toCabalComplex r)
-  Complex.Or l r -> CabalRange.unionVersionRanges (toCabalSimple l) (toCabalComplex r)
+  Complex.And l r -> CabalRange.intersectVersionRanges (toCabalComplex l) (toCabalComplex r)
+  Complex.Or l r -> CabalRange.unionVersionRanges (toCabalComplex l) (toCabalComplex r)
   Complex.Simple s -> toCabalSimple s
 
 toCabalSimple :: Simple.Simple -> CabalRange.VersionRange

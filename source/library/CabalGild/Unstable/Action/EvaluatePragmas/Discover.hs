@@ -65,7 +65,6 @@ instance Parsec.Parsec Discover where
       Monad.mplus
         (CharParsing.skipSpaces1 *> CharParsing.sepBy Parsec.parsec CharParsing.skipSpaces1)
         ([] <$ CharParsing.spaces)
-    CharParsing.eof
     pure . Discover $ fmap Newtypes.getToken' arguments
 
 -- | If modules are discovered for a field, that fields lines are completely

@@ -13,7 +13,9 @@ instance (Parsec.Parsec a) => Parsec.Parsec (Pragma a) where
     CharParsing.spaces
     Monad.void $ CharParsing.string cabalGildPragmaPrefix
     CharParsing.spaces
-    Pragma <$> Parsec.parsec
+    x <- Parsec.parsec
+    CharParsing.eof
+    pure $ Pragma x
 
 cabalGildPragmaPrefix :: String
 cabalGildPragmaPrefix = "cabal-gild:"

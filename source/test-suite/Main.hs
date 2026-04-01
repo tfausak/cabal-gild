@@ -1695,6 +1695,11 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
               False
       a `Hspec.shouldSatisfy` Either.isLeft
 
+    Hspec.it "ignores require pragma with trailing garbage" $ do
+      expectGilded
+        "-- cabal-gild: require < 0 trailing-garbage"
+        "-- cabal-gild: require < 0 trailing-garbage\n"
+
   Hspec.it "parses an empty brace section" $ do
     expectGilded
       "s{}"
@@ -1993,6 +1998,26 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       expectGilded
         "build-depends: x ( == 1 )"
         "build-depends: x (==1)\n"
+
+    Hspec.it "paren on left of and" $ do
+      expectGilded
+        "build-depends: x (>= 1) && < 2"
+        "build-depends: x (>=1) && <2\n"
+
+    Hspec.it "paren on left of or" $ do
+      expectGilded
+        "build-depends: x (>= 1) || < 2"
+        "build-depends: x (>=1) || <2\n"
+
+    Hspec.it "parens on both sides" $ do
+      expectGilded
+        "build-depends: x (>= 1) && (< 2)"
+        "build-depends: x (>=1) && (<2)\n"
+
+    Hspec.it "rejects non-trailing wildcard" $ do
+      expectGilded
+        "build-depends: x == 1.*.3"
+        "build-depends: x == 1.*.3\n"
 
   Hspec.around_ withTemporaryDirectory
     . Hspec.it "discovers modules on the file system"
