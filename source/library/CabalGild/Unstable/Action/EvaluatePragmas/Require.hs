@@ -9,15 +9,12 @@ import qualified CabalGild.Unstable.Type.Pragma as Pragma
 import qualified CabalGild.Unstable.Type.VersionRange as VR
 import qualified Control.Monad as Monad
 import qualified Control.Monad.Catch as Exception
-import qualified Data.List.NonEmpty as NonEmpty
-import qualified Data.Set as Set
 import qualified Data.Version as Version
 import qualified Distribution.Compat.CharParsing as CharParsing
 import qualified Distribution.Fields as Fields
 import qualified Distribution.Parsec as Parsec
 import qualified Distribution.Types.Version as CabalVersion
 import qualified Distribution.Types.VersionRange as CabalVR
-import qualified Numeric.Natural as Natural
 import qualified Paths_cabal_gild as This
 
 run ::
@@ -56,7 +53,7 @@ checkRequire ::
 checkRequire [] = pure []
 checkRequire (c : cs) = case Parsec.simpleParsecBS $ Comment.value c of
   Just (Pragma.Pragma (Require vr)) -> do
-    let cabalVR = toCabalVersionRange vr
+    let cabalVR = VR.toCabalVersionRange vr
         currentVersion = CabalVersion.mkVersion $ Version.versionBranch This.version
     Monad.unless (CabalVR.withinRange currentVersion cabalVR) $
       Exception.throwM
@@ -75,58 +72,3 @@ instance Parsec.Parsec Require where
     Monad.void $ CharParsing.string "require"
     CharParsing.skipSpaces1
     Require <$> Parsec.parsec
-
--- | Converts the project's 'VR.VersionRange' to Cabal-syntax's
--- 'CabalVR.VersionRange' for evaluation with 'CabalVR.withinRange'.
-toCabalVersionRange :: VR.VersionRange -> CabalVR.VersionRange
-toCabalVersionRange = toCabalComplex
-
-toCabalComplex :: VR.Complex VR.Simple -> CabalVR.VersionRange
-toCabalComplex x = case x of
-  VR.Par c -> toCabalComplex c
-  VR.And l r -> CabalVR.intersectVersionRanges (toCabalSimple l) (toCabalComplex r)
-  VR.Or l r -> CabalVR.unionVersionRanges (toCabalSimple l) (toCabalComplex r)
-  VR.Simple s -> toCabalSimple s
-
-toCabalSimple :: VR.Simple -> CabalVR.VersionRange
-toCabalSimple x = case x of
-  VR.Any -> CabalVR.anyVersion
-  VR.None -> CabalVR.noVersion
-  VR.Op op vs -> toCabalOp op vs
-
-toCabalOp :: VR.Operator -> VR.Versions -> CabalVR.VersionRange
-toCabalOp op vs = case vs of
-  VR.One v -> toCabalOpOne op v
-  VR.Set s -> case Set.toList s of
-    [] -> CabalVR.noVersion
-    v : rest -> foldr (CabalVR.unionVersionRanges . toCabalOpOne op) (toCabalOpOne op v) rest
-
-toCabalOpOne :: VR.Operator -> VR.Version -> CabalVR.VersionRange
-toCabalOpOne op v = case op of
-  VR.Caret -> CabalVR.majorBoundVersion cv
-  VR.Ge -> CabalVR.orLaterVersion cv
-  VR.Gt -> CabalVR.laterVersion cv
-  VR.Le -> CabalVR.orEarlierVersion cv
-  VR.Lt -> CabalVR.earlierVersion cv
-  VR.Eq
-    | hasWildcard v -> CabalVR.withinVersion cv
-    | otherwise -> CabalVR.thisVersion cv
-  where
-    cv = toCabalVersion v
-
-hasWildcard :: VR.Version -> Bool
-hasWildcard (VR.MkVersion parts) = any isWildcard $ NonEmpty.toList parts
-  where
-    isWildcard VR.Wildcard = True
-    isWildcard _ = False
-
-toCabalVersion :: VR.Version -> CabalVersion.Version
-toCabalVersion (VR.MkVersion parts) =
-  CabalVersion.mkVersion
-    . map fromIntegral
-    . concatMap toNumbers
-    $ NonEmpty.toList parts
-  where
-    toNumbers :: VR.Part -> [Natural.Natural]
-    toNumbers (VR.Numeric n) = [n]
-    toNumbers VR.Wildcard = []

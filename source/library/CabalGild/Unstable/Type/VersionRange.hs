@@ -8,6 +8,8 @@ import qualified Data.Set as Set
 import qualified Distribution.Compat.CharParsing as Parse
 import qualified Distribution.Parsec as Parsec
 import qualified Distribution.Pretty as Pretty
+import qualified Distribution.Types.Version as CabalVersion
+import qualified Distribution.Types.VersionRange as CabalVR
 import qualified Numeric.Natural as Natural
 import qualified Text.PrettyPrint as PrettyPrint
 import qualified Text.Read as Read
@@ -180,3 +182,58 @@ instance Parsec.Parsec VersionRange where
 
 instance Pretty.Pretty VersionRange where
   pretty = renderComplex renderSimple
+
+-- | Converts a 'VersionRange' to Cabal-syntax's 'CabalVR.VersionRange' for
+-- evaluation with 'CabalVR.withinRange'.
+toCabalVersionRange :: VersionRange -> CabalVR.VersionRange
+toCabalVersionRange = toCabalComplex
+
+toCabalComplex :: Complex Simple -> CabalVR.VersionRange
+toCabalComplex x = case x of
+  Par c -> toCabalComplex c
+  And l r -> CabalVR.intersectVersionRanges (toCabalSimple l) (toCabalComplex r)
+  Or l r -> CabalVR.unionVersionRanges (toCabalSimple l) (toCabalComplex r)
+  Simple s -> toCabalSimple s
+
+toCabalSimple :: Simple -> CabalVR.VersionRange
+toCabalSimple x = case x of
+  Any -> CabalVR.anyVersion
+  None -> CabalVR.noVersion
+  Op op vs -> toCabalOp op vs
+
+toCabalOp :: Operator -> Versions -> CabalVR.VersionRange
+toCabalOp op vs = case vs of
+  One v -> toCabalOpOne op v
+  Set s -> case Set.toList s of
+    [] -> CabalVR.noVersion
+    v : rest -> foldr (CabalVR.unionVersionRanges . toCabalOpOne op) (toCabalOpOne op v) rest
+
+toCabalOpOne :: Operator -> Version -> CabalVR.VersionRange
+toCabalOpOne op v = case op of
+  Caret -> CabalVR.majorBoundVersion cv
+  Ge -> CabalVR.orLaterVersion cv
+  Gt -> CabalVR.laterVersion cv
+  Le -> CabalVR.orEarlierVersion cv
+  Lt -> CabalVR.earlierVersion cv
+  Eq
+    | hasWildcard v -> CabalVR.withinVersion cv
+    | otherwise -> CabalVR.thisVersion cv
+  where
+    cv = toCabalVersion v
+
+hasWildcard :: Version -> Bool
+hasWildcard (MkVersion parts) = any isWildcard $ NonEmpty.toList parts
+  where
+    isWildcard Wildcard = True
+    isWildcard _ = False
+
+toCabalVersion :: Version -> CabalVersion.Version
+toCabalVersion (MkVersion parts) =
+  CabalVersion.mkVersion
+    . map fromIntegral
+    . concatMap toNumbers
+    $ NonEmpty.toList parts
+  where
+    toNumbers :: Part -> [Natural.Natural]
+    toNumbers (Numeric n) = [n]
+    toNumbers Wildcard = []
