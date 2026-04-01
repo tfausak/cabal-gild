@@ -1570,6 +1570,11 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "-- cabal-gild: version\nname: p\n-- cabal-gild: version\nversion: 0"
       (concat ["-- cabal-gild: version\n", versionComment, "\nname: p\n-- cabal-gild: version\n", versionComment, "\nversion: 0\n"])
 
+  Hspec.it "does not remove a generated comment without a preceding pragma" $ do
+    expectGilded
+      (concat [versionComment, "\nname: p"])
+      (concat [versionComment, "\nname: p\n"])
+
   Hspec.it "parses an empty brace section" $ do
     expectGilded
       "s{}"

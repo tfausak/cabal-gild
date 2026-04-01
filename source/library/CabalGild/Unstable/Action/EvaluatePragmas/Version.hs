@@ -39,9 +39,7 @@ expandVersion [] = []
 expandVersion (c : cs) = case Parsec.simpleParsecBS $ Comment.value c of
   Just (Pragma.Pragma Version) ->
     c : generatedComment c : expandVersion (dropGenerated cs)
-  Nothing
-    | isGenerated c -> expandVersion cs
-    | otherwise -> c : expandVersion cs
+  Nothing -> c : expandVersion cs
 
 -- | Creates a generated version comment, borrowing the annotation from the
 -- pragma comment.
