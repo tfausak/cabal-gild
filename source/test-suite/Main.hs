@@ -5,6 +5,7 @@ import qualified CabalGild.Unstable.Class.MonadHandle as MonadHandle
 import qualified CabalGild.Unstable.Class.MonadLog as MonadLog
 import qualified CabalGild.Unstable.Class.MonadRead as MonadRead
 import qualified CabalGild.Unstable.Class.MonadWalk as MonadWalk
+import qualified CabalGild.Unstable.Class.MonadWarn as MonadWarn
 import qualified CabalGild.Unstable.Class.MonadWrite as MonadWrite
 import qualified CabalGild.Unstable.Exception.CheckFailure as CheckFailure
 import qualified CabalGild.Unstable.Exception.DuplicateOption as DuplicateOption
@@ -1405,10 +1406,34 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "-- cabal-gild: discover\nname: p"
       "-- cabal-gild: discover\nname: p\n"
 
-  Hspec.it "ignores unknown pragma" $ do
-    expectGilded
-      "-- cabal-gild: unknown"
-      "-- cabal-gild: unknown\n"
+  Hspec.it "warns on unknown pragma" $ do
+    let (a, s, w) = runGild [] [(Input.Stdin, String.toUtf8 "-- cabal-gild: unknown")] (".", []) False
+    a `Hspec.shouldSatisfy` Either.isRight
+    w `Hspec.shouldBe` ["warning: unknown pragma \"unknown\""]
+    actual <- case Map.toList s of
+      [(Output.Stdout, x)] -> pure x
+      _ -> fail $ "impossible: " <> show s
+    actual `Hspec.shouldBe` String.toUtf8 "-- cabal-gild: unknown\n"
+
+  Hspec.it "does not warn on valid pragmas" $ do
+    let (a, _s, w) = runGild [] [(Input.Stdin, String.toUtf8 "-- cabal-gild: version\nname: p")] (".", []) False
+    a `Hspec.shouldSatisfy` Either.isRight
+    w `Hspec.shouldBe` []
+
+  Hspec.it "does not warn on regular comments" $ do
+    let (a, _s, w) = runGild [] [(Input.Stdin, String.toUtf8 "-- just a comment\nname: p")] (".", []) False
+    a `Hspec.shouldSatisfy` Either.isRight
+    w `Hspec.shouldBe` []
+
+  Hspec.it "warns on empty pragma" $ do
+    let (a, _s, w) = runGild [] [(Input.Stdin, String.toUtf8 "-- cabal-gild:\nname: p")] (".", []) False
+    a `Hspec.shouldSatisfy` Either.isRight
+    w `Hspec.shouldBe` ["warning: unknown pragma \"\""]
+
+  Hspec.it "warns on known pragma with invalid arguments" $ do
+    let (a, _s, w) = runGild [] [(Input.Stdin, String.toUtf8 "-- cabal-gild: require broken\nname: p")] (".", []) False
+    a `Hspec.shouldSatisfy` Either.isRight
+    w `Hspec.shouldBe` ["warning: unknown pragma \"require broken\""]
 
   Hspec.it "discovers from the currently directory explicitly" $ do
     expectDiscover
@@ -1695,10 +1720,14 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
               False
       a `Hspec.shouldSatisfy` Either.isLeft
 
-    Hspec.it "ignores require pragma with trailing garbage" $ do
-      expectGilded
-        "-- cabal-gild: require < 0 trailing-garbage"
-        "-- cabal-gild: require < 0 trailing-garbage\n"
+    Hspec.it "warns on require pragma with trailing garbage" $ do
+      let (a, s, w) = runGild [] [(Input.Stdin, String.toUtf8 "-- cabal-gild: require < 0 trailing-garbage")] (".", []) False
+      a `Hspec.shouldSatisfy` Either.isRight
+      w `Hspec.shouldBe` ["warning: unknown pragma \"require < 0 trailing-garbage\""]
+      actual <- case Map.toList s of
+        [(Output.Stdout, x)] -> pure x
+        _ -> fail $ "impossible: " <> show s
+      actual `Hspec.shouldBe` String.toUtf8 "-- cabal-gild: require < 0 trailing-garbage\n"
 
   Hspec.it "parses an empty brace section" $ do
     expectGilded
@@ -2180,6 +2209,9 @@ newtype TestT m a = TestT
 
 instance (Monad m) => MonadLog.MonadLog (TestT m) where
   logLn = TestT . Trans.lift . RWST.tell . pure
+
+instance (Monad m) => MonadWarn.MonadWarn (TestT m) where
+  warnLn = TestT . Trans.lift . RWST.tell . pure
 
 instance (Monad m) => MonadRead.MonadRead (TestT m) where
   read k = do
