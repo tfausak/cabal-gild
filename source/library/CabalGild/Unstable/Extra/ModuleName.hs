@@ -12,6 +12,13 @@ import qualified System.FilePath as FilePath
 fromFilePath :: FilePath -> Maybe ModuleName.ModuleName
 fromFilePath = Parsec.simpleParsec . List.intercalate "." . FilePath.splitDirectories
 
+toCaseFold :: ModuleName.ModuleName -> ModuleName.ModuleName
+toCaseFold =
+  ModuleName.fromString
+    . List.intercalate "."
+    . fmap String.toCaseFold
+    . ModuleName.components
+
 -- | Converts a 'ModuleName.ModuleName' into a 'Fields.FieldLine'.
 toFieldLine :: a -> ModuleName.ModuleName -> Fields.FieldLine a
 toFieldLine a = Fields.FieldLine a . String.toUtf8 . Pretty.prettyShow

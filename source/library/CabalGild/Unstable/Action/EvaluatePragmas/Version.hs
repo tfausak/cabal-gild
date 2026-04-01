@@ -3,6 +3,7 @@
 module CabalGild.Unstable.Action.EvaluatePragmas.Version where
 
 import qualified CabalGild.Unstable.Type.Comment as Comment
+import qualified CabalGild.Unstable.Type.Comments as Comments
 import qualified CabalGild.Unstable.Type.Pragma as Pragma
 import qualified Data.String as String
 import qualified Distribution.Compat.CharParsing as CharParsing
@@ -11,9 +12,9 @@ import qualified Distribution.Parsec as Parsec
 
 field ::
   () =>
-  Fields.Field (p, [Comment.Comment q]) ->
-  Fields.Field (p, [Comment.Comment q])
-field = fmap $ fmap $ fmap version
+  Fields.Field (p, Comments.Comments q) ->
+  Fields.Field (p, Comments.Comments q)
+field = fmap $ fmap versionComments
 
 data Version = Version
   deriving (Eq, Show)
@@ -23,6 +24,16 @@ instance Parsec.Parsec Version where
 
 cabalVersionPragma :: (String.IsString a) => a
 cabalVersionPragma = String.fromString "version"
+
+versionComments ::
+  () =>
+  Comments.Comments q ->
+  Comments.Comments q
+versionComments cs =
+  cs
+    { Comments.before = fmap version (Comments.before cs),
+      Comments.after = fmap version (Comments.after cs)
+    }
 
 version ::
   () =>

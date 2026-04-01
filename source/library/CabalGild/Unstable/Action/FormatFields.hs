@@ -6,20 +6,17 @@ import qualified CabalGild.Unstable.Extra.FieldLine as FieldLine
 import qualified CabalGild.Unstable.Extra.Name as Name
 import qualified CabalGild.Unstable.Extra.SectionArg as SectionArg
 import qualified CabalGild.Unstable.Extra.String as String
+import qualified CabalGild.Unstable.Type.Comment as Comment
+import qualified CabalGild.Unstable.Type.Comments as Comments
 import qualified CabalGild.Unstable.Type.Condition as Condition
 import qualified CabalGild.Unstable.Type.Dependency as Dependency
-import qualified CabalGild.Unstable.Type.ExeDependency as ExeDependency
 import qualified CabalGild.Unstable.Type.Extension as Extension
-import qualified CabalGild.Unstable.Type.ForeignLibOption as ForeignLibOption
-import qualified CabalGild.Unstable.Type.Language as Language
-import qualified CabalGild.Unstable.Type.LegacyExeDependency as LegacyExeDependency
 import qualified CabalGild.Unstable.Type.Mixin as Mixin
-import qualified CabalGild.Unstable.Type.ModuleReexport as ModuleReexport
-import qualified CabalGild.Unstable.Type.PkgconfigDependency as PkgconfigDependency
 import qualified CabalGild.Unstable.Type.SomeParsecParser as SPP
 import qualified CabalGild.Unstable.Type.TestedWith as TestedWith
 import qualified CabalGild.Unstable.Type.Variable as Variable
 import qualified Data.ByteString as ByteString
+import qualified Data.Function as Function
 import qualified Data.Functor.Identity as Identity
 import qualified Data.Map as Map
 import qualified Data.Maybe as Maybe
@@ -29,14 +26,20 @@ import qualified Distribution.Fields as Fields
 import qualified Distribution.ModuleName as ModuleName
 import qualified Distribution.Parsec as Parsec
 import qualified Distribution.Parsec.FieldLineStream as FieldLineStream
+import qualified Distribution.Types.ExeDependency as ExeDependency
+import qualified Distribution.Types.ForeignLibOption as ForeignLibOption
+import qualified Distribution.Types.LegacyExeDependency as LegacyExeDependency
+import qualified Distribution.Types.ModuleReexport as ModuleReexport
+import qualified Distribution.Types.PkgconfigDependency as PkgconfigDependency
+import qualified Language.Haskell.Extension as Haskell
 import qualified Text.PrettyPrint as PrettyPrint
 
 -- | A wrapper around 'field' to allow this to be composed with other actions.
 run ::
   (Applicative m) =>
   CabalSpecVersion.CabalSpecVersion ->
-  ([Fields.Field (p, [c])], [c]) ->
-  m ([Fields.Field (p, [c])], [c])
+  ([Fields.Field (p, Comments.Comments q)], [Comment.Comment q]) ->
+  m ([Fields.Field (p, Comments.Comments q)], [Comment.Comment q])
 run csv (fs, cs) = pure (fmap (field csv) fs, cs)
 
 -- | Formats the given field, if applicable. Otherwise returns the field as is.
@@ -44,8 +47,8 @@ run csv (fs, cs) = pure (fmap (field csv) fs, cs)
 -- formatted.
 field ::
   CabalSpecVersion.CabalSpecVersion ->
-  Fields.Field (p, [c]) ->
-  Fields.Field (p, [c])
+  Fields.Field (p, Comments.Comments q) ->
+  Fields.Field (p, Comments.Comments q)
 field csv f = case f of
   Fields.Field n fls ->
     let position =
@@ -58,7 +61,7 @@ field csv f = case f of
     let result =
           Parsec.runParsecParser' csv (Condition.parseCondition Variable.parseVariable) "<conditional>"
             . FieldLineStream.fieldLineStreamFromBS
-            . ByteString.intercalate (ByteString.singleton 0x20)
+            . joinSectionArgs
             $ fmap SectionArg.value sas
         position =
           fst
@@ -70,12 +73,29 @@ field csv f = case f of
               Left _ -> sas
               Right c ->
                 pure
-                  . Fields.SecArgName (position, [])
+                  . Fields.SecArgName (position, Comments.empty)
                   . String.toUtf8
                   . PrettyPrint.renderStyle style
                   $ Condition.prettyCondition Variable.prettyVariable c
             else sas
      in Fields.Section n newSas $ fmap (field csv) fs
+
+-- | Joins section argument values with spaces, but concatenates a @*@ wildcard
+-- directly onto a preceding token that ends with @.@ to preserve version
+-- wildcards like @9.10.*@.
+joinSectionArgs :: [ByteString.ByteString] -> ByteString.ByteString
+joinSectionArgs =
+  let space = ByteString.singleton 0x20
+      asterisk = ByteString.singleton 0x2a
+      fullStop = ByteString.singleton 0x2e
+      merge = Function.fix $ \rec xs -> case xs of
+        x : y : ys
+          | ByteString.isSuffixOf fullStop x,
+            y == asterisk ->
+              (x <> y) : rec ys
+          | otherwise -> x : rec (y : ys)
+        _ -> xs
+   in ByteString.intercalate space . merge
 
 -- | Returns 'True' if the field name is a conditional. @if@ is always one, and
 -- @elif@ is one for Cabal versions 2.2 and later.
@@ -90,15 +110,15 @@ isConditional csv n =
 fieldLines ::
   CabalSpecVersion.CabalSpecVersion ->
   p ->
-  [Fields.FieldLine (p, [c])] ->
+  [Fields.FieldLine (p, Comments.Comments q)] ->
   SPP.SomeParsecParser ->
-  [Fields.FieldLine (p, [c])]
+  [Fields.FieldLine (p, Comments.Comments q)]
 fieldLines csv position fls SPP.SomeParsecParser {SPP.parsec = parsec, SPP.pretty = pretty} =
   case Parsec.runParsecParser' csv parsec "" $ FieldLine.toFieldLineStream fls of
     Left _ -> floatComments position fls
     Right r ->
       zipWith
-        (\b l -> Fields.FieldLine (position, if b then collectComments fls else []) $ String.toUtf8 l)
+        (\b l -> Fields.FieldLine (position, if b then collectComments fls else Comments.empty) $ String.toUtf8 l)
         (True : repeat False)
         . lines
         . PrettyPrint.renderStyle style
@@ -108,18 +128,18 @@ fieldLines csv position fls SPP.SomeParsecParser {SPP.parsec = parsec, SPP.prett
 -- attaches them all to the first one.
 floatComments ::
   p ->
-  [Fields.FieldLine (p, [c])] ->
-  [Fields.FieldLine (p, [c])]
+  [Fields.FieldLine (p, Comments.Comments q)] ->
+  [Fields.FieldLine (p, Comments.Comments q)]
 floatComments p fls =
   zipWith
-    (\b -> Fields.FieldLine (p, if b then collectComments fls else []) . FieldLine.value)
+    (\b -> Fields.FieldLine (p, if b then collectComments fls else Comments.empty) . FieldLine.value)
     (True : repeat False)
     fls
 
 -- | Collects all comments from the given field lines. Their relative order
 -- will be maintained.
-collectComments :: [Fields.FieldLine (p, [c])] -> [c]
-collectComments = concatMap (snd . FieldLine.annotation)
+collectComments :: [Fields.FieldLine (p, Comments.Comments q)] -> Comments.Comments q
+collectComments = foldMap (snd . FieldLine.annotation)
 
 -- | This style attempts to force everything to be on its own line.
 style :: PrettyPrint.Style
@@ -193,7 +213,7 @@ parsers =
           "mixins" =: SPP.set @Newtypes.CommaVCat @(Identity.Identity Mixin.Mixin),
           "options" =: SPP.set @Newtypes.FSep @(Identity.Identity ForeignLibOption.ForeignLibOption),
           "other-extensions" =: SPP.set @Newtypes.FSep @(Newtypes.MQuoted Extension.Extension),
-          "other-languages" =: SPP.set @Newtypes.FSep @(Newtypes.MQuoted Language.Language),
+          "other-languages" =: SPP.set @Newtypes.FSep @(Newtypes.MQuoted Haskell.Language),
           "other-modules" =: SPP.set @Newtypes.VCat @(Newtypes.MQuoted ModuleName.ModuleName),
           "pkgconfig-depends" =: SPP.set @Newtypes.CommaFSep @(Identity.Identity PkgconfigDependency.PkgconfigDependency),
           "reexported-modules" =: SPP.set @Newtypes.CommaVCat @(Identity.Identity ModuleReexport.ModuleReexport),

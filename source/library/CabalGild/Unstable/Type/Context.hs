@@ -1,6 +1,10 @@
 module CabalGild.Unstable.Type.Context where
 
+import qualified CabalGild.Unstable.Class.MonadHandle as MonadHandle
 import qualified CabalGild.Unstable.Class.MonadLog as MonadLog
+import qualified CabalGild.Unstable.Class.MonadWalk as MonadWalk
+import qualified CabalGild.Unstable.Exception.MoreThanOneCabalFileFound as MoreThanOneCabalFileFound
+import qualified CabalGild.Unstable.Exception.NoCabalFileFound as NoCabalFileFound
 import qualified CabalGild.Unstable.Exception.SpecifiedOutputWithCheckMode as SpecifiedOutputWithCheckMode
 import qualified CabalGild.Unstable.Exception.SpecifiedStdinWithFileInput as SpecifiedStdinWithFileInput
 import qualified CabalGild.Unstable.Type.Config as Config
@@ -19,6 +23,7 @@ import qualified Data.Version as Version
 import qualified Paths_cabal_gild as This
 import qualified System.Console.GetOpt as GetOpt
 import qualified System.Exit as Exit
+import qualified System.IO as IO
 
 -- | Represents the context necessary to run the program. This is essentially a
 -- simplified 'Config.Config'.
@@ -35,7 +40,11 @@ data Context = Context
 -- requested, then this will throw an 'Exit.ExitSuccess'. Otherwise this makes
 -- sure the config is valid before returning the context.
 fromConfig ::
-  (MonadLog.MonadLog m, Exception.MonadThrow m) =>
+  ( MonadHandle.MonadHandle m,
+    MonadLog.MonadLog m,
+    Exception.MonadThrow m,
+    MonadWalk.MonadWalk m
+  ) =>
   Config.Config ->
   m Context
 fromConfig config = do
@@ -67,15 +76,26 @@ fromConfig config = do
       Exception.throwM SpecifiedOutputWithCheckMode.SpecifiedOutputWithCheckMode
     _ -> pure ()
 
-  let theInput = Maybe.fromMaybe Input.Stdin . Optional.toMaybe $ Config.input config
-      filePath = case theInput of
+  let preInput = Maybe.fromMaybe Input.Stdin . Optional.toMaybe $ Config.input config
+      filePath = case preInput of
         Input.Stdin -> "."
         Input.File f -> f
+      preOutput = Maybe.fromMaybe Output.Stdout . Optional.toMaybe $ Config.output config
+  (theInput, theOutput) <- do
+    isTerm <- MonadHandle.isTerminalDevice IO.stdin
+    if preInput == Input.Stdin && preOutput == Output.Stdout && isTerm
+      then do
+        cabalFiles <- MonadWalk.walk "." ["*.cabal"] []
+        case cabalFiles of
+          [fp] -> pure (Input.File fp, Output.File fp)
+          [] -> Exception.throwM NoCabalFileFound.NoCabalFileFound
+          _ -> Exception.throwM MoreThanOneCabalFileFound.MoreThanOneCabalFileFound
+      else pure (preInput, preOutput)
   pure
     Context
       { crlf = Maybe.fromMaybe Leniency.Lenient . Optional.toMaybe $ Config.crlf config,
         input = theInput,
         mode = Maybe.fromMaybe Mode.Format . Optional.toMaybe $ Config.mode config,
-        output = Maybe.fromMaybe Output.Stdout . Optional.toMaybe $ Config.output config,
+        output = theOutput,
         stdin = Maybe.fromMaybe filePath . Optional.toMaybe $ Config.stdin config
       }

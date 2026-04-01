@@ -1,5 +1,6 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
+import qualified CabalGild.Unstable.Class.MonadHandle as MonadHandle
 import qualified CabalGild.Unstable.Class.MonadLog as MonadLog
 import qualified CabalGild.Unstable.Class.MonadRead as MonadRead
 import qualified CabalGild.Unstable.Class.MonadWalk as MonadWalk
@@ -7,6 +8,8 @@ import qualified CabalGild.Unstable.Class.MonadWrite as MonadWrite
 import qualified CabalGild.Unstable.Exception.CheckFailure as CheckFailure
 import qualified CabalGild.Unstable.Exception.DuplicateOption as DuplicateOption
 import qualified CabalGild.Unstable.Exception.InvalidOption as InvalidOption
+import qualified CabalGild.Unstable.Exception.MoreThanOneCabalFileFound as MoreThanOneCabalFileFound
+import qualified CabalGild.Unstable.Exception.NoCabalFileFound as NoCabalFileFound
 import qualified CabalGild.Unstable.Exception.SpecifiedOutputWithCheckMode as SpecifiedOutputWithCheckMode
 import qualified CabalGild.Unstable.Exception.SpecifiedStdinWithFileInput as SpecifiedStdinWithFileInput
 import qualified CabalGild.Unstable.Exception.UnexpectedArgument as UnexpectedArgument
@@ -35,13 +38,13 @@ import qualified Test.Hspec as Hspec
 main :: IO ()
 main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
   Hspec.it "shows the help" $ do
-    let (a, s, w) = runGild ["--help"] [] (".", [])
+    let (a, s, w) = runGild ["--help"] [] (".", []) False
     a `shouldBeFailure` Exit.ExitSuccess
     w `Hspec.shouldNotBe` []
     s `Hspec.shouldBe` Map.empty
 
   Hspec.it "shows the version" $ do
-    let (a, s, w) = runGild ["--version"] [] (".", [])
+    let (a, s, w) = runGild ["--version"] [] (".", []) False
     a `shouldBeFailure` Exit.ExitSuccess
     w `Hspec.shouldNotBe` []
     s `Hspec.shouldBe` Map.empty
@@ -68,6 +71,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             ["--crlf=strict", "--crlf=strict"]
             [(Input.Stdin, String.toUtf8 "")]
             (".", [])
+            False
     a `Hspec.shouldSatisfy` Either.isRight
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.singleton Output.Stdout (String.toUtf8 "")
@@ -102,6 +106,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             ["--input", "input.cabal"]
             [(Input.File "input.cabal", String.toUtf8 "")]
             (".", [])
+            False
     a `Hspec.shouldSatisfy` Either.isRight
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.singleton Output.Stdout (String.toUtf8 "")
@@ -112,6 +117,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             ["--output", "output.cabal"]
             [(Input.Stdin, String.toUtf8 "")]
             (".", [])
+            False
     a `Hspec.shouldSatisfy` Either.isRight
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.singleton (Output.File "output.cabal") (String.toUtf8 "")
@@ -122,6 +128,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             ["--mode", "check"]
             [(Input.Stdin, String.toUtf8 "pass: yes\n")]
             (".", [])
+            False
     a `Hspec.shouldSatisfy` Either.isRight
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
@@ -132,6 +139,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             ["--mode", "check"]
             [(Input.Stdin, String.toUtf8 "pass: no")]
             (".", [])
+            False
     a `shouldBeFailure` CheckFailure.CheckFailure
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
@@ -142,6 +150,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             ["--mode", "check"]
             [(Input.Stdin, String.toUtf8 "pass: yes\r\n")]
             (".", [])
+            False
     a `Hspec.shouldSatisfy` Either.isRight
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
@@ -152,6 +161,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             ["--crlf", "strict", "--mode", "check"]
             [(Input.Stdin, String.toUtf8 "pass: no\r\n")]
             (".", [])
+            False
     a `shouldBeFailure` CheckFailure.CheckFailure
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
@@ -162,6 +172,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             ["--input", "f", "--stdin", "g"]
             []
             (".", [])
+            False
     a `shouldBeFailure` SpecifiedStdinWithFileInput.SpecifiedStdinWithFileInput
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
@@ -172,6 +183,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             ["--mode", "check", "--output", "-"]
             []
             (".", [])
+            False
     a `shouldBeFailure` SpecifiedOutputWithCheckMode.SpecifiedOutputWithCheckMode
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
@@ -182,6 +194,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             ["--io", "io.cabal"]
             [(Input.File "io.cabal", String.toUtf8 "")]
             (".", [])
+            False
     a `Hspec.shouldSatisfy` Either.isRight
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
@@ -192,6 +205,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             ["--input", "p.cabal"]
             [(Input.File "p.cabal", String.toUtf8 "")]
             (".", [])
+            False
     a `Hspec.shouldSatisfy` Either.isRight
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.singleton Output.Stdout (String.toUtf8 "")
@@ -202,6 +216,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             ["--input", "p.cabal", "--output", "q.cabal"]
             [(Input.File "p.cabal", String.toUtf8 "")]
             (".", [])
+            False
     a `Hspec.shouldSatisfy` Either.isRight
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.singleton (Output.File "q.cabal") (String.toUtf8 "")
@@ -212,6 +227,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             ["--output", "q.cabal"]
             [(Input.Stdin, String.toUtf8 "")]
             (".", [])
+            False
     a `Hspec.shouldSatisfy` Either.isRight
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.singleton (Output.File "q.cabal") (String.toUtf8 "")
@@ -222,6 +238,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             ["--io", "io.cabal"]
             [(Input.File "io.cabal", String.toUtf8 "f:a")]
             (".", [])
+            False
     a `Hspec.shouldSatisfy` Either.isRight
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.singleton (Output.File "io.cabal") (String.toUtf8 "f: a\n")
@@ -232,6 +249,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             ["--io", "p.cabal"]
             [(Input.File "p.cabal", String.toUtf8 "s\r\n")]
             (".", [])
+            False
     a `Hspec.shouldSatisfy` Either.isRight
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
@@ -242,6 +260,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             ["--crlf", "strict", "--io", "p.cabal"]
             [(Input.File "p.cabal", String.toUtf8 "s\r\n")]
             (".", [])
+            False
     a `Hspec.shouldSatisfy` Either.isRight
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.singleton (Output.File "p.cabal") (String.toUtf8 "s\n")
@@ -252,6 +271,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             ["--stdin", "d/p.cabal"]
             [(Input.Stdin, String.toUtf8 "library\n -- cabal-gild: discover\n exposed-modules:")]
             ("d", [["M.hs"]])
+            False
     a `Hspec.shouldSatisfy` Either.isRight
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.singleton Output.Stdout (String.toUtf8 "library\n  -- cabal-gild: discover\n  exposed-modules: M\n")
@@ -266,45 +286,193 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "\t\r\n \r\n"
       ""
 
-  Hspec.it "formats a comment" $ do
-    expectGilded
-      "-- c"
-      "-- c\n"
+  Hspec.describe "comments" $ do
+    Hspec.it "formats a comment" $ do
+      expectGilded
+        "-- c"
+        "-- c\n"
 
-  Hspec.it "keeps a blank comment" $ do
-    expectGilded
-      "--"
-      "--\n"
+    Hspec.it "keeps a blank comment" $ do
+      expectGilded
+        "--"
+        "--\n"
 
-  Hspec.it "formats multiple comments" $ do
-    expectGilded
-      "-- c\n-- d"
-      "-- c\n-- d\n"
+    Hspec.it "formats multiple comments" $ do
+      expectGilded
+        "-- c\n-- d"
+        "-- c\n-- d\n"
 
-  Hspec.it "removes blank lines between comments" $ do
-    expectGilded
-      "-- c\n\n-- d"
-      "-- c\n-- d\n"
+    Hspec.it "removes blank lines between comments" $ do
+      expectGilded
+        "-- c\n\n-- d"
+        "-- c\n-- d\n"
 
-  Hspec.it "does not require a space after the comment start" $ do
-    expectGilded
-      "--c"
-      "--c\n"
+    Hspec.it "does not require a space after the comment start" $ do
+      expectGilded
+        "--c"
+        "--c\n"
 
-  Hspec.it "leaves leading blank space in comments" $ do
-    expectGilded
-      "--\t c"
-      "--\t c\n"
+    Hspec.it "leaves leading blank space in comments" $ do
+      expectGilded
+        "--\t c"
+        "--\t c\n"
 
-  Hspec.it "trims trailing blank space from comments" $ do
-    expectGilded
-      "-- c\t \n"
-      "-- c\n"
+    Hspec.it "trims trailing blank space from comments" $ do
+      expectGilded
+        "-- c\t \n"
+        "-- c\n"
 
-  Hspec.it "normalizes Windows line endings in comments" $ do
-    expectGilded
-      "-- c\r\n"
-      "-- c\n"
+    Hspec.it "normalizes Windows line endings in comments" $ do
+      expectGilded
+        "-- c\r\n"
+        "-- c\n"
+
+    Hspec.it "formats a comment before a field" $ do
+      expectGilded
+        "-- c\nf: 1"
+        "-- c\nf: 1\n"
+
+    Hspec.it "formats a comment after a field" $ do
+      expectGilded
+        "f: 1\n-- c"
+        "f: 1\n-- c\n"
+
+    Hspec.it "formats a comment before a field's value" $ do
+      expectGilded
+        "f:\n -- c\n 1"
+        "f:\n  -- c\n  1\n"
+
+    Hspec.it "formats a comment in a field's value" $ do
+      expectGilded
+        "f:\n 1\n -- c\n 2"
+        "f:\n  -- c\n  1\n  2\n"
+
+    Hspec.it "formats a comment trailing an inline field's value" $ do
+      -- This comment is indented beyond the beginning of the field, so it
+      -- belongs to the field. That forces the field value into block mode,
+      -- even though the input was inline.
+      expectGilded
+        "f: 1\n -- c"
+        "f:\n  1\n  -- c\n"
+
+    Hspec.it "formats a comment trailing an inline field's value with an extra blank line" $ do
+      -- Even though there's an extra blank line separating the field from the
+      -- comment, the comment is still indented past the field.
+      expectGilded
+        "f: 1\n\n -- c"
+        "f:\n  1\n  -- c\n"
+
+    Hspec.it "formats a comment after an inline field's value" $ do
+      expectGilded
+        "f: 1\n-- c"
+        "f: 1\n-- c\n"
+
+    Hspec.it "formats a comment trailing a block field's value" $ do
+      expectGilded
+        "f:\n 1\n -- c"
+        "f:\n  1\n  -- c\n"
+
+    Hspec.it "formats a comment trailing a block field's value with an extra blank line" $ do
+      -- Same as above, but there's an extra blank line.
+      expectGilded
+        "f:\n 1\n\n -- c"
+        "f:\n  1\n  -- c\n"
+
+    Hspec.it "formats a comment after a block field's value" $ do
+      expectGilded
+        "f:\n 1\n-- c"
+        "f:\n  1\n\n-- c\n"
+
+    Hspec.it "formats a comment trailing a field with multiple values" $ do
+      expectGilded
+        "f: 1\n 2\n -- c"
+        "f:\n  1\n  2\n  -- c\n"
+
+    Hspec.it "formats a comment trailing a field with multiple values with an extra blank line" $ do
+      -- Same as above, but there's an extra blank line.
+      expectGilded
+        "f: 1\n 2\n\n -- c"
+        "f:\n  1\n  2\n  -- c\n"
+
+    Hspec.it "formats a comment after a field with multiple values" $ do
+      expectGilded
+        "f: 1\n 2\n-- c"
+        "f:\n  1\n  2\n\n-- c\n"
+
+    Hspec.it "formats a comment before a section" $ do
+      expectGilded
+        "-- c\ns"
+        "-- c\ns\n"
+
+    Hspec.it "formats a comment trailing a section" $ do
+      -- This comment is indented beyond the beginning of the section, so it
+      -- belongs to the section.
+      expectGilded
+        "s\n -- c"
+        "s\n  -- c\n"
+
+    Hspec.it "formats a comment trailing a section with extra blank line" $ do
+      -- Same as above, but there's an extra blank line.
+      expectGilded
+        "s\n\n -- c"
+        "s\n  -- c\n"
+
+    Hspec.it "formats a comment after a section's value" $ do
+      -- This is a minimal reproduction of the issue reported here:
+      -- <https://github.com/tfausak/cabal-gild/issues/122>.
+      expectGilded
+        "s\n f: 1\n -- c"
+        "s\n  f: 1\n  -- c\n"
+
+    Hspec.it "formats a comment after a section" $ do
+      expectGilded
+        "s\n-- c"
+        "s\n\n-- c\n"
+
+    Hspec.it "correctly indents a comment in a section" $ do
+      expectGilded
+        "s\n -- c\n f: 1"
+        "s\n  -- c\n  f: 1\n"
+
+    Hspec.it "floats comments on unknown fields" $ do
+      expectGilded
+        "unknown-field:\n the\n -- some comment\n value"
+        "unknown-field:\n  -- some comment\n  the\n  value\n"
+
+    Hspec.it "floats comments when parsing field fails" $ do
+      expectGilded
+        "build-depends:\n >> no\n -- comment\n parse"
+        "build-depends:\n  -- comment\n  >> no\n  parse\n"
+
+    Hspec.it "does not move an indented comment inside a field" $ do
+      -- Even though the comment is indented beyond the beginning of the field,
+      -- it does not belong to the field because it comes before the field.
+      expectGilded
+        " -- c\nf: 1"
+        "-- c\nf: 1\n"
+
+    Hspec.it "does not move an indented comment inside a section" $ do
+      -- Even though the comment is indented beyond the beginning of the
+      -- section, it does not belong to the section because it comes before the
+      -- section.
+      expectGilded
+        " -- c\ns"
+        "-- c\ns\n"
+
+    Hspec.it "sorts inline field comments correctly" $ do
+      expectGilded
+        "-- a\n-- b\nf: 1\n -- c\n -- d"
+        "-- a\n-- b\nf:\n  1\n  -- c\n  -- d\n"
+
+    Hspec.it "sorts block field comments correctly" $ do
+      expectGilded
+        "-- a\n-- b\nf:\n -- c\n -- d\n 1\n -- e\n -- f\n 2\n -- g\n -- h"
+        "-- a\n-- b\nf:\n  -- c\n  -- d\n  -- e\n  -- f\n  1\n  2\n  -- g\n  -- h\n"
+
+    Hspec.it "sorts section comments correctly" $ do
+      expectGilded
+        "-- a\n-- b\ns\n -- c\n -- d"
+        "-- a\n-- b\ns\n  -- c\n  -- d\n"
 
   Hspec.it "formats a field without a value" $ do
     expectGilded
@@ -432,51 +600,6 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     expectGilded
       "s\n f:\n  1\n  2"
       "s\n  f:\n    1\n    2\n"
-
-  Hspec.it "formats a comment before a field" $ do
-    expectGilded
-      "-- c\nf: 1"
-      "-- c\nf: 1\n"
-
-  Hspec.it "formats a comment after a field" $ do
-    expectGilded
-      "f: 1\n-- c"
-      "f: 1\n-- c\n"
-
-  Hspec.it "formats a comment before a field's value" $ do
-    expectGilded
-      "f:\n -- c\n 1"
-      "f:\n  -- c\n  1\n"
-
-  Hspec.it "formats a comment in a field's value" $ do
-    expectGilded
-      "f:\n 1\n -- c\n 2"
-      "f:\n  -- c\n  1\n  2\n"
-
-  Hspec.it "formats a comment after a field's value" $ do
-    expectGilded
-      "f:\n 1\n -- c"
-      "f:\n  1\n\n-- c\n"
-
-  Hspec.it "formats a comment after a field with multiple values" $ do
-    expectGilded
-      "f: 1\n 2\n-- c"
-      "f:\n  1\n  2\n\n-- c\n"
-
-  Hspec.it "formats a comment before a section" $ do
-    expectGilded
-      "-- c\ns"
-      "-- c\ns\n"
-
-  Hspec.it "formats a comment after a section" $ do
-    expectGilded
-      "s\n-- c"
-      "s\n\n-- c\n"
-
-  Hspec.it "correctly indents a comment in a section" $ do
-    expectGilded
-      "s\n -- c\n f: 1"
-      "s\n  -- c\n  f: 1\n"
 
   Hspec.describe "description" $ do
     -- These tests apply to other "free text" fields as well. The description
@@ -635,7 +758,22 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     Hspec.it "formats impl without version range" $ do
       expectGilded
         "if impl ( ghc )"
-        "if impl(ghc >=0)\n"
+        "if impl(ghc)\n"
+
+    Hspec.it "formats complex impl version range" $ do
+      expectGilded
+        "if impl ( ghc > 8 && < 9 )"
+        "if impl(ghc >8 && <9)\n"
+
+    Hspec.it "formats impl with wildcard version" $ do
+      expectGilded
+        "if impl ( ghc == 9.10. * )"
+        "if impl(ghc ==9.10.*)\n"
+
+    Hspec.it "formats complex condition with wildcard version" $ do
+      expectGilded
+        "if ( ! flag ( hlint ) ) || ( impl ( ghc == 9.10. * ) || impl ( ghc >= 9.14 ) )"
+        "if (!flag(hlint)) || (impl(ghc ==9.10.*) || impl(ghc >=9.14))\n"
 
     Hspec.it "formats os" $ do
       expectGilded
@@ -736,6 +874,11 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     expectGilded
       "tested-with: GHC == 9.8.1 , GHC == 9.6.4"
       "tested-with:\n  ghc ==9.6.4\n  ghc ==9.8.1\n"
+
+  Hspec.it "formats complex tested-with version range" $ do
+    expectGilded
+      "tested-with: GHC > 8 && < 9"
+      "tested-with: ghc >8 && <9\n"
 
   Hspec.it "sorts data-files" $ do
     expectGilded
@@ -859,6 +1002,11 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "library\n default-extensions: b a"
       "library\n  default-extensions:\n    a\n    b\n"
 
+  Hspec.it "sorts default-extensions case insensitively" $ do
+    expectGilded
+      "library\n default-extensions: B a"
+      "library\n  default-extensions:\n    a\n    B\n"
+
   Hspec.it "sorts known extensions by name" $ do
     expectGilded
       "library\n default-extensions: DerivingVia BlockArguments"
@@ -889,10 +1037,20 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "library\n other-extensions: b a"
       "library\n  other-extensions:\n    a\n    b\n"
 
+  Hspec.it "sorts other-extensions case insensitively" $ do
+    expectGilded
+      "library\n other-extensions: B a"
+      "library\n  other-extensions:\n    a\n    B\n"
+
   Hspec.it "sorts extensions" $ do
     expectGilded
       "library\n extensions: b a"
       "library\n  extensions:\n    a\n    b\n"
+
+  Hspec.it "sorts extensions case insensitively" $ do
+    expectGilded
+      "library\n extensions: B a"
+      "library\n  extensions:\n    a\n    B\n"
 
   Hspec.it "sorts build-depends" $ do
     expectGilded
@@ -913,6 +1071,11 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     expectGilded
       "cabal-version: 3.0\nlibrary\n build-depends: p:{b,a}"
       "cabal-version: 3.0\n\nlibrary\n  build-depends: p:{a, b}\n"
+
+  Hspec.it "sorts sub-libraries case insensitively in build-depends" $ do
+    expectGilded
+      "cabal-version: 3.0\nlibrary\n build-depends: p:{B,a}"
+      "cabal-version: 3.0\n\nlibrary\n  build-depends: p:{a, B}\n"
 
   Hspec.it "removes duplicate options" $ do
     -- This is kind of silly because there's only one possible foreign library
@@ -1041,25 +1204,55 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "library\n mixins: q (M, N as O), p"
       "library\n  mixins:\n    p,\n    q (M, N as O)\n"
 
+  Hspec.it "sorts mixins case insensitively" $ do
+    expectGilded
+      "library\n mixins: B, a"
+      "library\n  mixins:\n    a,\n    B\n"
+
+  Hspec.it "sorts mixin sub-libraries case insensitively" $ do
+    expectGilded
+      "cabal-version: 3.4\nlibrary\n mixins: p:B, p:a"
+      "cabal-version: 3.4\n\nlibrary\n  mixins:\n    p:a,\n    p:B,\n"
+
   Hspec.it "sorts hiding in mixins" $ do
     expectGilded
       "library\n mixins: p hiding (N, M)"
       "library\n  mixins: p hiding (M, N)\n"
+
+  Hspec.it "sorts hiding in mixins case insensitively" $ do
+    expectGilded
+      "library\n mixins: p hiding (MB, Ma)"
+      "library\n  mixins: p hiding (Ma, MB)\n"
 
   Hspec.it "sorts modules in mixins" $ do
     expectGilded
       "library\n mixins: p (N, M)"
       "library\n  mixins: p (M, N)\n"
 
+  Hspec.it "sorts modules in mixins case insensitively" $ do
+    expectGilded
+      "library\n mixins: p (MB, Ma)"
+      "library\n  mixins: p (Ma, MB)\n"
+
   Hspec.it "sorts hiding in mixins requires" $ do
     expectGilded
       "library\n mixins: p requires hiding (N, M)"
       "library\n  mixins: p requires hiding (M, N)\n"
 
+  Hspec.it "sorts hiding in mixins requires case insensitively" $ do
+    expectGilded
+      "library\n mixins: p requires hiding (MB, Ma)"
+      "library\n  mixins: p requires hiding (Ma, MB)\n"
+
   Hspec.it "sorts modules in mixins requires" $ do
     expectGilded
       "library\n mixins: p requires (N, M)"
       "library\n  mixins: p requires (M, N)\n"
+
+  Hspec.it "sorts modules in mixins requires case insensitively" $ do
+    expectGilded
+      "library\n mixins: p requires (MB, Ma)"
+      "library\n  mixins: p requires (Ma, MB)\n"
 
   Hspec.it "does not sort ghc-options" $ do
     expectGilded
@@ -1100,6 +1293,11 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     expectGilded
       "cabal-version: 3.0\ncustom-setup\n setup-depends: p:{b,a}"
       "cabal-version: 3.0\n\ncustom-setup\n  setup-depends: p:{a, b}\n"
+
+  Hspec.it "sorts sub-libraries case insensitively in setup-depends" $ do
+    expectGilded
+      "cabal-version: 3.0\ncustom-setup\n setup-depends: p:{B,a}"
+      "cabal-version: 3.0\n\ncustom-setup\n  setup-depends: p:{a, B}\n"
 
   Hspec.it "discovers an exposed module" $ do
     expectDiscover
@@ -1290,6 +1488,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             ["--input", FilePath.combine d "io.cabal"]
             [(Input.File $ FilePath.combine d "io.cabal", String.toUtf8 "library\n -- cabal-gild: discover src --exclude src/N.hs\n exposed-modules:")]
             (d, [["src", "M.hs"], ["src", "N.hs"]])
+            False
     a `Hspec.shouldSatisfy` Either.isRight
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.singleton Output.Stdout (String.toUtf8 "library\n  -- cabal-gild: discover src --exclude src/N.hs\n  exposed-modules: M\n")
@@ -1312,6 +1511,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             []
             [(Input.Stdin, String.toUtf8 "-- cabal-gild: discover --unknown\nsignatures:")]
             (".", [])
+            False
     a `shouldBeFailure` UnknownOption.UnknownOption "--unknown"
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
@@ -1322,6 +1522,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             []
             [(Input.Stdin, String.toUtf8 "-- cabal-gild: discover --exclude\nsignatures:")]
             (".", [])
+            False
     a `shouldBeFailure` InvalidOption.InvalidOption "option `--exclude' requires an argument PATTERN"
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
@@ -1485,6 +1686,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             ["--input", FilePath.combine d "io.cabal"]
             [(Input.File $ FilePath.combine d "io.cabal", String.toUtf8 "library\n -- cabal-gild: discover src --include src/M.hs\n exposed-modules:")]
             (d, [["src", "M.hs"], ["src", "N.hs"]])
+            False
     a `Hspec.shouldSatisfy` Either.isRight
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.singleton Output.Stdout (String.toUtf8 "library\n  -- cabal-gild: discover src --include src/M.hs\n  exposed-modules: M\n")
@@ -1549,21 +1751,97 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "-- cabal-gild: discover\nlicense-files:"
       "-- cabal-gild: discover\nlicense-files: example.txt\n"
 
-  Hspec.it "floats comments on unknown fields" $ do
-    expectGilded
-      "unknown-field:\n the\n -- some comment\n value"
-      "unknown-field:\n  -- some comment\n  the\n  value\n"
-
-  Hspec.it "floats comments when parsing field fails" $ do
-    expectGilded
-      "build-depends:\n >> no\n -- comment\n parse"
-      "build-depends:\n  -- comment\n  >> no\n  parse\n"
-
   Hspec.it "only discovers modules in given directories" $ do
     expectDiscover
       (".", [["Setup.hs"], ["source", "Example.hs"]])
       "-- cabal-gild: discover source\nexposed-modules:"
       "-- cabal-gild: discover source\nexposed-modules: Example\n"
+
+  Hspec.it "keeps an explicit sub-library name" $ do
+    expectGilded
+      "cabal-version: 3.0\nbuild-depends: x:x"
+      "cabal-version: 3.0\nbuild-depends: x:x\n"
+
+  Hspec.it "keeps a singleton set of sub-library names" $ do
+    expectGilded
+      "cabal-version: 3.0\nbuild-depends: x:{ x }"
+      "cabal-version: 3.0\nbuild-depends: x:{x}\n"
+
+  Hspec.describe "version ranges" $ do
+    Hspec.it "implicit" $ do
+      expectGilded
+        "build-depends:  x"
+        "build-depends: x\n"
+
+    Hspec.it "any" $ do
+      expectGilded
+        "build-depends: x  -any"
+        "build-depends: x -any\n"
+
+    Hspec.it "none" $ do
+      expectGilded
+        "build-depends: x  -none"
+        "build-depends: x -none\n"
+
+    Hspec.it "this" $ do
+      expectGilded
+        "build-depends: x == 1"
+        "build-depends: x ==1\n"
+
+    Hspec.it "later" $ do
+      expectGilded
+        "build-depends: x > 1"
+        "build-depends: x >1\n"
+
+    Hspec.it "or later" $ do
+      expectGilded
+        "build-depends: x >= 1"
+        "build-depends: x >=1\n"
+
+    Hspec.it "earlier" $ do
+      expectGilded
+        "build-depends: x < 1"
+        "build-depends: x <1\n"
+
+    Hspec.it "or earlier" $ do
+      expectGilded
+        "build-depends: x <= 1"
+        "build-depends: x <=1\n"
+
+    Hspec.it "union" $ do
+      expectGilded
+        "build-depends: x > 1 || < 1"
+        "build-depends: x >1 || <1\n"
+
+    Hspec.it "intersect" $ do
+      expectGilded
+        "build-depends: x > 1 && < 2"
+        "build-depends: x >1 && <2\n"
+
+    Hspec.it "within" $ do
+      expectGilded
+        "build-depends: x == 1.*"
+        "build-depends: x ==1.*\n"
+
+    Hspec.it "major bound" $ do
+      expectGilded
+        "build-depends: x ^>= 1"
+        "build-depends: x ^>=1\n"
+
+    Hspec.it "set" $ do
+      expectGilded
+        "build-depends: x == { 1 , 2 }"
+        "build-depends: x =={1, 2}\n"
+
+    Hspec.it "sorts set" $ do
+      expectGilded
+        "build-depends: x == { 2, 1 }"
+        "build-depends: x =={1, 2}\n"
+
+    Hspec.it "paren" $ do
+      expectGilded
+        "build-depends: x ( == 1 )"
+        "build-depends: x (==1)\n"
 
   Hspec.around_ withTemporaryDirectory
     . Hspec.it "discovers modules on the file system"
@@ -1602,6 +1880,31 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             "    N.M2"
           ]
 
+  Hspec.it "successfully determine that stdin is terminal and find/format the cabal file" $ do
+    let filePath = "stdin-is-terminal.cabal"
+        fileData = "FOO :  bar"
+        (a, s, w) =
+          runGild
+            []
+            [(Input.File "stdin-is-terminal.cabal", String.toUtf8 fileData)]
+            (".", [[filePath]])
+            True
+    a `Hspec.shouldSatisfy` Either.isRight
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.singleton (Output.File filePath) (String.toUtf8 "foo: bar\n")
+
+  Hspec.it "fails if no cabal file is found" $ do
+    let (a, s, w) = runGild [] [] (".", []) True
+    a `shouldBeFailure` NoCabalFileFound.NoCabalFileFound
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.empty
+
+  Hspec.it "fails if more than one cabal file is found" $ do
+    let (a, s, w) = runGild [] [] (".", [["0.cabal"], ["1.cabal"]]) True
+    a `shouldBeFailure` MoreThanOneCabalFileFound.MoreThanOneCabalFileFound
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.empty
+
 withTemporaryDirectory :: IO () -> IO ()
 withTemporaryDirectory =
   Temp.withSystemTempDirectory "cabal-gild"
@@ -1627,7 +1930,7 @@ expectStable ::
   ByteString.ByteString ->
   Hspec.Expectation
 expectStable files input = do
-  let (a, s, w) = runGild [] [(Input.Stdin, input)] files
+  let (a, s, w) = runGild [] [(Input.Stdin, input)] files False
   a `Hspec.shouldSatisfy` Either.isRight
   w `Hspec.shouldBe` []
   output <- case Map.toList s of
@@ -1642,7 +1945,7 @@ expectDiscover ::
   String ->
   Hspec.Expectation
 expectDiscover files input expected = do
-  let (a, s, w) = runGild [] [(Input.Stdin, String.toUtf8 input)] files
+  let (a, s, w) = runGild [] [(Input.Stdin, String.toUtf8 input)] files False
   a `Hspec.shouldSatisfy` Either.isRight
   w `Hspec.shouldBe` []
   actual <- case Map.toList s of
@@ -1655,20 +1958,25 @@ runGild ::
   [String] ->
   [(Input.Input, ByteString.ByteString)] ->
   (String, [[String]]) ->
+  Bool ->
   (Either E (), S, W)
-runGild arguments inputs files =
+runGild arguments inputs files tty =
   runTest
     (Gild.mainWith arguments)
-    ( Map.fromList inputs,
-      fmap FilePath.joinPath <$> uncurry Map.singleton files
+    ( ( Map.fromList inputs,
+        fmap FilePath.joinPath <$> uncurry Map.singleton files
+      ),
+      tty
     )
     Map.empty
 
 expectException ::
   (Stack.HasCallStack, Eq e, Exception.Exception e) =>
-  [String] -> e -> Hspec.Expectation
+  [String] ->
+  e ->
+  Hspec.Expectation
 expectException flags exception = do
-  let (a, s, w) = runGild flags [] (".", [])
+  let (a, s, w) = runGild flags [] (".", []) False
   a `shouldBeFailure` exception
   w `Hspec.shouldBe` []
   s `Hspec.shouldBe` Map.empty
@@ -1680,7 +1988,12 @@ runTest t r = Identity.runIdentity . RWST.runRWST (ExceptT.runExceptT $ runTestT
 
 type E = Exception.SomeException
 
-type R = (Map.Map Input.Input ByteString.ByteString, Map.Map FilePath [FilePath])
+type R =
+  ( ( Map.Map Input.Input ByteString.ByteString, -- For 'MonadRead'.
+      Map.Map FilePath [FilePath] -- For 'MonadWalk'.
+    ),
+    Bool -- For 'MonadHandle'.
+  )
 
 type S = Map.Map Output.Output ByteString.ByteString
 
@@ -1696,7 +2009,7 @@ instance (Monad m) => MonadLog.MonadLog (TestT m) where
 
 instance (Monad m) => MonadRead.MonadRead (TestT m) where
   read k = do
-    m <- TestT . Trans.lift . RWST.asks $ Map.lookup k . fst
+    m <- TestT . Trans.lift . RWST.asks $ Map.lookup k . fst . fst
     case m of
       Nothing -> Exception.throwM . userError $ "read " <> show k
       Just x -> pure x
@@ -1706,7 +2019,7 @@ instance (Monad m) => Exception.MonadThrow (TestT m) where
 
 instance (Monad m) => MonadWalk.MonadWalk (TestT m) where
   walk d i x = do
-    result <- TestT . Trans.lift . RWST.asks $ Map.lookup d . snd
+    result <- TestT . Trans.lift . RWST.asks $ Map.lookup d . snd . fst
     case result of
       Nothing -> Exception.throwM . userError $ "walk " <> show d
       Just fs ->
@@ -1717,3 +2030,6 @@ instance (Monad m) => MonadWalk.MonadWalk (TestT m) where
 
 instance (Monad m) => MonadWrite.MonadWrite (TestT m) where
   write k = TestT . Trans.lift . RWST.modify . Map.insert k
+
+instance (Monad m) => MonadHandle.MonadHandle (TestT m) where
+  isTerminalDevice = const . TestT . Trans.lift $ RWST.asks snd

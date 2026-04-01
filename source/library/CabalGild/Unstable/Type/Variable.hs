@@ -1,6 +1,7 @@
 module CabalGild.Unstable.Type.Variable where
 
 import qualified CabalGild.Unstable.Extra.CharParsing as Parse
+import qualified CabalGild.Unstable.Type.VersionRange as VersionRange
 import qualified Data.Char as Char
 import qualified Distribution.Compat.CharParsing as Parse
 import qualified Distribution.Compiler as Compiler
@@ -8,7 +9,6 @@ import qualified Distribution.Parsec as Parsec
 import qualified Distribution.Pretty as Pretty
 import qualified Distribution.System as System
 import qualified Distribution.Types.Flag as Flag
-import qualified Distribution.Types.VersionRange as VersionRange
 import qualified Text.PrettyPrint as PrettyPrint
 
 -- | Similar to 'Distribution.Types.ConfVar.ConfVar', but with different
@@ -16,7 +16,7 @@ import qualified Text.PrettyPrint as PrettyPrint
 data Variable
   = Arch System.Arch
   | Flag Flag.FlagName
-  | Impl Compiler.CompilerFlavor VersionRange.VersionRange
+  | Impl Compiler.CompilerFlavor (Maybe VersionRange.VersionRange)
   | Os System.OS
   deriving (Eq, Show)
 
@@ -41,14 +41,14 @@ parseFlag :: (Parsec.CabalParsing m) => m Flag.FlagName
 parseFlag = Parse.token "flag" *> Parse.parens (Parsec.parsec <* Parse.spaces)
 
 -- | Parses an 'Impl'.
-parseImpl :: (Parsec.CabalParsing m) => m (Compiler.CompilerFlavor, VersionRange.VersionRange)
+parseImpl :: (Parsec.CabalParsing m) => m (Compiler.CompilerFlavor, Maybe VersionRange.VersionRange)
 parseImpl = do
   Parse.token "impl"
   Parse.parens $
     (,)
       <$> Parsec.parsec
       <* Parse.spaces
-      <*> Parse.option VersionRange.anyVersion Parsec.parsec
+      <*> Parse.optional Parsec.parsec
       <* Parse.spaces
 
 -- | Parses an 'Os'.
@@ -77,7 +77,7 @@ prettyVariable x =
         <> PrettyPrint.parens (Pretty.pretty y)
     Impl y z ->
       PrettyPrint.text "impl"
-        <> PrettyPrint.parens (Pretty.pretty y PrettyPrint.<+> Pretty.pretty z)
+        <> PrettyPrint.parens (Pretty.pretty y PrettyPrint.<+> foldMap Pretty.pretty z)
     Os y ->
       PrettyPrint.text "os"
         <> PrettyPrint.parens (Pretty.pretty y)

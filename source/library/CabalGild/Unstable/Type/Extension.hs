@@ -1,5 +1,6 @@
 module CabalGild.Unstable.Type.Extension where
 
+import qualified CabalGild.Unstable.Extra.String as String
 import qualified Data.Ord as Ord
 import qualified Distribution.Parsec as Parsec
 import qualified Distribution.Pretty as Pretty
@@ -14,7 +15,8 @@ newtype Extension = Extension
   deriving (Eq, Show)
 
 instance Ord Extension where
-  compare = Ord.comparing Pretty.prettyShow
+  compare = Ord.comparing $ \x ->
+    let y = Pretty.prettyShow x in (String.toCaseFold y, y)
 
 instance Parsec.Parsec Extension where
   parsec = Extension <$> Parsec.parsec

@@ -9,6 +9,7 @@ import qualified CabalGild.Unstable.Extra.ModuleName as ModuleName
 import qualified CabalGild.Unstable.Extra.Name as Name
 import qualified CabalGild.Unstable.Extra.String as String
 import qualified CabalGild.Unstable.Type.Comment as Comment
+import qualified CabalGild.Unstable.Type.Comments as Comments
 import qualified CabalGild.Unstable.Type.DiscoverTarget as DiscoverTarget
 import qualified CabalGild.Unstable.Type.Pragma as Pragma
 import qualified Control.Applicative as Applicative
@@ -34,17 +35,17 @@ import qualified System.FilePath as FilePath
 -- | Evaluates pragmas within the given field. Or, if the field is a section,
 -- evaluates pragmas recursively within the fields of the section.
 field ::
-  (Exception.MonadThrow m, MonadWalk.MonadWalk m, Show p, Show q) =>
+  (Exception.MonadThrow m, MonadWalk.MonadWalk m) =>
   FilePath ->
-  Fields.Field (p, [Comment.Comment q]) ->
-  m (Fields.Field (p, [Comment.Comment q]))
+  Fields.Field (p, Comments.Comments q) ->
+  m (Fields.Field (p, Comments.Comments q))
 field p f = case f of
   Fields.Field n fls -> fmap (Maybe.fromMaybe f) . MaybeT.runMaybeT $ do
     dt <-
       maybe Applicative.empty pure $
         Map.lookup (Name.value n) relevantFieldNames
-    comment <- MaybeT.hoistMaybe . Utils.safeLast . snd $ Name.annotation n
-    Pragma.Pragma (Discover ds) <- MaybeT.hoistMaybe . Parsec.simpleParsecBS $ Comment.value comment
+    comment <- hoistMaybe . Utils.safeLast . Comments.toList . snd $ Name.annotation n
+    Pragma.Pragma (Discover ds) <- hoistMaybe . Parsec.simpleParsecBS $ Comment.value comment
     discover p n fls dt ds
   Fields.Section n sas fs -> Fields.Section n sas <$> traverse (field p) fs
 
@@ -65,11 +66,11 @@ instance Parsec.Parsec Discover where
 discover ::
   (Exception.MonadThrow m, MonadWalk.MonadWalk m) =>
   FilePath ->
-  Fields.Name (p, [c]) ->
-  [Fields.FieldLine (p, [c])] ->
+  Fields.Name (p, Comments.Comments q) ->
+  [Fields.FieldLine (p, Comments.Comments q)] ->
   DiscoverTarget.DiscoverTarget ->
   [String] ->
-  MaybeT.MaybeT m (Fields.Field (p, [c]))
+  MaybeT.MaybeT m (Fields.Field (p, Comments.Comments q))
 discover p n fls dt ds = do
   let (flgs, args, opts, errs) =
         GetOpt.getOpt'
@@ -92,19 +93,19 @@ discover p n fls dt ds = do
           . fmap clean
           $ if null incs then fmap (`FilePath.combine` "**") directories else incs
   files <- Trans.lift $ MonadWalk.walk root inclusions exclusions
-  let comments = concatMap (snd . FieldLine.annotation) fls
+  let comments = foldMap (snd . FieldLine.annotation) fls
       position =
         maybe (fst $ Name.annotation n) (fst . FieldLine.annotation) $
           Maybe.listToMaybe fls
       fieldLines = case dt of
         DiscoverTarget.Modules ->
-          zipWith ModuleName.toFieldLine ((,) position <$> comments : repeat [])
+          zipWith ModuleName.toFieldLine ((,) position <$> comments : repeat Comments.empty)
             . Maybe.mapMaybe (toModuleName directories)
             $ Maybe.mapMaybe (stripAnyExtension extensions . clean) files
         DiscoverTarget.Files ->
           zipWith
             (\a -> Fields.FieldLine a . String.toUtf8)
-            ((,) position <$> comments : repeat [])
+            ((,) position <$> comments : repeat Comments.empty)
             files
       -- This isn't great, but the comments have to go /somewhere/.
       name =
@@ -171,3 +172,8 @@ toModuleName :: [FilePath] -> FilePath -> Maybe ModuleName.ModuleName
 toModuleName ds f =
   Maybe.listToMaybe $
     Maybe.mapMaybe (ModuleName.fromFilePath . flip FilePath.makeRelative f) ds
+
+-- | This was added in @transformers-0.6.0.0@. See
+-- <https://hub.darcs.net/ross/transformers/issue/49>.
+hoistMaybe :: (Applicative f) => Maybe a -> MaybeT.MaybeT f a
+hoistMaybe = MaybeT.MaybeT . pure

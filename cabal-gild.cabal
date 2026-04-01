@@ -11,7 +11,7 @@ license-file: LICENSE.txt
 maintainer: Taylor Fausak
 name: cabal-gild
 synopsis: Formats package descriptions.
-version: 1.5.0.1
+version: 1.8.0.0
 
 source-repository head
   type: git
@@ -22,7 +22,7 @@ flag pedantic
   manual: True
 
 common library
-  build-depends: base ^>=4.18.0.0 || ^>=4.19.0.0 || ^>=4.20.0.0
+  build-depends: base ^>=4.20.0.0 || ^>=4.21.0.0 || ^>=4.22.0.0
   default-language: Haskell2010
   ghc-options:
     -Weverything
@@ -33,13 +33,11 @@ common library
     -Wno-missing-export-lists
     -Wno-missing-import-lists
     -Wno-missing-kind-signatures
+    -Wno-missing-role-annotations
     -Wno-missing-safe-haskell-mode
     -Wno-prepositive-qualified-module
     -Wno-safe
     -Wno-unsafe
-
-  if impl(ghc >=9.8)
-    ghc-options: -Wno-missing-role-annotations
 
   if flag(pedantic)
     ghc-options: -Werror
@@ -55,15 +53,15 @@ library
   import: library
   autogen-modules: Paths_cabal_gild
   build-depends:
-    Cabal-syntax ^>=3.10.1.0 || ^>=3.12.0.0,
-    bytestring ^>=0.11.4.0 || ^>=0.12.0.2,
-    containers ^>=0.6.7 || ^>=0.7,
+    Cabal-syntax ^>=3.12.0.0 || ^>=3.14.0.0 || ^>=3.16.0.0,
+    bytestring ^>=0.12.0.2,
+    containers ^>=0.7 || ^>=0.8,
     exceptions ^>=0.10.7,
     filepath ^>=1.4.100.1 || ^>=1.5.2.0,
     filepattern ^>=0.1.3,
     parsec ^>=3.1.16.1,
     pretty ^>=1.1.3.6,
-    text ^>=2.0.2 || ^>=2.1,
+    text ^>=2.1,
     transformers ^>=0.6.1.0,
 
   -- cabal-gild: discover source/library
@@ -79,6 +77,7 @@ library
     CabalGild.Unstable.Action.ReflowText
     CabalGild.Unstable.Action.Render
     CabalGild.Unstable.Action.StripBlanks
+    CabalGild.Unstable.Class.MonadHandle
     CabalGild.Unstable.Class.MonadLog
     CabalGild.Unstable.Class.MonadRead
     CabalGild.Unstable.Class.MonadWalk
@@ -88,6 +87,8 @@ library
     CabalGild.Unstable.Exception.InvalidLeniency
     CabalGild.Unstable.Exception.InvalidMode
     CabalGild.Unstable.Exception.InvalidOption
+    CabalGild.Unstable.Exception.MoreThanOneCabalFileFound
+    CabalGild.Unstable.Exception.NoCabalFileFound
     CabalGild.Unstable.Exception.ParseError
     CabalGild.Unstable.Exception.SpecifiedOutputWithCheckMode
     CabalGild.Unstable.Exception.SpecifiedStdinWithFileInput
@@ -99,37 +100,37 @@ library
     CabalGild.Unstable.Extra.Field
     CabalGild.Unstable.Extra.FieldLine
     CabalGild.Unstable.Extra.FilePath
+    CabalGild.Unstable.Extra.IncludeRenaming
+    CabalGild.Unstable.Extra.LibraryName
     CabalGild.Unstable.Extra.List
+    CabalGild.Unstable.Extra.Mixin
     CabalGild.Unstable.Extra.ModuleName
+    CabalGild.Unstable.Extra.ModuleRenaming
     CabalGild.Unstable.Extra.Name
+    CabalGild.Unstable.Extra.PackageName
     CabalGild.Unstable.Extra.SectionArg
     CabalGild.Unstable.Extra.String
+    CabalGild.Unstable.Extra.UnqualComponentName
     CabalGild.Unstable.Main
     CabalGild.Unstable.Type.Block
     CabalGild.Unstable.Type.Chunk
     CabalGild.Unstable.Type.Comment
+    CabalGild.Unstable.Type.Comments
     CabalGild.Unstable.Type.Condition
     CabalGild.Unstable.Type.Config
     CabalGild.Unstable.Type.Context
     CabalGild.Unstable.Type.Dependency
     CabalGild.Unstable.Type.DiscoverTarget
-    CabalGild.Unstable.Type.ExeDependency
     CabalGild.Unstable.Type.Extension
     CabalGild.Unstable.Type.Flag
-    CabalGild.Unstable.Type.ForeignLibOption
     CabalGild.Unstable.Type.Input
-    CabalGild.Unstable.Type.Language
-    CabalGild.Unstable.Type.LegacyExeDependency
     CabalGild.Unstable.Type.Leniency
     CabalGild.Unstable.Type.Line
     CabalGild.Unstable.Type.List
     CabalGild.Unstable.Type.Mixin
     CabalGild.Unstable.Type.Mode
-    CabalGild.Unstable.Type.ModuleReexport
     CabalGild.Unstable.Type.Optional
     CabalGild.Unstable.Type.Output
-    CabalGild.Unstable.Type.PkgconfigDependency
-    CabalGild.Unstable.Type.PkgconfigVersionRange
     CabalGild.Unstable.Type.Pragma
     CabalGild.Unstable.Type.Set
     CabalGild.Unstable.Type.SomeParsecParser
