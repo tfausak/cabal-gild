@@ -108,16 +108,16 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       ["--stdin=f", "--stdin=g"]
       $ DuplicateOption.DuplicateOption "stdin" "f" "g"
 
-  Hspec.it "reads from an input file" $ do
+  Hspec.it "formats a positional file in-place" $ do
     let (a, s, w) =
           runGild
-            ["--input", "input.cabal"]
+            ["input.cabal"]
             [(Input.File "input.cabal", String.toUtf8 "")]
             (".", [])
             False
     a `Hspec.shouldSatisfy` Either.isRight
-    w `Hspec.shouldSatisfy` (not . null)
-    s `Hspec.shouldBe` Map.singleton Output.Stdout (String.toUtf8 "")
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.empty
 
   Hspec.it "writes to an output file" $ do
     let (a, s, w) =
@@ -127,7 +127,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             (".", [])
             False
     a `Hspec.shouldSatisfy` Either.isRight
-    w `Hspec.shouldSatisfy` (not . null)
+    w `Hspec.shouldSatisfy` (not . null) -- deprecated flag
     s `Hspec.shouldBe` Map.singleton (Output.File "output.cabal") (String.toUtf8 "")
 
   Hspec.it "succeeds when checking formatted input" $ do
@@ -182,7 +182,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             (".", [])
             False
     a `shouldBeFailure` SpecifiedStdinWithFileInput.SpecifiedStdinWithFileInput
-    w `Hspec.shouldSatisfy` (not . null)
+    w `Hspec.shouldSatisfy` (not . null) -- deprecated flag
     s `Hspec.shouldBe` Map.empty
 
   Hspec.it "fails when --output is given with check mode" $ do
@@ -193,84 +193,51 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             (".", [])
             False
     a `shouldBeFailure` SpecifiedOutputWithCheckMode.SpecifiedOutputWithCheckMode
-    w `Hspec.shouldSatisfy` (not . null)
+    w `Hspec.shouldSatisfy` (not . null) -- deprecated flag
     s `Hspec.shouldBe` Map.empty
 
   Hspec.it "does not overwrite output when input is formatted" $ do
     let (a, s, w) =
           runGild
-            ["--io", "io.cabal"]
+            ["io.cabal"]
             [(Input.File "io.cabal", String.toUtf8 "")]
             (".", [])
             False
     a `Hspec.shouldSatisfy` Either.isRight
-    w `Hspec.shouldSatisfy` (not . null)
+    w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
 
-  Hspec.it "writes to stdout when input is formatted" $ do
+  Hspec.it "formats a positional file to output" $ do
     let (a, s, w) =
           runGild
-            ["--input", "p.cabal"]
-            [(Input.File "p.cabal", String.toUtf8 "")]
-            (".", [])
-            False
-    a `Hspec.shouldSatisfy` Either.isRight
-    w `Hspec.shouldSatisfy` (not . null)
-    s `Hspec.shouldBe` Map.singleton Output.Stdout (String.toUtf8 "")
-
-  Hspec.it "writes to output when input is formatted" $ do
-    let (a, s, w) =
-          runGild
-            ["--input", "p.cabal", "--output", "q.cabal"]
-            [(Input.File "p.cabal", String.toUtf8 "")]
-            (".", [])
-            False
-    a `Hspec.shouldSatisfy` Either.isRight
-    w `Hspec.shouldSatisfy` (not . null)
-    s `Hspec.shouldBe` Map.singleton (Output.File "q.cabal") (String.toUtf8 "")
-
-  Hspec.it "writes to output when stdin is formatted" $ do
-    let (a, s, w) =
-          runGild
-            ["--output", "q.cabal"]
-            [(Input.Stdin, String.toUtf8 "")]
-            (".", [])
-            False
-    a `Hspec.shouldSatisfy` Either.isRight
-    w `Hspec.shouldSatisfy` (not . null)
-    s `Hspec.shouldBe` Map.singleton (Output.File "q.cabal") (String.toUtf8 "")
-
-  Hspec.it "sets input and output simultaneously" $ do
-    let (a, s, w) =
-          runGild
-            ["--io", "io.cabal"]
+            ["io.cabal"]
             [(Input.File "io.cabal", String.toUtf8 "f:a")]
             (".", [])
             False
     a `Hspec.shouldSatisfy` Either.isRight
-    w `Hspec.shouldSatisfy` (not . null)
+    w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.singleton (Output.File "io.cabal") (String.toUtf8 "f: a\n")
 
   Hspec.it "does not overwrite CRLF file when lenient" $ do
     let (a, s, w) =
           runGild
-            ["--io", "p.cabal"]
+            ["p.cabal"]
             [(Input.File "p.cabal", String.toUtf8 "s\r\n")]
             (".", [])
             False
     a `Hspec.shouldSatisfy` Either.isRight
-    w `Hspec.shouldSatisfy` (not . null)
+    w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
 
   Hspec.it "overwrites CRLF file when strict" $ do
     let (a, s, w) =
           runGild
-            ["--crlf", "strict", "--io", "p.cabal"]
+            ["--crlf", "strict", "p.cabal"]
             [(Input.File "p.cabal", String.toUtf8 "s\r\n")]
             (".", [])
             False
     a `Hspec.shouldSatisfy` Either.isRight
-    w `Hspec.shouldSatisfy` (not . null)
+    w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.singleton (Output.File "p.cabal") (String.toUtf8 "s\n")
 
   Hspec.it "uses --stdin for discovery" $ do
@@ -1547,13 +1514,13 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     let d = "input"
         (a, s, w) =
           runGild
-            ["--input", FilePath.combine d "io.cabal"]
+            [FilePath.combine d "io.cabal"]
             [(Input.File $ FilePath.combine d "io.cabal", String.toUtf8 "library\n -- cabal-gild: discover src --exclude src/N.hs\n exposed-modules:")]
             (d, [["src", "M.hs"], ["src", "N.hs"]])
             False
     a `Hspec.shouldSatisfy` Either.isRight
-    w `Hspec.shouldSatisfy` (not . null)
-    s `Hspec.shouldBe` Map.singleton Output.Stdout (String.toUtf8 "library\n  -- cabal-gild: discover src --exclude src/N.hs\n  exposed-modules: M\n")
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.singleton (Output.File $ FilePath.combine d "io.cabal") (String.toUtf8 "library\n  -- cabal-gild: discover src --exclude src/N.hs\n  exposed-modules: M\n")
 
   Hspec.it "allows excluding simple wildcards" $ do
     expectDiscover
@@ -1904,13 +1871,13 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     let d = "input"
         (a, s, w) =
           runGild
-            ["--input", FilePath.combine d "io.cabal"]
+            [FilePath.combine d "io.cabal"]
             [(Input.File $ FilePath.combine d "io.cabal", String.toUtf8 "library\n -- cabal-gild: discover src --include src/M.hs\n exposed-modules:")]
             (d, [["src", "M.hs"], ["src", "N.hs"]])
             False
     a `Hspec.shouldSatisfy` Either.isRight
-    w `Hspec.shouldSatisfy` (not . null)
-    s `Hspec.shouldBe` Map.singleton Output.Stdout (String.toUtf8 "library\n  -- cabal-gild: discover src --include src/M.hs\n  exposed-modules: M\n")
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.singleton (Output.File $ FilePath.combine d "io.cabal") (String.toUtf8 "library\n  -- cabal-gild: discover src --include src/M.hs\n  exposed-modules: M\n")
 
   Hspec.it "discovers asm-sources" $ do
     expectDiscover
