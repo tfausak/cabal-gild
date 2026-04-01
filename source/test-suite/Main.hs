@@ -1,5 +1,6 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
+import qualified CabalGild.Unstable.Action.EvaluatePragmas.Version as Version
 import qualified CabalGild.Unstable.Class.MonadHandle as MonadHandle
 import qualified CabalGild.Unstable.Class.MonadLog as MonadLog
 import qualified CabalGild.Unstable.Class.MonadRead as MonadRead
@@ -1544,6 +1545,31 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "library\n -- cabal-gild: discover\n exposed-modules:\n  -- c\n  N"
       "library\n  -- c\n  -- cabal-gild: discover\n  exposed-modules:\n"
 
+  Hspec.it "inserts version comment below version pragma" $ do
+    expectGilded
+      "-- cabal-gild: version\nname: p"
+      (concat ["-- cabal-gild: version\n", versionComment, "\nname: p\n"])
+
+  Hspec.it "inserts version comment inside a section" $ do
+    expectGilded
+      "library\n -- cabal-gild: version\n build-depends: base"
+      (concat ["library\n  -- cabal-gild: version\n  ", versionComment, "\n  build-depends: base\n"])
+
+  Hspec.it "updates an existing generated version comment" $ do
+    expectGilded
+      "-- cabal-gild: version\n-- Generated with cabal-gild version 0.0.0.0\nname: p"
+      (concat ["-- cabal-gild: version\n", versionComment, "\nname: p\n"])
+
+  Hspec.it "does not modify non-pragma comments" $ do
+    expectGilded
+      "-- just a comment\nname: p"
+      "-- just a comment\nname: p\n"
+
+  Hspec.it "evaluates version pragma on multiple fields" $ do
+    expectGilded
+      "-- cabal-gild: version\nname: p\n-- cabal-gild: version\nversion: 0"
+      (concat ["-- cabal-gild: version\n", versionComment, "\nname: p\n-- cabal-gild: version\n", versionComment, "\nversion: 0\n"])
+
   Hspec.it "parses an empty brace section" $ do
     expectGilded
       "s{}"
@@ -1923,6 +1949,9 @@ shouldBeFailure result expected = case result of
 
 expectGilded :: (Stack.HasCallStack) => String -> String -> Hspec.Expectation
 expectGilded = expectDiscover (".", [])
+
+versionComment :: String
+versionComment = "--" ++ Version.generatedText
 
 expectStable ::
   (Stack.HasCallStack) =>

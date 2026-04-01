@@ -97,7 +97,7 @@ format filePath input = do
   ( StripBlanks.run
       Monad.>=> AttachComments.run
       Monad.>=> ReflowText.run csv
-      Monad.>=> EvaluatePragmas.run filePath -- . traceShowId
+      Monad.>=> EvaluatePragmas.run filePath
       Monad.>=> FormatFields.run csv
       Monad.>=> Render.run csv
     )
