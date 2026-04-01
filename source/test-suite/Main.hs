@@ -2306,7 +2306,7 @@ instance (Monad m) => Exception.MonadThrow (TestT m) where
   throwM = TestT . ExceptT.throwE . Exception.toException
 
 instance (Monad m) => Exception.MonadCatch (TestT m) where
-  catch (TestT m) h = TestT $ ExceptT.ExceptT $ do
+  catch (TestT m) h = TestT . ExceptT.ExceptT $ do
     result <- ExceptT.runExceptT m
     case result of
       Left e -> case Exception.fromException e of
