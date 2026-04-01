@@ -80,6 +80,7 @@ library
     CabalGild.Unstable.Action.StripBlanks
     CabalGild.Unstable.Class.MonadHandle
     CabalGild.Unstable.Class.MonadLog
+    CabalGild.Unstable.Class.MonadWarn
     CabalGild.Unstable.Class.MonadRead
     CabalGild.Unstable.Class.MonadWalk
     CabalGild.Unstable.Class.MonadWrite
