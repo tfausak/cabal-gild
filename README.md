@@ -269,3 +269,29 @@ library
 
 If a file would match both the `--include` pattern and the `--exclude` pattern,
 it will be excluded.
+
+#### `version`
+
+```
+-- cabal-gild: version
+```
+
+This pragma will insert a comment below it indicating which version of Gild
+produced the output. For example, given this input:
+
+``` cabal
+-- cabal-gild: version
+name: my-package
+```
+
+Gild will produce this output:
+
+``` cabal
+-- cabal-gild: version
+-- Generated with cabal-gild version 1.8.0.0
+name: my-package
+```
+
+On subsequent runs, the generated comment will be updated to reflect the
+current version of Gild. The pragma itself is left unchanged. This pragma can
+be used on any field or section.
