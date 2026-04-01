@@ -2014,7 +2014,6 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
         "build-depends: x (>= 1) && (< 2)"
         "build-depends: x (>=1) && (<2)\n"
 
-
   Hspec.around_ withTemporaryDirectory
     . Hspec.it "discovers modules on the file system"
     $ do
