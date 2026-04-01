@@ -55,12 +55,12 @@ options =
       ['i']
       [inputOption]
       (GetOpt.ReqArg Input "FILE")
-      "Sets the input file. Use '-' for standard input (STDIN).\nDefault: '-'",
+      "Deprecated. Sets the input file. Use a positional argument instead.",
     GetOpt.Option
       []
       [ioOption]
       (GetOpt.ReqArg IO "FILE")
-      "Shortcut for setting both the input and output files.",
+      "Deprecated. Shortcut for setting both the input and output files.\nUse a positional argument instead.",
     GetOpt.Option
       ['m']
       [modeOption]
@@ -70,7 +70,7 @@ options =
       ['o']
       [outputOption]
       (GetOpt.ReqArg Output "FILE")
-      "Sets the output file. Use '-' for standard output (STDOUT).\nDefault: '-'",
+      "Deprecated. Sets the output file. Use piping instead.",
     GetOpt.Option
       ['s']
       [stdinOption]

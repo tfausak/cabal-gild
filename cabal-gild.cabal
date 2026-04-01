@@ -96,7 +96,6 @@ library
     CabalGild.Unstable.Exception.ParseError
     CabalGild.Unstable.Exception.SpecifiedOutputWithCheckMode
     CabalGild.Unstable.Exception.SpecifiedStdinWithFileInput
-    CabalGild.Unstable.Exception.UnexpectedArgument
     CabalGild.Unstable.Exception.UnknownOption
     CabalGild.Unstable.Exception.UnsatisfiedRequire
     CabalGild.Unstable.Extra.ByteString
