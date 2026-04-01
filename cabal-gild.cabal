@@ -70,6 +70,7 @@ library
     CabalGild.Unstable.Action.AttachComments
     CabalGild.Unstable.Action.EvaluatePragmas
     CabalGild.Unstable.Action.EvaluatePragmas.Discover
+    CabalGild.Unstable.Action.EvaluatePragmas.Require
     CabalGild.Unstable.Action.EvaluatePragmas.Version
     CabalGild.Unstable.Action.ExtractComments
     CabalGild.Unstable.Action.FormatFields
@@ -94,6 +95,7 @@ library
     CabalGild.Unstable.Exception.SpecifiedStdinWithFileInput
     CabalGild.Unstable.Exception.UnexpectedArgument
     CabalGild.Unstable.Exception.UnknownOption
+    CabalGild.Unstable.Exception.UnsatisfiedRequire
     CabalGild.Unstable.Extra.ByteString
     CabalGild.Unstable.Extra.CharParsing
     CabalGild.Unstable.Extra.Either

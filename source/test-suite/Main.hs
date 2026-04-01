@@ -1617,6 +1617,84 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
           "-- cabal-gild: version\n-- Generated with cabal-gild version 0\n-- Generated with cabal-gild version 1"
           ("-- cabal-gild: version\n" <> versionComment <> "\n-- Generated with cabal-gild version 1\n")
 
+  Hspec.describe "require" $ do
+      Hspec.it "passes with a permissive range" $ do
+        expectGilded
+          "-- cabal-gild: require >= 0"
+          "-- cabal-gild: require >= 0\n"
+
+      Hspec.it "fails with an impossible range" $ do
+        let (a, _s, _w) =
+              runGild
+                []
+                [(Input.Stdin, String.toUtf8 "-- cabal-gild: require < 0")]
+                (".", [])
+                False
+        a `Hspec.shouldSatisfy` Either.isLeft
+
+      Hspec.it "works before a field" $ do
+        expectGilded
+          "-- cabal-gild: require >= 0\nfld: val"
+          "-- cabal-gild: require >= 0\nfld: val\n"
+
+      Hspec.it "works within a field" $ do
+        expectGilded
+          "fld:\n a\n -- cabal-gild: require >= 0\n b"
+          "fld:\n  -- cabal-gild: require >= 0\n  a\n  b\n"
+
+      Hspec.it "works after a field" $ do
+        expectGilded
+          "fld: val\n-- cabal-gild: require >= 0"
+          "fld: val\n-- cabal-gild: require >= 0\n"
+
+      Hspec.it "works before a section" $ do
+        expectGilded
+          "-- cabal-gild: require >= 0\nsec"
+          "-- cabal-gild: require >= 0\nsec\n"
+
+      Hspec.it "works within a section" $ do
+        expectGilded
+          "sec\n -- cabal-gild: require >= 0"
+          "sec\n  -- cabal-gild: require >= 0\n"
+
+      Hspec.it "works after a section" $ do
+        expectGilded
+          "sec\n-- cabal-gild: require >= 0"
+          "sec\n\n-- cabal-gild: require >= 0\n"
+
+      Hspec.it "works with caret operator" $ do
+        expectGilded
+          "-- cabal-gild: require ^>= 1.8"
+          "-- cabal-gild: require ^>= 1.8\n"
+
+      Hspec.it "works with compound range" $ do
+        expectGilded
+          "-- cabal-gild: require >= 0 && < 99999"
+          "-- cabal-gild: require >= 0 && < 99999\n"
+
+      Hspec.it "multiple require pragmas all satisfied" $ do
+        expectGilded
+          "-- cabal-gild: require >= 0\n-- cabal-gild: require >= 0"
+          "-- cabal-gild: require >= 0\n-- cabal-gild: require >= 0\n"
+
+      Hspec.it "multiple require pragmas first fails" $ do
+        let (a, _s, _w) =
+              runGild
+                []
+                [(Input.Stdin, String.toUtf8 "-- cabal-gild: require < 0\n-- cabal-gild: require >= 0")]
+                (".", [])
+                False
+        a `Hspec.shouldSatisfy` Either.isLeft
+
+      Hspec.it "multiple require pragmas second fails" $ do
+        let (a, _s, _w) =
+              runGild
+                []
+                [(Input.Stdin, String.toUtf8 "-- cabal-gild: require >= 0\n-- cabal-gild: require < 0")]
+                (".", [])
+                False
+        a `Hspec.shouldSatisfy` Either.isLeft
+
   Hspec.it "parses an empty brace section" $ do
     expectGilded
       "s{}"
