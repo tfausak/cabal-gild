@@ -127,7 +127,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             (".", [])
             False
     a `Hspec.shouldSatisfy` Either.isRight
-    w `Hspec.shouldSatisfy` (not . null) -- deprecated flag
+    w `Hspec.shouldBe` ["warning: --output is deprecated, use piping instead"]
     s `Hspec.shouldBe` Map.singleton (Output.File "output.cabal") (String.toUtf8 "")
 
   Hspec.it "succeeds when checking formatted input" $ do
@@ -182,7 +182,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             (".", [])
             False
     a `shouldBeFailure` SpecifiedStdinWithFileInput.SpecifiedStdinWithFileInput
-    w `Hspec.shouldSatisfy` (not . null) -- deprecated flag
+    w `Hspec.shouldBe` ["warning: --input is deprecated, use a positional argument instead"]
     s `Hspec.shouldBe` Map.empty
 
   Hspec.it "fails when --output is given with check mode" $ do
@@ -193,7 +193,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             (".", [])
             False
     a `shouldBeFailure` SpecifiedOutputWithCheckMode.SpecifiedOutputWithCheckMode
-    w `Hspec.shouldSatisfy` (not . null) -- deprecated flag
+    w `Hspec.shouldBe` ["warning: --output is deprecated, use piping instead"]
     s `Hspec.shouldBe` Map.empty
 
   Hspec.it "does not overwrite output when input is formatted" $ do
@@ -259,7 +259,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             (".", [])
             False
     a `Hspec.shouldSatisfy` Either.isRight
-    w `Hspec.shouldSatisfy` (not . null)
+    w `Hspec.shouldBe` ["warning: --input is deprecated, use a positional argument instead"]
 
   Hspec.it "warns when --output is used" $ do
     let (a, _s, w) =
@@ -269,7 +269,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             (".", [])
             False
     a `Hspec.shouldSatisfy` Either.isRight
-    w `Hspec.shouldSatisfy` (not . null)
+    w `Hspec.shouldBe` ["warning: --output is deprecated, use piping instead"]
 
   Hspec.it "warns when --io is used" $ do
     let (a, _s, w) =
@@ -279,7 +279,10 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             (".", [])
             False
     a `Hspec.shouldSatisfy` Either.isRight
-    w `Hspec.shouldSatisfy` (not . null)
+    w `Hspec.shouldBe`
+      [ "warning: --input is deprecated, use a positional argument instead",
+        "warning: --output is deprecated, use piping instead"
+      ]
 
   Hspec.it "succeeds with empty input" $ do
     expectGilded
