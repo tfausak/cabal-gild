@@ -3,6 +3,7 @@
 import qualified CabalGild.Unstable.Action.EvaluatePragmas.Version as Version
 import qualified CabalGild.Unstable.Class.MonadHandle as MonadHandle
 import qualified CabalGild.Unstable.Class.MonadLog as MonadLog
+import qualified CabalGild.Unstable.Class.MonadWarn as MonadWarn
 import qualified CabalGild.Unstable.Class.MonadRead as MonadRead
 import qualified CabalGild.Unstable.Class.MonadWalk as MonadWalk
 import qualified CabalGild.Unstable.Class.MonadWrite as MonadWrite
@@ -2180,6 +2181,9 @@ newtype TestT m a = TestT
 
 instance (Monad m) => MonadLog.MonadLog (TestT m) where
   logLn = TestT . Trans.lift . RWST.tell . pure
+
+instance (Monad m) => MonadWarn.MonadWarn (TestT m) where
+  warnLn = TestT . Trans.lift . RWST.tell . pure
 
 instance (Monad m) => MonadRead.MonadRead (TestT m) where
   read k = do
