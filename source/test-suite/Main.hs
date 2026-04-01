@@ -279,10 +279,10 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             (".", [])
             False
     a `Hspec.shouldSatisfy` Either.isRight
-    w `Hspec.shouldBe`
-      [ "warning: --input is deprecated, use a positional argument instead",
-        "warning: --output is deprecated, use piping instead"
-      ]
+    w
+      `Hspec.shouldBe` [ "warning: --input is deprecated, use a positional argument instead",
+                         "warning: --output is deprecated, use piping instead"
+                       ]
 
   Hspec.it "succeeds with empty input" $ do
     expectGilded
