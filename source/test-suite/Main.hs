@@ -1735,6 +1735,101 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
         _ -> fail $ "impossible: " <> show s
       actual `Hspec.shouldBe` String.toUtf8 "-- cabal-gild: require < 0 trailing-garbage\n"
 
+  Hspec.describe "fragment" $ do
+    Hspec.it "replaces a field value from a fragment file" $ do
+      expectFragment
+        [(Input.File "build-deps.fragment", String.toUtf8 "build-depends: base, containers")]
+        "library\n -- cabal-gild: fragment build-deps.fragment\n build-depends: old-dep"
+        "library\n  -- cabal-gild: fragment build-deps.fragment\n  build-depends:\n    base,\n    containers\n"
+
+    Hspec.it "replaces a section body from a fragment file" $ do
+      expectFragment
+        [(Input.File "common.fragment", String.toUtf8 "common deps\n  build-depends: base\n  ghc-options: -Wall")]
+        "-- cabal-gild: fragment common.fragment\ncommon deps"
+        "-- cabal-gild: fragment common.fragment\ncommon deps\n  build-depends: base\n  ghc-options: -Wall\n"
+
+    Hspec.it "warns when fragment file is missing" $ do
+      expectFragmentWarning
+        []
+        "library\n -- cabal-gild: fragment missing.fragment\n build-depends: base"
+        "library\n  -- cabal-gild: fragment missing.fragment\n  build-depends: base\n"
+        ["warning: could not read fragment \"missing.fragment\""]
+
+    Hspec.it "warns when fragment has wrong field name" $ do
+      expectFragmentWarning
+        [(Input.File "tested-with.fragment", String.toUtf8 "tested-with: GHC ==8.0.2")]
+        "library\n -- cabal-gild: fragment tested-with.fragment\n build-depends: base"
+        "library\n  -- cabal-gild: fragment tested-with.fragment\n  build-depends: base\n"
+        ["warning: fragment contains field \"tested-with\", but expected \"build-depends\""]
+
+    Hspec.it "warns when fragment contains section but pragma is on field" $ do
+      expectFragmentWarning
+        [(Input.File "common.fragment", String.toUtf8 "common deps\n  build-depends: base")]
+        "library\n -- cabal-gild: fragment common.fragment\n build-depends: base"
+        "library\n  -- cabal-gild: fragment common.fragment\n  build-depends: base\n"
+        ["warning: fragment contains a section, but the pragma is on a field"]
+
+    Hspec.it "warns when fragment contains field but pragma is on section" $ do
+      expectFragmentWarning
+        [(Input.File "field.fragment", String.toUtf8 "build-depends: base")]
+        "-- cabal-gild: fragment field.fragment\ncommon deps\n  ghc-options: -Wall"
+        "-- cabal-gild: fragment field.fragment\ncommon deps\n  ghc-options: -Wall\n"
+        ["warning: fragment contains a field \"build-depends\", but the pragma is on a section"]
+
+    Hspec.it "warns when fragment file is empty" $ do
+      expectFragmentWarning
+        [(Input.File "empty.fragment", String.toUtf8 "")]
+        "library\n -- cabal-gild: fragment empty.fragment\n build-depends: base"
+        "library\n  -- cabal-gild: fragment empty.fragment\n  build-depends: base\n"
+        ["warning: fragment file is empty"]
+
+    Hspec.it "replaces an empty field value" $ do
+      expectFragment
+        [(Input.File "deps.fragment", String.toUtf8 "build-depends: base")]
+        "library\n -- cabal-gild: fragment deps.fragment\n build-depends:"
+        "library\n  -- cabal-gild: fragment deps.fragment\n  build-depends: base\n"
+
+    Hspec.it "is recognized as a known pragma" $ do
+      -- Should not produce "unknown pragma" warning (only the missing file warning)
+      expectFragmentWarning
+        []
+        "-- cabal-gild: fragment missing.fragment\nname: test"
+        "-- cabal-gild: fragment missing.fragment\nname: test\n"
+        ["warning: could not read fragment \"missing.fragment\""]
+
+    Hspec.it "warns when fragment file cannot be parsed" $ do
+      expectFragmentWarning
+        [(Input.File "bad.fragment", String.toUtf8 "not valid {cabal} syntax [")]
+        "library\n -- cabal-gild: fragment bad.fragment\n build-depends: base"
+        "library\n  -- cabal-gild: fragment bad.fragment\n  build-depends: base\n"
+        ["warning: could not parse fragment \"bad.fragment\""]
+
+    Hspec.it "warns when fragment section args do not match" $ do
+      expectFragmentWarning
+        [(Input.File "common.fragment", String.toUtf8 "common other\n  ghc-options: -Wall")]
+        "-- cabal-gild: fragment common.fragment\ncommon deps\n  build-depends: base"
+        "-- cabal-gild: fragment common.fragment\ncommon deps\n  build-depends: base\n"
+        ["warning: fragment contains section \"common other\", but expected \"common deps\""]
+
+    Hspec.it "resolves fragment paths relative to the cabal file directory" $ do
+      let allInputs =
+            [ (Input.Stdin, String.toUtf8 "library\n -- cabal-gild: fragment deps.fragment\n build-depends: old"),
+              (Input.File (FilePath.combine "subdir" "deps.fragment"), String.toUtf8 "build-depends: base")
+            ]
+          (a, s, w) = runGild ["--stdin", "subdir/test.cabal"] allInputs (".", []) False
+      a `Hspec.shouldSatisfy` Either.isRight
+      w `Hspec.shouldBe` []
+      actual <- case Map.toList s of
+        [(Output.Stdout, x)] -> pure x
+        _ -> fail $ "impossible: " <> show s
+      actual `Hspec.shouldBe` String.toUtf8 "library\n  -- cabal-gild: fragment deps.fragment\n  build-depends: base\n"
+
+    Hspec.it "replaces a top-level field value" $ do
+      expectFragment
+        [(Input.File "tested.fragment", String.toUtf8 "tested-with: GHC ==9.10.1")]
+        "name: test\n-- cabal-gild: fragment tested.fragment\ntested-with: GHC ==8.0.2"
+        "name: test\n-- cabal-gild: fragment tested.fragment\ntested-with: ghc ==9.10.1\n"
+
   Hspec.it "parses an empty brace section" $ do
     expectGilded
       "s{}"
@@ -2249,6 +2344,48 @@ expectDiscover files input expected = do
     _ -> fail $ "impossible: " <> show s
   actual `Hspec.shouldBe` String.toUtf8 expected
   expectStable files actual
+
+expectFragment ::
+  (Stack.HasCallStack) =>
+  [(Input.Input, ByteString.ByteString)] ->
+  String ->
+  String ->
+  Hspec.Expectation
+expectFragment extraInputs input expected = do
+  let allInputs = (Input.Stdin, String.toUtf8 input) : extraInputs
+      (a, s, w) = runGild [] allInputs (".", []) False
+  a `Hspec.shouldSatisfy` Either.isRight
+  w `Hspec.shouldBe` []
+  actual <- case Map.toList s of
+    [(Output.Stdout, x)] -> pure x
+    _ -> fail $ "impossible: " <> show s
+  actual `Hspec.shouldBe` String.toUtf8 expected
+  -- Check idempotency: running again should produce the same output.
+  let allInputs2 = (Input.Stdin, actual) : extraInputs
+      (a2, s2, w2) = runGild [] allInputs2 (".", []) False
+  a2 `Hspec.shouldSatisfy` Either.isRight
+  w2 `Hspec.shouldBe` []
+  actual2 <- case Map.toList s2 of
+    [(Output.Stdout, x)] -> pure x
+    _ -> fail $ "impossible: " <> show s2
+  actual2 `Hspec.shouldBe` actual
+
+expectFragmentWarning ::
+  (Stack.HasCallStack) =>
+  [(Input.Input, ByteString.ByteString)] ->
+  String ->
+  String ->
+  [String] ->
+  Hspec.Expectation
+expectFragmentWarning extraInputs input expected expectedWarnings = do
+  let allInputs = (Input.Stdin, String.toUtf8 input) : extraInputs
+      (a, s, w) = runGild [] allInputs (".", []) False
+  a `Hspec.shouldSatisfy` Either.isRight
+  w `Hspec.shouldBe` expectedWarnings
+  actual <- case Map.toList s of
+    [(Output.Stdout, x)] -> pure x
+    _ -> fail $ "impossible: " <> show s
+  actual `Hspec.shouldBe` String.toUtf8 expected
 
 runGild ::
   [String] ->

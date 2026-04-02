@@ -70,6 +70,7 @@ library
     CabalGild.Unstable.Action.AttachComments
     CabalGild.Unstable.Action.EvaluatePragmas
     CabalGild.Unstable.Action.EvaluatePragmas.Discover
+    CabalGild.Unstable.Action.EvaluatePragmas.Fragment
     CabalGild.Unstable.Action.EvaluatePragmas.Require
     CabalGild.Unstable.Action.EvaluatePragmas.Version
     CabalGild.Unstable.Action.EvaluatePragmas.WarnUnknown

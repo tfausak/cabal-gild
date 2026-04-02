@@ -1,6 +1,7 @@
 module CabalGild.Unstable.Action.EvaluatePragmas.WarnUnknown where
 
 import qualified CabalGild.Unstable.Action.EvaluatePragmas.Discover as Discover
+import qualified CabalGild.Unstable.Action.EvaluatePragmas.Fragment as Fragment
 import qualified CabalGild.Unstable.Action.EvaluatePragmas.Require as Require
 import qualified CabalGild.Unstable.Action.EvaluatePragmas.Version as Version
 import qualified CabalGild.Unstable.Class.MonadWarn as MonadWarn
@@ -61,6 +62,7 @@ warnComment c =
 isKnownPragma :: ByteString.ByteString -> Bool
 isKnownPragma bs =
   Maybe.isJust (Parsec.simpleParsecBS bs :: Maybe (Pragma.Pragma Discover.Discover))
+    || Maybe.isJust (Parsec.simpleParsecBS bs :: Maybe (Pragma.Pragma Fragment.Fragment))
     || Maybe.isJust (Parsec.simpleParsecBS bs :: Maybe (Pragma.Pragma Require.Require))
     || Maybe.isJust (Parsec.simpleParsecBS bs :: Maybe (Pragma.Pragma Version.Version))
 
