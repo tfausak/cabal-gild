@@ -85,6 +85,11 @@ fromConfig config = do
       MonadWarn.warnLn "warning: --output is deprecated, use piping instead"
     _ -> pure ()
 
+  case (Config.files config, Config.stdin config) of
+    (_ : _, Optional.Specific _) ->
+      Exception.throwM $ MixedArgumentStyles.MixedArgumentStyles Flag.stdinOption
+    _ -> pure ()
+
   case (Config.input config, Config.stdin config) of
     (Optional.Specific (Input.File _), Optional.Specific _) ->
       Exception.throwM SpecifiedStdinWithFileInput.SpecifiedStdinWithFileInput

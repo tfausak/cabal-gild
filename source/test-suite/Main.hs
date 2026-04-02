@@ -2187,6 +2187,17 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     w `Hspec.shouldBe` []
     s `Hspec.shouldBe` Map.empty
 
+  Hspec.it "fails when positional args are mixed with --stdin" $ do
+    let (a, s, w) =
+          runGild
+            ["--stdin", "a.cabal", "b.cabal"]
+            []
+            (".", [])
+            False
+    a `shouldBeFailure` MixedArgumentStyles.MixedArgumentStyles "stdin"
+    w `Hspec.shouldBe` []
+    s `Hspec.shouldBe` Map.empty
+
 withTemporaryDirectory :: IO () -> IO ()
 withTemporaryDirectory =
   Temp.withSystemTempDirectory "cabal-gild"
