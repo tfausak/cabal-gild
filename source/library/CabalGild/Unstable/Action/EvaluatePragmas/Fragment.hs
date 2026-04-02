@@ -45,7 +45,7 @@ field p f = case f of
           MonadWarn.warnLn "warning: fragment file is empty"
           pure f
         Fields.Section {} : _ -> do
-          MonadWarn.warnLn $
+          MonadWarn.warnLn
             "warning: fragment contains a section, but the pragma is on a field"
           pure f
         Fields.Field (Fields.Name _ n') fls' : _ -> do
@@ -83,7 +83,7 @@ field p f = case f of
                in pure . Fields.Section n sas $
                     fmap (fmap (const (position, Comments.empty))) fs'
             else do
-              MonadWarn.warnLn $
+              MonadWarn.warnLn
                 "warning: fragment section name or args do not match"
               pure f
 
