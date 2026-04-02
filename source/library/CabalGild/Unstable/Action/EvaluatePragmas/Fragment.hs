@@ -62,10 +62,10 @@ field p f = case f of
                   <> String.fromUtf8 (Name.value n)
                   <> "\""
               pure f
-  Fields.Section n sas _ -> do
+  Fields.Section n sas children -> do
     result <- tryFragment p n
     case result of
-      Nothing -> Fields.Section n sas <$> traverse (field p) (sectionFields f)
+      Nothing -> Fields.Section n sas <$> traverse (field p) children
       Just fragmentFields -> case fragmentFields of
         [] -> do
           MonadWarn.warnLn "warning: fragment file is empty"
@@ -86,13 +86,6 @@ field p f = case f of
               MonadWarn.warnLn $
                 "warning: fragment section name or args do not match"
               pure f
-
--- | Extracts child fields from a section. Needed because the Section pattern
--- match in the outer case already destructured, but we need the original for
--- the fallback.
-sectionFields :: Fields.Field a -> [Fields.Field a]
-sectionFields (Fields.Section _ _ fs) = fs
-sectionFields _ = []
 
 -- | Tries to find and read a fragment pragma from the last "before" comment on
 -- a field/section name. Returns 'Nothing' if no fragment pragma is present.
