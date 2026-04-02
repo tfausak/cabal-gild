@@ -1797,6 +1797,25 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
         "-- cabal-gild: fragment missing.fragment\nname: test\n"
         ["warning: could not read fragment \"missing.fragment\""]
 
+    Hspec.it "resolves fragment paths relative to the cabal file directory" $ do
+      let allInputs =
+            [ (Input.Stdin, String.toUtf8 "library\n -- cabal-gild: fragment deps.fragment\n build-depends: old"),
+              (Input.File "subdir/deps.fragment", String.toUtf8 "build-depends: base")
+            ]
+          (a, s, w) = runGild ["--stdin", "subdir/test.cabal"] allInputs (".", []) False
+      a `Hspec.shouldSatisfy` Either.isRight
+      w `Hspec.shouldBe` []
+      actual <- case Map.toList s of
+        [(Output.Stdout, x)] -> pure x
+        _ -> fail $ "impossible: " <> show s
+      actual `Hspec.shouldBe` String.toUtf8 "library\n  -- cabal-gild: fragment deps.fragment\n  build-depends: base\n"
+
+    Hspec.it "replaces a top-level field value" $ do
+      expectFragment
+        [(Input.File "tested.fragment", String.toUtf8 "tested-with: GHC ==9.10.1")]
+        "name: test\n-- cabal-gild: fragment tested.fragment\ntested-with: GHC ==8.0.2"
+        "name: test\n-- cabal-gild: fragment tested.fragment\ntested-with: ghc ==9.10.1\n"
+
   Hspec.it "parses an empty brace section" $ do
     expectGilded
       "s{}"
