@@ -31,6 +31,7 @@ import qualified Distribution.Parsec as Parsec
 import qualified Distribution.Utils.Generic as Utils
 import qualified System.Console.GetOpt as GetOpt
 import qualified System.FilePath as FilePath
+import qualified System.FilePath.Posix as Posix
 
 run ::
   (Exception.MonadThrow m, MonadWalk.MonadWalk m) =>
@@ -107,7 +108,7 @@ discover p n fls dt ds = do
         DiscoverTarget.Modules ->
           zipWith ModuleName.toFieldLine ((,) position <$> comments : repeat Comments.empty)
             . Maybe.mapMaybe (toModuleName directories)
-            $ Maybe.mapMaybe (stripAnyExtension extensions . clean) files
+            $ Maybe.mapMaybe (stripAnyExtension extensions) files
         DiscoverTarget.Files ->
           zipWith
             (\a -> Fields.FieldLine a . String.toUtf8)
@@ -146,10 +147,11 @@ relevantFieldNames =
 
 -- | Attempts to strip any of the given extensions from the file path. If any
 -- of them succeed, the result is returned. Otherwise 'Nothing' is returned.
+-- The file path must use POSIX separators.
 stripAnyExtension :: Set.Set String -> FilePath -> Maybe String
 stripAnyExtension es p =
   Maybe.listToMaybe
-    . Maybe.mapMaybe (`FilePath.stripExtension` p)
+    . Maybe.mapMaybe (`Posix.stripExtension` p)
     $ Set.toList es
 
 -- | The set of extensions that should be discovered by this pragma. Any file
@@ -173,11 +175,12 @@ extensions =
     ]
 
 -- | Attempts to convert a file path (without an extension) into a module name
--- by making it relative to one of the given directories.
+-- by making it relative to one of the given directories. Both the directories
+-- and the file path must use POSIX separators.
 toModuleName :: [FilePath] -> FilePath -> Maybe ModuleName.ModuleName
 toModuleName ds f =
   Maybe.listToMaybe $
-    Maybe.mapMaybe (ModuleName.fromFilePath . flip FilePath.makeRelative f) ds
+    Maybe.mapMaybe (ModuleName.fromFilePath . flip Posix.makeRelative f) ds
 
 -- | This was added in @transformers-0.6.0.0@. See
 -- <https://hub.darcs.net/ross/transformers/issue/49>.
