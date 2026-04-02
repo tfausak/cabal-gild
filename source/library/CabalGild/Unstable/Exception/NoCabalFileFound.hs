@@ -1,7 +1,7 @@
 module CabalGild.Unstable.Exception.NoCabalFileFound where
 
 import qualified CabalGild.Unstable.Type.Flag as Flag
-import qualified Control.Monad.Catch as Exception
+import qualified Control.Exception as Exception
 
 -- | This exception is thrown when no input or output file has been specified,
 -- stdin is a terminal device, and there are no Cabal files in the current

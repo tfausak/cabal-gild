@@ -1,15 +1,18 @@
+{-# LANGUAGE TypeOperators #-}
+
 module CabalGild.Unstable.Action.EvaluatePragmas.WarnUnknown where
 
 import qualified CabalGild.Unstable.Action.EvaluatePragmas.Discover as Discover
 import qualified CabalGild.Unstable.Action.EvaluatePragmas.Fragment as Fragment
 import qualified CabalGild.Unstable.Action.EvaluatePragmas.Require as Require
 import qualified CabalGild.Unstable.Action.EvaluatePragmas.Version as Version
-import qualified CabalGild.Unstable.Class.MonadWarn as MonadWarn
+import qualified CabalGild.Unstable.Effect.Warn as Warn
 import qualified CabalGild.Unstable.Extra.FieldLine as FieldLine
 import qualified CabalGild.Unstable.Extra.Name as Name
 import qualified CabalGild.Unstable.Type.Comment as Comment
 import qualified CabalGild.Unstable.Type.Comments as Comments
 import qualified CabalGild.Unstable.Type.Pragma as Pragma
+import Bluefin.Eff (Eff, (:>))
 import qualified Data.ByteString as ByteString
 import qualified Data.Maybe as Maybe
 import qualified Distribution.Compat.CharParsing as CharParsing
@@ -17,46 +20,50 @@ import qualified Distribution.Fields as Fields
 import qualified Distribution.Parsec as Parsec
 
 run ::
-  (MonadWarn.MonadWarn m) =>
+  (eW :> es) =>
+  Warn.Warn eW ->
   ([Fields.Field (p, Comments.Comments q)], [Comment.Comment q]) ->
-  m ([Fields.Field (p, Comments.Comments q)], [Comment.Comment q])
-run (fs, cs) = do
-  mapM_ field fs
-  mapM_ warnComment cs
+  Eff es ([Fields.Field (p, Comments.Comments q)], [Comment.Comment q])
+run warnH (fs, cs) = do
+  mapM_ (field warnH) fs
+  mapM_ (warnComment warnH) cs
   pure (fs, cs)
 
 field ::
-  (MonadWarn.MonadWarn m) =>
+  (eW :> es) =>
+  Warn.Warn eW ->
   Fields.Field (p, Comments.Comments q) ->
-  m ()
-field f = case f of
+  Eff es ()
+field warnH f = case f of
   Fields.Field n fls -> do
-    warnComments . snd $ Name.annotation n
-    mapM_ (warnComments . snd . FieldLine.annotation) fls
+    warnComments warnH . snd $ Name.annotation n
+    mapM_ (warnComments warnH . snd . FieldLine.annotation) fls
   Fields.Section n _ fs -> do
-    warnComments . snd $ Name.annotation n
-    mapM_ field fs
+    warnComments warnH . snd $ Name.annotation n
+    mapM_ (field warnH) fs
 
 warnComments ::
-  (MonadWarn.MonadWarn m) =>
+  (eW :> es) =>
+  Warn.Warn eW ->
   Comments.Comments q ->
-  m ()
-warnComments cs = do
-  mapM_ warnComment (Comments.before cs)
-  mapM_ warnComment (Comments.after cs)
+  Eff es ()
+warnComments warnH cs = do
+  mapM_ (warnComment warnH) (Comments.before cs)
+  mapM_ (warnComment warnH) (Comments.after cs)
 
 warnComment ::
-  (MonadWarn.MonadWarn m) =>
+  (eW :> es) =>
+  Warn.Warn eW ->
   Comment.Comment q ->
-  m ()
-warnComment c =
+  Eff es ()
+warnComment warnH c =
   let bs = Comment.value c
    in case Parsec.simpleParsecBS bs :: Maybe (Pragma.Pragma PragmaBody) of
         Nothing -> pure ()
         Just (Pragma.Pragma (PragmaBody body))
           | isKnownPragma bs -> pure ()
           | otherwise ->
-              MonadWarn.warnLn $ "warning: unknown pragma \"" <> body <> "\""
+              Warn.warnLn warnH $ "warning: unknown pragma \"" <> body <> "\""
 
 -- | Checks whether a comment parses as any known pragma type.
 isKnownPragma :: ByteString.ByteString -> Bool
