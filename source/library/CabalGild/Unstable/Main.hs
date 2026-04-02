@@ -1,8 +1,13 @@
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeOperators #-}
 
 -- | This module defines the main entry point for the application.
 module CabalGild.Unstable.Main where
 
+import Bluefin.Eff (Eff, (:>))
+import qualified Bluefin.Eff as Eff
+import qualified Bluefin.Exception as Exception
+import qualified Bluefin.IO as BIO
 import qualified CabalGild.Unstable.Action.AttachComments as AttachComments
 import qualified CabalGild.Unstable.Action.EvaluatePragmas as EvaluatePragmas
 import qualified CabalGild.Unstable.Action.ExtractComments as ExtractComments
@@ -11,12 +16,12 @@ import qualified CabalGild.Unstable.Action.GetCabalVersion as GetCabalVersion
 import qualified CabalGild.Unstable.Action.ReflowText as ReflowText
 import qualified CabalGild.Unstable.Action.Render as Render
 import qualified CabalGild.Unstable.Action.StripBlanks as StripBlanks
-import qualified CabalGild.Unstable.Class.MonadHandle as MonadHandle
-import qualified CabalGild.Unstable.Class.MonadLog as MonadLog
-import qualified CabalGild.Unstable.Class.MonadRead as MonadRead
-import qualified CabalGild.Unstable.Class.MonadWalk as MonadWalk
-import qualified CabalGild.Unstable.Class.MonadWarn as MonadWarn
-import qualified CabalGild.Unstable.Class.MonadWrite as MonadWrite
+import qualified CabalGild.Unstable.Effect.Handle as Handle
+import qualified CabalGild.Unstable.Effect.Log as Log
+import qualified CabalGild.Unstable.Effect.Read as Read
+import qualified CabalGild.Unstable.Effect.Walk as Walk
+import qualified CabalGild.Unstable.Effect.Warn as Warn
+import qualified CabalGild.Unstable.Effect.Write as Write
 import qualified CabalGild.Unstable.Exception.CheckFailure as CheckFailure
 import qualified CabalGild.Unstable.Exception.ParseError as ParseError
 import qualified CabalGild.Unstable.Extra.ByteString as ByteString
@@ -27,10 +32,11 @@ import qualified CabalGild.Unstable.Type.Input as Input
 import qualified CabalGild.Unstable.Type.Leniency as Leniency
 import qualified CabalGild.Unstable.Type.Mode as Mode
 import qualified CabalGild.Unstable.Type.Output as Output
+import qualified Control.Exception as E
 import qualified Control.Monad as Monad
-import qualified Control.Monad.Catch as Exception
 import qualified Data.ByteString as ByteString
 import qualified Distribution.Fields as Fields
+import Prelude hiding (Read, read)
 import qualified System.Environment as Environment
 import qualified System.Exit as Exit
 import qualified System.IO as IO
@@ -39,131 +45,153 @@ import qualified System.IO as IO
 -- arguments and then hands things off to 'mainWith'. If any exceptions are
 -- thrown, they will be handled by 'onException'.
 defaultMain :: IO ()
-defaultMain = Exception.handle onException $ do
-  arguments <- Environment.getArgs
-  mainWith arguments
+defaultMain = E.handle onException $ Eff.runEff $ \ioe -> do
+  arguments <- BIO.effIO ioe Environment.getArgs
+  let handleH = Handle.makeHandleIO ioe
+      logH = Log.makeLogIO ioe
+      readH = Read.makeReadIO ioe
+      walkH = Walk.makeWalkIO ioe
+      warnH = Warn.makeWarnIO ioe
+      writeH = Write.makeWriteIO ioe
+  result <- Exception.try $ \ex ->
+    mainWith handleH logH readH ex walkH warnH writeH arguments
+  case result of
+    Right () -> pure ()
+    Left e -> BIO.effIO ioe $ E.throwIO e
 
 -- | If the exception was an 'Exit.ExitCode', simply exit with that code.
 -- Otherwise handle exceptions by printing them to STDERR using
--- 'Exception.displayException' instead of 'show'. Then exit with a failing
+-- 'E.displayException' instead of 'show'. Then exit with a failing
 -- status code.
-onException :: Exception.SomeException -> IO a
-onException e = case Exception.fromException e of
+onException :: E.SomeException -> IO a
+onException e = case E.fromException e of
   Just exitCode -> Exit.exitWith exitCode
   Nothing -> do
-    IO.hPutStrLn IO.stderr $ Exception.displayException e
+    IO.hPutStrLn IO.stderr $ E.displayException e
     Exit.exitFailure
 
 -- | The actual logic for the command line application. This is written using
--- constraints so that it can be run in pure code if so desired. But most often
--- this will be run in 'IO'.
+-- bluefin effects so that it can be run in pure code if so desired. But most
+-- often this will be run in 'IO'.
 mainWith ::
-  ( MonadHandle.MonadHandle m,
-    MonadLog.MonadLog m,
-    MonadRead.MonadRead m,
-    Exception.MonadCatch m,
-    MonadWalk.MonadWalk m,
-    MonadWarn.MonadWarn m,
-    MonadWrite.MonadWrite m
-  ) =>
+  (eH :> es, eL :> es, eR :> es, eX :> es, eWk :> es, eWn :> es, eW :> es) =>
+  Handle.Handle eH ->
+  Log.Log eL ->
+  Read.Read eR ->
+  Exception.Exception E.SomeException eX ->
+  Walk.Walk eWk ->
+  Warn.Warn eWn ->
+  Write.Write eW ->
   [String] ->
-  m ()
-mainWith arguments = do
-  (flags, positionalArgs) <- Flag.fromArguments arguments
-  config <- Config.fromFlags flags positionalArgs
-  context <- Context.fromConfig config
+  Eff es ()
+mainWith handleH logH readH ex walkH warnH writeH arguments = do
+  (flags, positionalArgs) <- Flag.fromArguments ex arguments
+  config <- Config.fromFlags ex flags positionalArgs
+  context <- Context.fromConfig handleH logH warnH ex walkH config
 
   case Config.files config of
-    [] -> processOne context
-    fps -> processFiles context fps
+    [] -> processOne readH ex walkH warnH writeH context
+    fps -> processFiles readH ex walkH warnH writeH context fps
 
 processFiles ::
-  forall m.
-  ( MonadRead.MonadRead m,
-    Exception.MonadCatch m,
-    MonadWalk.MonadWalk m,
-    MonadWarn.MonadWarn m,
-    MonadWrite.MonadWrite m
-  ) =>
+  forall eR eX eWk eWn eW es.
+  (eR :> es, eX :> es, eWk :> es, eWn :> es, eW :> es) =>
+  Read.Read eR ->
+  Exception.Exception E.SomeException eX ->
+  Walk.Walk eWk ->
+  Warn.Warn eWn ->
+  Write.Write eW ->
   Context.Context ->
   [FilePath] ->
-  m ()
-processFiles context = go False
+  Eff es ()
+processFiles readH ex walkH warnH writeH context = go False
   where
-    go :: Bool -> [FilePath] -> m ()
+    go :: Bool -> [FilePath] -> Eff es ()
     go anyFail [] =
-      Monad.when anyFail $ Exception.throwM CheckFailure.CheckFailure
+      Monad.when anyFail $ Exception.throw ex (E.toException CheckFailure.CheckFailure)
     go anyFail (fp : fps) = do
-      result <- Exception.try (processFile context fp)
-      let anyFail' = case (result :: Either CheckFailure.CheckFailure ()) of
-            Left _ -> True
-            Right _ -> anyFail
-      go anyFail' fps
+      formatted <- processFileInner readH ex walkH warnH writeH context fp
+      go (anyFail || not formatted) fps
 
-processFile ::
-  ( MonadRead.MonadRead m,
-    Exception.MonadCatch m,
-    MonadWalk.MonadWalk m,
-    MonadWarn.MonadWarn m,
-    MonadWrite.MonadWrite m
-  ) =>
+processFileInner ::
+  (eR :> es, eX :> es, eWk :> es, eWn :> es, eW :> es) =>
+  Read.Read eR ->
+  Exception.Exception E.SomeException eX ->
+  Walk.Walk eWk ->
+  Warn.Warn eWn ->
+  Write.Write eW ->
   Context.Context ->
   FilePath ->
-  m ()
-processFile context fp =
+  Eff es Bool
+processFileInner readH ex walkH warnH writeH context fp =
   let ctx =
         context
           { Context.input = Input.File fp,
             Context.output = Output.File fp,
             Context.stdin = fp
           }
-   in processOne ctx
+   in processOneInner readH ex walkH warnH writeH ctx
 
 processOne ::
-  ( MonadRead.MonadRead m,
-    Exception.MonadCatch m,
-    MonadWalk.MonadWalk m,
-    MonadWarn.MonadWarn m,
-    MonadWrite.MonadWrite m
-  ) =>
+  (eR :> es, eX :> es, eWk :> es, eWn :> es, eW :> es) =>
+  Read.Read eR ->
+  Exception.Exception E.SomeException eX ->
+  Walk.Walk eWk ->
+  Warn.Warn eWn ->
+  Write.Write eW ->
   Context.Context ->
-  m ()
-processOne context = do
-  input <- MonadRead.read $ Context.input context
-  output <- format (Context.stdin context) input
+  Eff es ()
+processOne readH ex walkH warnH writeH context = do
+  formatted <- processOneInner readH ex walkH warnH writeH context
+  Monad.unless formatted $ Exception.throw ex (E.toException CheckFailure.CheckFailure)
+
+-- | Process a single file. Returns True if the file is already formatted.
+processOneInner ::
+  (eR :> es, eX :> es, eWk :> es, eWn :> es, eW :> es) =>
+  Read.Read eR ->
+  Exception.Exception E.SomeException eX ->
+  Walk.Walk eWk ->
+  Warn.Warn eWn ->
+  Write.Write eW ->
+  Context.Context ->
+  Eff es Bool
+processOneInner readH ex walkH warnH writeH context = do
+  input <- Read.read readH $ Context.input context
+  output <- format ex readH walkH warnH (Context.stdin context) input
 
   let formatted = check (Context.crlf context) input output
   case Context.mode context of
-    Mode.Check -> Monad.unless formatted $ Exception.throwM CheckFailure.CheckFailure
-    Mode.Format -> case (Context.input context, Context.output context) of
-      (Input.File i, Output.File o) | formatted, i == o -> pure ()
-      (_, o) -> MonadWrite.write o output
+    Mode.Check -> pure formatted
+    Mode.Format -> do
+      case (Context.input context, Context.output context) of
+        (Input.File i, Output.File o) | formatted, i == o -> pure ()
+        (_, o) -> Write.write writeH o output
+      pure True
 
 -- | Formats the given input using the provided file path as the apparent
 -- source file (see 'Context.stdin'). An exception will be thrown if the input
--- is invalid. The 'MonadWalk.MonadWalk' constraint is used to discover modules
--- on the file system, 'MonadRead.MonadRead' is used to read fragment files,
--- and 'Exception.MonadCatch' is used to catch errors in these operations and
--- report them as warnings. Typically @m@ will be 'IO'.
+-- is invalid.
 format ::
-  (Exception.MonadCatch m, MonadRead.MonadRead m, MonadWalk.MonadWalk m, MonadWarn.MonadWarn m) =>
+  (eX :> es, eR :> es, eWk :> es, eWn :> es) =>
+  Exception.Exception E.SomeException eX ->
+  Read.Read eR ->
+  Walk.Walk eWk ->
+  Warn.Warn eWn ->
   FilePath ->
   ByteString.ByteString ->
-  m ByteString.ByteString
-format filePath input = do
+  Eff es ByteString.ByteString
+format ex readH walkH warnH filePath input = do
   fields <-
-    either (Exception.throwM . ParseError.ParseError) pure $
+    either (Exception.throw ex . E.toException . ParseError.ParseError) pure $
       Fields.readFields input
   let csv = GetCabalVersion.fromFields fields
       comments = ExtractComments.fromByteString input
-  ( StripBlanks.run
-      Monad.>=> AttachComments.run
-      Monad.>=> ReflowText.run csv
-      Monad.>=> EvaluatePragmas.run filePath
-      Monad.>=> FormatFields.run csv
-      Monad.>=> Render.run csv
-    )
-    (fields, comments)
+  StripBlanks.run (fields, comments)
+    >>= AttachComments.run
+    >>= ReflowText.run csv
+    >>= EvaluatePragmas.run ex readH walkH warnH filePath
+    >>= FormatFields.run csv
+    >>= Render.run csv
 
 -- | Returns true if the output is formatted correctly, false otherwise.
 check ::

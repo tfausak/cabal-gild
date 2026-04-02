@@ -1,6 +1,6 @@
 module CabalGild.Unstable.Exception.InvalidOption where
 
-import qualified Control.Monad.Catch as Exception
+import qualified Control.Exception as Exception
 import qualified Data.Char as Char
 import qualified Data.List as List
 

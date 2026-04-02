@@ -54,9 +54,9 @@ library
   autogen-modules: Paths_cabal_gild
   build-depends:
     Cabal-syntax ^>=3.12.0.0 || ^>=3.14.0.0 || ^>=3.16.0.0,
+    bluefin ^>=0.5.0.0,
     bytestring ^>=0.12.0.2,
     containers ^>=0.7 || ^>=0.8,
-    exceptions ^>=0.10.7,
     filepath ^>=1.4.100.1 || ^>=1.5.2.0,
     filepattern ^>=0.1.3,
     parsec ^>=3.1.16.1,
@@ -80,12 +80,12 @@ library
     CabalGild.Unstable.Action.ReflowText
     CabalGild.Unstable.Action.Render
     CabalGild.Unstable.Action.StripBlanks
-    CabalGild.Unstable.Class.MonadHandle
-    CabalGild.Unstable.Class.MonadLog
-    CabalGild.Unstable.Class.MonadRead
-    CabalGild.Unstable.Class.MonadWalk
-    CabalGild.Unstable.Class.MonadWarn
-    CabalGild.Unstable.Class.MonadWrite
+    CabalGild.Unstable.Effect.Handle
+    CabalGild.Unstable.Effect.Log
+    CabalGild.Unstable.Effect.Read
+    CabalGild.Unstable.Effect.Walk
+    CabalGild.Unstable.Effect.Warn
+    CabalGild.Unstable.Effect.Write
     CabalGild.Unstable.Exception.CheckFailure
     CabalGild.Unstable.Exception.DuplicateOption
     CabalGild.Unstable.Exception.InvalidLeniency
@@ -160,15 +160,14 @@ executable cabal-gild
 test-suite cabal-gild-test-suite
   import: executable
   build-depends:
+    bluefin,
     bytestring,
     containers,
     directory ^>=1.3.8.1,
-    exceptions,
     filepath,
     filepattern,
     hspec ^>=2.11.8,
     temporary ^>=1.3,
-    transformers,
 
   hs-source-dirs: source/test-suite
   main-is: Main.hs

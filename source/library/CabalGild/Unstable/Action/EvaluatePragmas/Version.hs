@@ -12,10 +12,9 @@ import qualified Distribution.Parsec as Parsec
 import qualified Paths_cabal_gild as This
 
 run ::
-  (Applicative m) =>
   ([Fields.Field (p, Comments.Comments q)], [Comment.Comment q]) ->
-  m ([Fields.Field (p, Comments.Comments q)], [Comment.Comment q])
-run (fs, cs) = pure (fmap field fs, expandVersion cs)
+  ([Fields.Field (p, Comments.Comments q)], [Comment.Comment q])
+run (fs, cs) = (fmap field fs, expandVersion cs)
 
 field ::
   Fields.Field (p, Comments.Comments q) ->

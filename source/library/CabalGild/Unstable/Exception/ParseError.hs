@@ -1,6 +1,6 @@
 module CabalGild.Unstable.Exception.ParseError where
 
-import qualified Control.Monad.Catch as Exception
+import qualified Control.Exception as Exception
 import qualified Text.Parsec.Error as Parsec
 
 -- | This type only exists to add an 'Exception.Exception' instance to the

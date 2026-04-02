@@ -1,6 +1,6 @@
 module CabalGild.Unstable.Exception.UnknownOption where
 
-import qualified Control.Monad.Catch as Exception
+import qualified Control.Exception as Exception
 
 -- | This exception is thrown when a command line option is not known.
 newtype UnknownOption

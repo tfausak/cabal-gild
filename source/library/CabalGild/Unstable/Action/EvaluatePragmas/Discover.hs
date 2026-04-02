@@ -1,6 +1,10 @@
+{-# LANGUAGE TypeOperators #-}
+
 module CabalGild.Unstable.Action.EvaluatePragmas.Discover where
 
-import qualified CabalGild.Unstable.Class.MonadWalk as MonadWalk
+import Bluefin.Eff (Eff, (:>))
+import qualified Bluefin.Exception as Exception
+import qualified CabalGild.Unstable.Effect.Walk as Walk
 import qualified CabalGild.Unstable.Exception.InvalidOption as InvalidOption
 import qualified CabalGild.Unstable.Exception.UnknownOption as UnknownOption
 import qualified CabalGild.Unstable.Extra.FieldLine as FieldLine
@@ -12,11 +16,8 @@ import qualified CabalGild.Unstable.Type.Comment as Comment
 import qualified CabalGild.Unstable.Type.Comments as Comments
 import qualified CabalGild.Unstable.Type.DiscoverTarget as DiscoverTarget
 import qualified CabalGild.Unstable.Type.Pragma as Pragma
-import qualified Control.Applicative as Applicative
+import qualified Control.Exception as E
 import qualified Control.Monad as Monad
-import qualified Control.Monad.Catch as Exception
-import qualified Control.Monad.Trans.Class as Trans
-import qualified Control.Monad.Trans.Maybe as MaybeT
 import qualified Data.Containers.ListUtils as List
 import qualified Data.Either as Either
 import qualified Data.Map as Map
@@ -33,28 +34,46 @@ import qualified System.Console.GetOpt as GetOpt
 import qualified System.FilePath as FilePath
 
 run ::
-  (Exception.MonadThrow m, MonadWalk.MonadWalk m) =>
+  (eX :> es, eW :> es) =>
+  Exception.Exception E.SomeException eX ->
+  Walk.Walk eW ->
   FilePath ->
   ([Fields.Field (p, Comments.Comments q)], [Comment.Comment q]) ->
-  m ([Fields.Field (p, Comments.Comments q)], [Comment.Comment q])
-run p (fs, cs) = (,) <$> traverse (field p) fs <*> pure cs
+  Eff es ([Fields.Field (p, Comments.Comments q)], [Comment.Comment q])
+run ex walkH p (fs, cs) = (,) <$> traverse (field ex walkH p) fs <*> pure cs
 
 -- | Evaluates pragmas within the given field. Or, if the field is a section,
 -- evaluates pragmas recursively within the fields of the section.
 field ::
-  (Exception.MonadThrow m, MonadWalk.MonadWalk m) =>
+  (eX :> es, eW :> es) =>
+  Exception.Exception E.SomeException eX ->
+  Walk.Walk eW ->
   FilePath ->
   Fields.Field (p, Comments.Comments q) ->
-  m (Fields.Field (p, Comments.Comments q))
-field p f = case f of
-  Fields.Field n fls -> fmap (Maybe.fromMaybe f) . MaybeT.runMaybeT $ do
-    dt <-
-      maybe Applicative.empty pure $
-        Map.lookup (Name.value n) relevantFieldNames
-    comment <- hoistMaybe . Utils.safeLast . Comments.toList . snd $ Name.annotation n
-    Pragma.Pragma (Discover ds) <- hoistMaybe . Parsec.simpleParsecBS $ Comment.value comment
-    discover p n fls dt ds
-  Fields.Section n sas fs -> Fields.Section n sas <$> traverse (field p) fs
+  Eff es (Fields.Field (p, Comments.Comments q))
+field ex walkH p f = case f of
+  Fields.Field n fls -> do
+    result <- fieldInner ex walkH p n fls f
+    pure $ Maybe.fromMaybe f result
+  Fields.Section n sas fs -> Fields.Section n sas <$> traverse (field ex walkH p) fs
+
+fieldInner ::
+  (eX :> es, eW :> es) =>
+  Exception.Exception E.SomeException eX ->
+  Walk.Walk eW ->
+  FilePath ->
+  Fields.Name (p, Comments.Comments q) ->
+  [Fields.FieldLine (p, Comments.Comments q)] ->
+  Fields.Field (p, Comments.Comments q) ->
+  Eff es (Maybe (Fields.Field (p, Comments.Comments q)))
+fieldInner ex walkH p n fls _f = case Map.lookup (Name.value n) relevantFieldNames of
+  Nothing -> pure Nothing
+  Just dt -> case Utils.safeLast . Comments.toList . snd $ Name.annotation n of
+    Nothing -> pure Nothing
+    Just comment -> case Parsec.simpleParsecBS $ Comment.value comment of
+      Nothing -> pure Nothing
+      Just (Pragma.Pragma (Discover ds)) ->
+        Just <$> discover ex walkH p n fls dt ds
 
 newtype Discover = Discover [String]
 
@@ -70,14 +89,16 @@ instance Parsec.Parsec Discover where
 -- | If modules are discovered for a field, that fields lines are completely
 -- replaced.
 discover ::
-  (Exception.MonadThrow m, MonadWalk.MonadWalk m) =>
+  (eX :> es, eW :> es) =>
+  Exception.Exception E.SomeException eX ->
+  Walk.Walk eW ->
   FilePath ->
   Fields.Name (p, Comments.Comments q) ->
   [Fields.FieldLine (p, Comments.Comments q)] ->
   DiscoverTarget.DiscoverTarget ->
   [String] ->
-  MaybeT.MaybeT m (Fields.Field (p, Comments.Comments q))
-discover p n fls dt ds = do
+  Eff es (Fields.Field (p, Comments.Comments q))
+discover ex walkH p n fls dt ds = do
   let (flgs, args, opts, errs) =
         GetOpt.getOpt'
           GetOpt.Permute
@@ -86,8 +107,8 @@ discover p n fls dt ds = do
           ]
           ds
   let (excs, incs) = Either.partitionEithers flgs
-  mapM_ (Exception.throwM . UnknownOption.fromString) opts
-  mapM_ (Exception.throwM . InvalidOption.fromString) errs
+  mapM_ (Exception.throw ex . E.toException . UnknownOption.fromString) opts
+  mapM_ (Exception.throw ex . E.toException . InvalidOption.fromString) errs
   let root = FilePath.dropTrailingPathSeparator . clean $ FilePath.takeDirectory p
       directories =
         List.nubOrd
@@ -98,7 +119,7 @@ discover p n fls dt ds = do
         List.nubOrd
           . fmap clean
           $ if null incs then fmap (`FilePath.combine` "**") directories else incs
-  files <- Trans.lift $ MonadWalk.walk root inclusions exclusions
+  files <- Walk.walk walkH root inclusions exclusions
   let comments = foldMap (snd . FieldLine.annotation) fls
       position =
         maybe (fst $ Name.annotation n) (fst . FieldLine.annotation) $
@@ -178,8 +199,3 @@ toModuleName :: [FilePath] -> FilePath -> Maybe ModuleName.ModuleName
 toModuleName ds f =
   Maybe.listToMaybe $
     Maybe.mapMaybe (ModuleName.fromFilePath . flip FilePath.makeRelative f) ds
-
--- | This was added in @transformers-0.6.0.0@. See
--- <https://hub.darcs.net/ross/transformers/issue/49>.
-hoistMaybe :: (Applicative f) => Maybe a -> MaybeT.MaybeT f a
-hoistMaybe = MaybeT.MaybeT . pure

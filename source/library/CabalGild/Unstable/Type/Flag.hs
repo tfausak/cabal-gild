@@ -1,9 +1,13 @@
+{-# LANGUAGE TypeOperators #-}
+
 module CabalGild.Unstable.Type.Flag where
 
+import Bluefin.Eff (Eff, (:>))
+import qualified Bluefin.Exception as Exception
 import qualified CabalGild.Unstable.Exception.DuplicateOption as DuplicateOption
 import qualified CabalGild.Unstable.Exception.InvalidOption as InvalidOption
 import qualified CabalGild.Unstable.Exception.UnknownOption as UnknownOption
-import qualified Control.Monad.Catch as Exception
+import qualified Control.Exception as E
 import qualified Data.Foldable as Foldable
 import qualified Data.Map as Map
 import qualified Data.Maybe as Maybe
@@ -99,16 +103,16 @@ stdinOption = "stdin"
 -- | Converts a list of command line arguments into a list of flags and
 -- positional arguments. If there are any invalid options or unknown options, an
 -- exception will be thrown.
-fromArguments :: (Exception.MonadThrow m) => [String] -> m ([Flag], [String])
-fromArguments arguments = do
+fromArguments :: (eX :> es) => Exception.Exception E.SomeException eX -> [String] -> Eff es ([Flag], [String])
+fromArguments ex arguments = do
   let (flgs, args, opts, errs) = GetOpt.getOpt' GetOpt.Permute options arguments
-  Foldable.traverse_ (Exception.throwM . InvalidOption.fromString) errs
-  Foldable.traverse_ (Exception.throwM . UnknownOption.fromString) opts
-  detectDuplicateOptions flgs
+  Foldable.traverse_ (Exception.throw ex . E.toException . InvalidOption.fromString) errs
+  Foldable.traverse_ (Exception.throw ex . E.toException . UnknownOption.fromString) opts
+  detectDuplicateOptions ex flgs
   pure (flgs, args)
 
-detectDuplicateOptions :: (Exception.MonadThrow m) => [Flag] -> m ()
-detectDuplicateOptions =
+detectDuplicateOptions :: (eX :> es) => Exception.Exception E.SomeException eX -> [Flag] -> Eff es ()
+detectDuplicateOptions ex =
   let toWarnings o l =
         fmap (uncurry . flip $ DuplicateOption.DuplicateOption o)
           . reverse
@@ -122,7 +126,7 @@ detectDuplicateOptions =
         Output s -> Just (outputOption, [s])
         Stdin s -> Just (stdinOption, [s])
         _ -> Nothing
-   in Foldable.traverse_ Exception.throwM
+   in Foldable.traverse_ (Exception.throw ex . E.toException)
         . concatMap (uncurry toWarnings)
         . Map.toAscList
         . Map.fromListWith (<>)

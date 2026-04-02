@@ -1,12 +1,17 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE TypeOperators #-}
 
+import Bluefin.Eff ((:>))
+import qualified Bluefin.Eff as Eff
+import qualified Bluefin.Exception as Exception
+import qualified Bluefin.IO as BIO
+import qualified Bluefin.State as State
 import qualified CabalGild.Unstable.Action.EvaluatePragmas.Version as Version
-import qualified CabalGild.Unstable.Class.MonadHandle as MonadHandle
-import qualified CabalGild.Unstable.Class.MonadLog as MonadLog
-import qualified CabalGild.Unstable.Class.MonadRead as MonadRead
-import qualified CabalGild.Unstable.Class.MonadWalk as MonadWalk
-import qualified CabalGild.Unstable.Class.MonadWarn as MonadWarn
-import qualified CabalGild.Unstable.Class.MonadWrite as MonadWrite
+import qualified CabalGild.Unstable.Effect.Handle as Handle
+import qualified CabalGild.Unstable.Effect.Log as Log
+import qualified CabalGild.Unstable.Effect.Read as Read
+import qualified CabalGild.Unstable.Effect.Walk as Walk
+import qualified CabalGild.Unstable.Effect.Warn as Warn
+import qualified CabalGild.Unstable.Effect.Write as Write
 import qualified CabalGild.Unstable.Exception.CheckFailure as CheckFailure
 import qualified CabalGild.Unstable.Exception.DuplicateOption as DuplicateOption
 import qualified CabalGild.Unstable.Exception.InvalidOption as InvalidOption
@@ -20,13 +25,9 @@ import qualified CabalGild.Unstable.Extra.String as String
 import qualified CabalGild.Unstable.Main as Gild
 import qualified CabalGild.Unstable.Type.Input as Input
 import qualified CabalGild.Unstable.Type.Output as Output
-import qualified Control.Monad.Catch as Exception
-import qualified Control.Monad.Trans.Class as Trans
-import qualified Control.Monad.Trans.Except as ExceptT
-import qualified Control.Monad.Trans.RWS as RWST
+import qualified Control.Exception as E
 import qualified Data.ByteString as ByteString
 import qualified Data.Either as Either
-import qualified Data.Functor.Identity as Identity
 import qualified Data.Map as Map
 import qualified Data.Maybe as Maybe
 import qualified GHC.Stack as Stack
@@ -36,6 +37,7 @@ import qualified System.FilePath as FilePath
 import qualified System.FilePattern as FilePattern
 import qualified System.IO.Temp as Temp
 import qualified Test.Hspec as Hspec
+import Prelude hiding (Read, read)
 
 main :: IO ()
 main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
@@ -2161,7 +2163,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       Directory.createDirectory "N"
       writeFile (FilePath.combine "N" "M1.hs") ""
       writeFile (FilePath.combine "N" "M2.hs") ""
-      Gild.mainWith ["--input=i.cabal", "--output=r.cabal"]
+      mainWithIO ["--input=i.cabal", "--output=r.cabal"]
       readFile "r.cabal"
         `Hspec.shouldReturn` unlines
           [ "library",
@@ -2171,7 +2173,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
             "    N.M2"
           ]
       d <- Directory.getCurrentDirectory
-      Gild.mainWith ["--input", FilePath.combine d "i.cabal", "--output=a.cabal"]
+      mainWithIO ["--input", FilePath.combine d "i.cabal", "--output=a.cabal"]
       readFile "a.cabal"
         `Hspec.shouldReturn` unlines
           [ "library",
@@ -2299,12 +2301,12 @@ withTemporaryDirectory =
     . flip Directory.withCurrentDirectory
 
 shouldBeFailure ::
-  (Stack.HasCallStack, Eq e, Exception.Exception e, Show a) =>
-  Either Exception.SomeException a ->
+  (Stack.HasCallStack, Eq e, E.Exception e, Show a) =>
+  Either E.SomeException a ->
   e ->
   Hspec.Expectation
 shouldBeFailure result expected = case result of
-  Left exception -> case Exception.fromException exception of
+  Left exception -> case E.fromException exception of
     Just actual -> actual `Hspec.shouldBe` expected
     x -> x `Hspec.shouldSatisfy` Maybe.isJust
   x -> x `Hspec.shouldSatisfy` Either.isLeft
@@ -2392,19 +2394,25 @@ runGild ::
   [(Input.Input, ByteString.ByteString)] ->
   (String, [[String]]) ->
   Bool ->
-  (Either E (), S, W)
+  (Either E.SomeException (), Map.Map Output.Output ByteString.ByteString, [String])
 runGild arguments inputs files tty =
-  runTest
-    (Gild.mainWith arguments)
-    ( ( Map.fromList inputs,
-        fmap FilePath.joinPath <$> uncurry Map.singleton files
-      ),
-      tty
-    )
-    Map.empty
+  let ((result, writes), logs) = Eff.runPureEff $
+        State.runState [] $ \logState ->
+          State.runState Map.empty $ \writeState ->
+            Exception.try $ \ex -> do
+              let inputMap = Map.fromList inputs
+                  walkMap = fmap FilePath.joinPath <$> uncurry Map.singleton files
+                  readH = makeReadTest inputMap ex
+                  walkH = makeWalkTest walkMap ex
+                  writeH = makeWriteTest writeState
+                  warnH = makeWarnTest logState
+                  logH = makeLogTest logState
+                  handleH = makeHandleTest tty ex
+              Gild.mainWith handleH logH readH ex walkH warnH writeH arguments
+   in (result, writes, logs)
 
 expectException ::
-  (Stack.HasCallStack, Eq e, Exception.Exception e) =>
+  (Stack.HasCallStack, Eq e, E.Exception e) =>
   [String] ->
   e ->
   Hspec.Expectation
@@ -2414,67 +2422,63 @@ expectException flags exception = do
   w `Hspec.shouldBe` []
   s `Hspec.shouldBe` Map.empty
 
-type Test = TestT Identity.Identity
+-- | IO wrapper for mainWith, used by integration tests that need real file system.
+mainWithIO :: [String] -> IO ()
+mainWithIO args = Eff.runEff $ \ioe -> do
+  let handleH = Handle.makeHandleIO ioe
+      logH = Log.makeLogIO ioe
+      readH = Read.makeReadIO ioe
+      walkH = Walk.makeWalkIO ioe
+      warnH = Warn.makeWarnIO ioe
+      writeH = Write.makeWriteIO ioe
+  result <- Exception.try $ \ex ->
+    Gild.mainWith handleH logH readH ex walkH warnH writeH args
+  case result of
+    Right () -> pure ()
+    Left e -> BIO.effIO ioe $ E.throwIO e
 
-runTest :: Test a -> R -> S -> (Either E a, S, W)
-runTest t r = Identity.runIdentity . RWST.runRWST (ExceptT.runExceptT $ runTestT t) r
+-- Mock effect handle constructors for testing
 
-type E = Exception.SomeException
-
-type R =
-  ( ( Map.Map Input.Input ByteString.ByteString, -- For 'MonadRead'.
-      Map.Map FilePath [FilePath] -- For 'MonadWalk'.
-    ),
-    Bool -- For 'MonadHandle'.
-  )
-
-type S = Map.Map Output.Output ByteString.ByteString
-
-type W = [String]
-
-newtype TestT m a = TestT
-  { runTestT :: ExceptT.ExceptT E (RWST.RWST R W S m) a
+makeReadTest ::
+  Map.Map Input.Input ByteString.ByteString ->
+  Exception.Exception E.SomeException e ->
+  Read.Read e
+makeReadTest m ex = Read.MkRead
+  { Read.readImpl = \k -> case Map.lookup k m of
+      Nothing -> Exception.throw ex . E.toException . userError $ "read " <> show k
+      Just v -> pure v,
+    Read.tryReadImpl = \k -> pure $ case Map.lookup k m of
+      Nothing -> Left . E.toException . userError $ "read " <> show k
+      Just v -> Right v
   }
-  deriving (Applicative, Functor, Monad)
 
-instance (Monad m) => MonadLog.MonadLog (TestT m) where
-  logLn = TestT . Trans.lift . RWST.tell . pure
+makeWalkTest ::
+  Map.Map FilePath [FilePath] ->
+  Exception.Exception E.SomeException e ->
+  Walk.Walk e
+makeWalkTest m ex = Walk.MkWalk $ \d i x ->
+  case Map.lookup d m of
+    Nothing -> Exception.throw ex . E.toException . userError $ "walk " <> show d
+    Just fs ->
+      pure $
+        filter
+          (\f -> any (FilePattern.?== f) i && not (any (FilePattern.?== f) x))
+          fs
 
-instance (Monad m) => MonadWarn.MonadWarn (TestT m) where
-  warnLn = TestT . Trans.lift . RWST.tell . pure
+makeWriteTest ::
+  State.State (Map.Map Output.Output ByteString.ByteString) e ->
+  Write.Write e
+makeWriteTest st = Write.MkWrite $ \k v -> State.modify st (Map.insert k v)
 
-instance (Monad m) => MonadRead.MonadRead (TestT m) where
-  read k = do
-    m <- TestT . Trans.lift . RWST.asks $ Map.lookup k . fst . fst
-    case m of
-      Nothing -> Exception.throwM . userError $ "read " <> show k
-      Just x -> pure x
+makeWarnTest ::
+  State.State [String] e ->
+  Warn.Warn e
+makeWarnTest st = Warn.MkWarn $ \s -> State.modify st (<> [s])
 
-instance (Monad m) => Exception.MonadThrow (TestT m) where
-  throwM = TestT . ExceptT.throwE . Exception.toException
+makeLogTest ::
+  State.State [String] e ->
+  Log.Log e
+makeLogTest st = Log.MkLog $ \s -> State.modify st (<> [s])
 
-instance (Monad m) => Exception.MonadCatch (TestT m) where
-  catch (TestT m) h = TestT . ExceptT.ExceptT $ do
-    result <- ExceptT.runExceptT m
-    case result of
-      Left e -> case Exception.fromException e of
-        Just e' -> ExceptT.runExceptT . runTestT $ h e'
-        Nothing -> pure (Left e)
-      Right a -> pure (Right a)
-
-instance (Monad m) => MonadWalk.MonadWalk (TestT m) where
-  walk d i x = do
-    result <- TestT . Trans.lift . RWST.asks $ Map.lookup d . snd . fst
-    case result of
-      Nothing -> Exception.throwM . userError $ "walk " <> show d
-      Just fs ->
-        pure $
-          filter
-            (\f -> any (FilePattern.?== f) i && not (any (FilePattern.?== f) x))
-            fs
-
-instance (Monad m) => MonadWrite.MonadWrite (TestT m) where
-  write k = TestT . Trans.lift . RWST.modify . Map.insert k
-
-instance (Monad m) => MonadHandle.MonadHandle (TestT m) where
-  isTerminalDevice = const . TestT . Trans.lift $ RWST.asks snd
+makeHandleTest :: Bool -> Exception.Exception E.SomeException e -> Handle.Handle e
+makeHandleTest tty _ = Handle.MkHandle $ \_ -> pure tty

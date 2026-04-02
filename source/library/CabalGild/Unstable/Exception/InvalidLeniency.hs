@@ -1,6 +1,6 @@
 module CabalGild.Unstable.Exception.InvalidLeniency where
 
-import qualified Control.Monad.Catch as Exception
+import qualified Control.Exception as Exception
 
 -- | This exception is thrown when the given
 -- 'CabalGild.Type.Leniency.Leniency' is invalid.

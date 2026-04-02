@@ -1,6 +1,6 @@
 module CabalGild.Unstable.Exception.DuplicateOption where
 
-import qualified Control.Monad.Catch as Exception
+import qualified Control.Exception as Exception
 
 -- | This exception is thrown when an option is specified more than once.
 data DuplicateOption

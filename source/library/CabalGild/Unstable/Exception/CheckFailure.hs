@@ -1,6 +1,6 @@
 module CabalGild.Unstable.Exception.CheckFailure where
 
-import qualified Control.Monad.Catch as Exception
+import qualified Control.Exception as Exception
 
 -- | This exception is thrown when the input is not formatted correctly.
 data CheckFailure

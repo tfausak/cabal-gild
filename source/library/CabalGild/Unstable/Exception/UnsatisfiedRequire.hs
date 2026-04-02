@@ -1,7 +1,7 @@
 module CabalGild.Unstable.Exception.UnsatisfiedRequire where
 
 import qualified CabalGild.Unstable.Type.VersionRange as VersionRange
-import qualified Control.Monad.Catch as Exception
+import qualified Control.Exception as Exception
 import qualified Data.Version as Version
 import qualified Distribution.Pretty as Pretty
 
