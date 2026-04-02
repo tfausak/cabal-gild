@@ -1797,6 +1797,20 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
         "-- cabal-gild: fragment missing.fragment\nname: test\n"
         ["warning: could not read fragment \"missing.fragment\""]
 
+    Hspec.it "warns when fragment file cannot be parsed" $ do
+      expectFragmentWarning
+        [(Input.File "bad.fragment", String.toUtf8 "not valid {cabal} syntax [")]
+        "library\n -- cabal-gild: fragment bad.fragment\n build-depends: base"
+        "library\n  -- cabal-gild: fragment bad.fragment\n  build-depends: base\n"
+        ["warning: could not parse fragment \"bad.fragment\""]
+
+    Hspec.it "warns when fragment section args do not match" $ do
+      expectFragmentWarning
+        [(Input.File "common.fragment", String.toUtf8 "common other\n  ghc-options: -Wall")]
+        "-- cabal-gild: fragment common.fragment\ncommon deps\n  build-depends: base"
+        "-- cabal-gild: fragment common.fragment\ncommon deps\n  build-depends: base\n"
+        ["warning: fragment contains section \"common other\", but expected \"common deps\""]
+
     Hspec.it "resolves fragment paths relative to the cabal file directory" $ do
       let allInputs =
             [ (Input.Stdin, String.toUtf8 "library\n -- cabal-gild: fragment deps.fragment\n build-depends: old"),

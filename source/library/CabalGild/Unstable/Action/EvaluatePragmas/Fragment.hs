@@ -11,6 +11,7 @@ import qualified CabalGild.Unstable.Type.Comment as Comment
 import qualified CabalGild.Unstable.Type.Comments as Comments
 import qualified CabalGild.Unstable.Type.Input as Input
 import qualified CabalGild.Unstable.Type.Pragma as Pragma
+import qualified Control.Exception as IO
 import qualified Control.Monad as Monad
 import qualified Control.Monad.Catch as Exception
 import qualified Distribution.Compat.CharParsing as CharParsing
@@ -85,9 +86,9 @@ field p f = case f of
             else do
               MonadWarn.warnLn $
                 "warning: fragment contains section \""
-                  <> String.fromUtf8 n'
+                  <> showSection n' sas'
                   <> "\", but expected \""
-                  <> String.fromUtf8 (Name.value n)
+                  <> showSection (Name.value n) sas
                   <> "\""
               Fields.Section n sas <$> traverse (field p) children
 
@@ -111,7 +112,7 @@ tryFragment p n = do
             path = FilePath.normalise $ FilePath.combine root token
         result <- Exception.try $ MonadRead.read (Input.File path)
         case result of
-          Left (_ :: Exception.SomeException) -> do
+          Left (_ :: IO.IOException) -> do
             MonadWarn.warnLn $
               "warning: could not read fragment " <> show path
             pure Nothing
@@ -121,6 +122,15 @@ tryFragment p n = do
                 "warning: could not parse fragment " <> show path
               pure Nothing
             Right fields -> pure $ Just fields
+
+-- | Renders a section name and its arguments as a human-readable string for
+-- use in warning messages.
+showSection :: Fields.FieldName -> [Fields.SectionArg a] -> String
+showSection n [] = String.fromUtf8 n
+showSection n args =
+  String.fromUtf8 n
+    <> " "
+    <> unwords (fmap (String.fromUtf8 . SectionArg.value) args)
 
 -- | The fragment pragma type. Parsed from @-- cabal-gild: fragment FILE@.
 newtype Fragment = Fragment String

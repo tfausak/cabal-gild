@@ -142,7 +142,9 @@ processOne context = do
 -- | Formats the given input using the provided file path as the apparent
 -- source file (see 'Context.stdin'). An exception will be thrown if the input
 -- is invalid. The 'MonadWalk.MonadWalk' constraint is used to discover modules
--- on the file system. Typically @m@ will be 'IO'.
+-- on the file system, 'MonadRead.MonadRead' is used to read fragment files,
+-- and 'Exception.MonadCatch' is used to catch errors in these operations and
+-- report them as warnings. Typically @m@ will be 'IO'.
 format ::
   (Exception.MonadCatch m, MonadRead.MonadRead m, MonadWalk.MonadWalk m, MonadWarn.MonadWarn m) =>
   FilePath ->
