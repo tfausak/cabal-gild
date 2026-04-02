@@ -306,3 +306,64 @@ name: my-package
 On subsequent runs, the generated comment will be updated to reflect the
 current version of Gild. The pragma itself is left unchanged. This pragma can
 be used on any field or section.
+
+#### `fragment`
+
+```
+-- cabal-gild: fragment FILE
+```
+
+This pragma will replace the contents of a field or section with the contents
+of the given file. The file path is resolved relative to the directory of the
+package description. This is useful for sharing configuration between multiple
+packages. For example, given this input:
+
+``` cabal
+-- cabal-gild: fragment common.fragment
+common warnings
+```
+
+And a file called `common.fragment` with this content:
+
+``` cabal
+common warnings
+  ghc-options:
+    -Wall
+    -Wcompat
+```
+
+Gild will produce this output:
+
+``` cabal
+-- cabal-gild: fragment common.fragment
+common warnings
+  ghc-options:
+    -Wall
+    -Wcompat
+```
+
+This pragma works on both fields and sections. For fields, the fragment file
+must contain a field with the same name. For sections, it must contain a
+section with the same name and arguments. For example:
+
+``` cabal
+library
+  -- cabal-gild: fragment build-deps.fragment
+  build-depends: ...
+```
+
+With a `build-deps.fragment` file containing:
+
+``` cabal
+build-depends:
+  base,
+  containers,
+```
+
+On subsequent runs, the field or section contents will be replaced again with
+the contents of the fragment file, making the operation idempotent. The pragma
+itself is left unchanged.
+
+If the fragment file cannot be read or parsed, or if the field or section name
+does not match, a warning is emitted and the field or section is left
+unchanged. Recursive fragment expansion is not supported.
