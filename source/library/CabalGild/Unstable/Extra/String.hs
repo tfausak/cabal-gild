@@ -13,4 +13,4 @@ toUtf8 = Encoding.encodeUtf8 . Text.pack
 
 -- | Converts a UTF-8 encoded 'ByteString.ByteString' into a 'String'.
 fromUtf8 :: ByteString.ByteString -> String
-fromUtf8 = Text.unpack . Encoding.decodeUtf8
+fromUtf8 = Text.unpack . Encoding.decodeUtf8Lenient
