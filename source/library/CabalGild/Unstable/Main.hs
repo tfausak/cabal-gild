@@ -102,7 +102,7 @@ processFiles context = go False
 
 processFile ::
   ( MonadRead.MonadRead m,
-    Exception.MonadThrow m,
+    Exception.MonadCatch m,
     MonadWalk.MonadWalk m,
     MonadWarn.MonadWarn m,
     MonadWrite.MonadWrite m
@@ -121,7 +121,7 @@ processFile context fp =
 
 processOne ::
   ( MonadRead.MonadRead m,
-    Exception.MonadThrow m,
+    Exception.MonadCatch m,
     MonadWalk.MonadWalk m,
     MonadWarn.MonadWarn m,
     MonadWrite.MonadWrite m
@@ -144,7 +144,7 @@ processOne context = do
 -- is invalid. The 'MonadWalk.MonadWalk' constraint is used to discover modules
 -- on the file system. Typically @m@ will be 'IO'.
 format ::
-  (Exception.MonadThrow m, MonadWalk.MonadWalk m, MonadWarn.MonadWarn m) =>
+  (Exception.MonadCatch m, MonadRead.MonadRead m, MonadWalk.MonadWalk m, MonadWarn.MonadWarn m) =>
   FilePath ->
   ByteString.ByteString ->
   m ByteString.ByteString

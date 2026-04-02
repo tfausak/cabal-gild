@@ -1,3 +1,5 @@
+{-# LANGUAGE ScopedTypeVariables #-}
+
 module CabalGild.Unstable.Action.EvaluatePragmas.Fragment where
 
 import qualified CabalGild.Unstable.Class.MonadRead as MonadRead
@@ -100,7 +102,7 @@ tryFragment ::
   (Exception.MonadCatch m, MonadRead.MonadRead m, MonadWarn.MonadWarn m) =>
   FilePath ->
   Fields.Name (p, Comments.Comments q) ->
-  m (Maybe [Fields.Field Fields.Position])
+  m (Maybe [Fields.Field Parsec.Position])
 tryFragment p n = do
   let comments = Comments.before . snd $ Name.annotation n
   case Utils.safeLast comments of

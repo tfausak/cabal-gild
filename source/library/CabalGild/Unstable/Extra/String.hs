@@ -10,3 +10,7 @@ toCaseFold = Text.unpack . Text.toCaseFold . Text.pack
 -- | Converts the given 'String' into a UTF-8 encoded 'ByteString.ByteString'.
 toUtf8 :: String -> ByteString.ByteString
 toUtf8 = Encoding.encodeUtf8 . Text.pack
+
+-- | Converts a UTF-8 encoded 'ByteString.ByteString' into a 'String'.
+fromUtf8 :: ByteString.ByteString -> String
+fromUtf8 = Text.unpack . Encoding.decodeUtf8
