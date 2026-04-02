@@ -1800,7 +1800,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     Hspec.it "resolves fragment paths relative to the cabal file directory" $ do
       let allInputs =
             [ (Input.Stdin, String.toUtf8 "library\n -- cabal-gild: fragment deps.fragment\n build-depends: old"),
-              (Input.File "subdir/deps.fragment", String.toUtf8 "build-depends: base")
+              (Input.File (FilePath.combine "subdir" "deps.fragment"), String.toUtf8 "build-depends: base")
             ]
           (a, s, w) = runGild ["--stdin", "subdir/test.cabal"] allInputs (".", []) False
       a `Hspec.shouldSatisfy` Either.isRight

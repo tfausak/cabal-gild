@@ -69,13 +69,13 @@ field p f = case f of
       Just fragmentFields -> case fragmentFields of
         [] -> do
           MonadWarn.warnLn "warning: fragment file is empty"
-          pure f
+          Fields.Section n sas <$> traverse (field p) children
         Fields.Field (Fields.Name _ n') _ : _ -> do
           MonadWarn.warnLn $
             "warning: fragment contains a field \""
               <> String.fromUtf8 n'
               <> "\", but the pragma is on a section"
-          pure f
+          Fields.Section n sas <$> traverse (field p) children
         Fields.Section (Fields.Name _ n') sas' fs' : _ -> do
           if Name.value n == n' && fmap SectionArg.value sas == fmap SectionArg.value sas'
             then
@@ -83,9 +83,13 @@ field p f = case f of
                in pure . Fields.Section n sas $
                     fmap (fmap (const (position, Comments.empty))) fs'
             else do
-              MonadWarn.warnLn
-                "warning: fragment section name or args do not match"
-              pure f
+              MonadWarn.warnLn $
+                "warning: fragment contains section \""
+                  <> String.fromUtf8 n'
+                  <> "\", but expected \""
+                  <> String.fromUtf8 (Name.value n)
+                  <> "\""
+              Fields.Section n sas <$> traverse (field p) children
 
 -- | Tries to find and read a fragment pragma from the last "before" comment on
 -- a field/section name. Returns 'Nothing' if no fragment pragma is present.
@@ -97,7 +101,7 @@ tryFragment ::
   Fields.Name (p, Comments.Comments q) ->
   m (Maybe [Fields.Field Parsec.Position])
 tryFragment p n = do
-  let comments = Comments.before . snd $ Name.annotation n
+  let comments = Comments.toList . snd $ Name.annotation n
   case Utils.safeLast comments of
     Nothing -> pure Nothing
     Just comment -> case Parsec.simpleParsecBS $ Comment.value comment of
