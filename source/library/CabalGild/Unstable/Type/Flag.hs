@@ -2,7 +2,6 @@ module CabalGild.Unstable.Type.Flag where
 
 import qualified CabalGild.Unstable.Exception.DuplicateOption as DuplicateOption
 import qualified CabalGild.Unstable.Exception.InvalidOption as InvalidOption
-import qualified CabalGild.Unstable.Exception.UnexpectedArgument as UnexpectedArgument
 import qualified CabalGild.Unstable.Exception.UnknownOption as UnknownOption
 import qualified Control.Monad.Catch as Exception
 import qualified Data.Foldable as Foldable
@@ -56,12 +55,12 @@ options =
       ['i']
       [inputOption]
       (GetOpt.ReqArg Input "FILE")
-      "Sets the input file. Use '-' for standard input (STDIN).\nDefault: '-'",
+      "Deprecated. Sets the input file. Use a positional argument instead.",
     GetOpt.Option
       []
       [ioOption]
       (GetOpt.ReqArg IO "FILE")
-      "Shortcut for setting both the input and output files.",
+      "Deprecated. Shortcut for setting both the input and output files.\nUse a positional argument instead.",
     GetOpt.Option
       ['m']
       [modeOption]
@@ -71,7 +70,7 @@ options =
       ['o']
       [outputOption]
       (GetOpt.ReqArg Output "FILE")
-      "Sets the output file. Use '-' for standard output (STDOUT).\nDefault: '-'",
+      "Deprecated. Sets the output file. Use piping instead.",
     GetOpt.Option
       ['s']
       [stdinOption]
@@ -97,17 +96,16 @@ outputOption = "output"
 stdinOption :: String
 stdinOption = "stdin"
 
--- | Converts a list of command line arguments into a list of flags. If there
--- are any unexpected arguments, invalid options, or unknown options, an
+-- | Converts a list of command line arguments into a list of flags and
+-- positional arguments. If there are any invalid options or unknown options, an
 -- exception will be thrown.
-fromArguments :: (Exception.MonadThrow m) => [String] -> m [Flag]
+fromArguments :: (Exception.MonadThrow m) => [String] -> m ([Flag], [String])
 fromArguments arguments = do
   let (flgs, args, opts, errs) = GetOpt.getOpt' GetOpt.Permute options arguments
-  Foldable.traverse_ (Exception.throwM . UnexpectedArgument.fromString) args
   Foldable.traverse_ (Exception.throwM . InvalidOption.fromString) errs
   Foldable.traverse_ (Exception.throwM . UnknownOption.fromString) opts
   detectDuplicateOptions flgs
-  pure flgs
+  pure (flgs, args)
 
 detectDuplicateOptions :: (Exception.MonadThrow m) => [Flag] -> m ()
 detectDuplicateOptions =

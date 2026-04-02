@@ -1,3 +1,5 @@
+{-# LANGUAGE ScopedTypeVariables #-}
+
 -- | This module defines the main entry point for the application.
 module CabalGild.Unstable.Main where
 
@@ -59,7 +61,7 @@ mainWith ::
   ( MonadHandle.MonadHandle m,
     MonadLog.MonadLog m,
     MonadRead.MonadRead m,
-    Exception.MonadThrow m,
+    Exception.MonadCatch m,
     MonadWalk.MonadWalk m,
     MonadWarn.MonadWarn m,
     MonadWrite.MonadWrite m
@@ -67,10 +69,66 @@ mainWith ::
   [String] ->
   m ()
 mainWith arguments = do
-  flags <- Flag.fromArguments arguments
-  config <- Config.fromFlags flags
+  (flags, positionalArgs) <- Flag.fromArguments arguments
+  config <- Config.fromFlags flags positionalArgs
   context <- Context.fromConfig config
 
+  case Config.files config of
+    [] -> processOne context
+    fps -> processFiles context fps
+
+processFiles ::
+  forall m.
+  ( MonadRead.MonadRead m,
+    Exception.MonadCatch m,
+    MonadWalk.MonadWalk m,
+    MonadWarn.MonadWarn m,
+    MonadWrite.MonadWrite m
+  ) =>
+  Context.Context ->
+  [FilePath] ->
+  m ()
+processFiles context = go False
+  where
+    go :: Bool -> [FilePath] -> m ()
+    go anyFail [] =
+      Monad.when anyFail $ Exception.throwM CheckFailure.CheckFailure
+    go anyFail (fp : fps) = do
+      result <- Exception.try (processFile context fp)
+      let anyFail' = case (result :: Either CheckFailure.CheckFailure ()) of
+            Left _ -> True
+            Right _ -> anyFail
+      go anyFail' fps
+
+processFile ::
+  ( MonadRead.MonadRead m,
+    Exception.MonadThrow m,
+    MonadWalk.MonadWalk m,
+    MonadWarn.MonadWarn m,
+    MonadWrite.MonadWrite m
+  ) =>
+  Context.Context ->
+  FilePath ->
+  m ()
+processFile context fp =
+  let ctx =
+        context
+          { Context.input = Input.File fp,
+            Context.output = Output.File fp,
+            Context.stdin = fp
+          }
+   in processOne ctx
+
+processOne ::
+  ( MonadRead.MonadRead m,
+    Exception.MonadThrow m,
+    MonadWalk.MonadWalk m,
+    MonadWarn.MonadWarn m,
+    MonadWrite.MonadWrite m
+  ) =>
+  Context.Context ->
+  m ()
+processOne context = do
   input <- MonadRead.read $ Context.input context
   output <- format (Context.stdin context) input
 

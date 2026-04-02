@@ -3,6 +3,8 @@ module CabalGild.Unstable.Type.Context where
 import qualified CabalGild.Unstable.Class.MonadHandle as MonadHandle
 import qualified CabalGild.Unstable.Class.MonadLog as MonadLog
 import qualified CabalGild.Unstable.Class.MonadWalk as MonadWalk
+import qualified CabalGild.Unstable.Class.MonadWarn as MonadWarn
+import qualified CabalGild.Unstable.Exception.MixedArgumentStyles as MixedArgumentStyles
 import qualified CabalGild.Unstable.Exception.MoreThanOneCabalFileFound as MoreThanOneCabalFileFound
 import qualified CabalGild.Unstable.Exception.NoCabalFileFound as NoCabalFileFound
 import qualified CabalGild.Unstable.Exception.SpecifiedOutputWithCheckMode as SpecifiedOutputWithCheckMode
@@ -42,6 +44,7 @@ data Context = Context
 fromConfig ::
   ( MonadHandle.MonadHandle m,
     MonadLog.MonadLog m,
+    MonadWarn.MonadWarn m,
     Exception.MonadThrow m,
     MonadWalk.MonadWalk m
   ) =>
@@ -55,7 +58,9 @@ fromConfig config = do
           unlines
             [ "cabal-gild version " <> version,
               "",
-              "<https://github.com/tfausak/cabal-gild>"
+              "<https://github.com/tfausak/cabal-gild>",
+              "",
+              "Usage: cabal-gild [OPTIONS] [FILE ...]"
             ]
     MonadLog.logLn
       . List.dropWhileEnd Char.isSpace
@@ -65,6 +70,25 @@ fromConfig config = do
   Monad.when (Maybe.fromMaybe False . Optional.toMaybe $ Config.version config) $ do
     MonadLog.logLn version
     Exception.throwM Exit.ExitSuccess
+
+  case (Config.files config, Config.input config, Config.output config) of
+    (_ : _, Optional.Specific _, _) ->
+      Exception.throwM $ MixedArgumentStyles.MixedArgumentStyles Flag.inputOption
+    (_ : _, _, Optional.Specific _) ->
+      Exception.throwM $ MixedArgumentStyles.MixedArgumentStyles Flag.outputOption
+    ([], Optional.Specific _, Optional.Specific _) -> do
+      MonadWarn.warnLn "warning: --input is deprecated, use a positional argument instead"
+      MonadWarn.warnLn "warning: --output is deprecated, use piping instead"
+    ([], Optional.Specific _, _) ->
+      MonadWarn.warnLn "warning: --input is deprecated, use a positional argument instead"
+    ([], _, Optional.Specific _) ->
+      MonadWarn.warnLn "warning: --output is deprecated, use piping instead"
+    _ -> pure ()
+
+  case (Config.files config, Config.stdin config) of
+    (_ : _, Optional.Specific _) ->
+      Exception.throwM $ MixedArgumentStyles.MixedArgumentStyles Flag.stdinOption
+    _ -> pure ()
 
   case (Config.input config, Config.stdin config) of
     (Optional.Specific (Input.File _), Optional.Specific _) ->
@@ -83,7 +107,7 @@ fromConfig config = do
       preOutput = Maybe.fromMaybe Output.Stdout . Optional.toMaybe $ Config.output config
   (theInput, theOutput) <- do
     isTerm <- MonadHandle.isTerminalDevice IO.stdin
-    if preInput == Input.Stdin && preOutput == Output.Stdout && isTerm
+    if null (Config.files config) && preInput == Input.Stdin && preOutput == Output.Stdout && isTerm
       then do
         cabalFiles <- MonadWalk.walk "." ["*.cabal"] []
         case cabalFiles of
