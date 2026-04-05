@@ -913,6 +913,11 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "library\n exposed-modules: N M"
       "library\n  exposed-modules:\n    M\n    N\n"
 
+  Hspec.it "sorts exposed-modules case insensitively" $ do
+    expectGilded
+      "library\n exposed-modules: MB Ma"
+      "library\n  exposed-modules:\n    Ma\n    MB\n"
+
   Hspec.it "sorts reexported-modules" $ do
     expectGilded
       "library\n reexported-modules: p:M4 as M5, M2 as M3, q:M6, M1"
@@ -922,6 +927,11 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     expectGilded
       "library\n signatures: N M"
       "library\n  signatures:\n    M\n    N\n"
+
+  Hspec.it "sorts signatures case insensitively" $ do
+    expectGilded
+      "library\n signatures: MB Ma"
+      "library\n  signatures:\n    Ma\n    MB\n"
 
   Hspec.it "sorts build-tools" $ do
     expectGilded
@@ -990,15 +1000,30 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "library\n other-modules: N M"
       "library\n  other-modules:\n    M\n    N\n"
 
+  Hspec.it "sorts other-modules case insensitively" $ do
+    expectGilded
+      "library\n other-modules: MB Ma"
+      "library\n  other-modules:\n    Ma\n    MB\n"
+
   Hspec.it "sorts virtual-modules" $ do
     expectGilded
       "library\n virtual-modules: N M"
       "library\n  virtual-modules:\n    M\n    N\n"
 
+  Hspec.it "sorts virtual-modules case insensitively" $ do
+    expectGilded
+      "library\n virtual-modules: MB Ma"
+      "library\n  virtual-modules:\n    Ma\n    MB\n"
+
   Hspec.it "sorts autogen-modules" $ do
     expectGilded
       "library\n autogen-modules: N M"
       "library\n  autogen-modules:\n    M\n    N\n"
+
+  Hspec.it "sorts autogen-modules case insensitively" $ do
+    expectGilded
+      "library\n autogen-modules: MB Ma"
+      "library\n  autogen-modules:\n    Ma\n    MB\n"
 
   Hspec.it "sorts other-languages" $ do
     expectGilded

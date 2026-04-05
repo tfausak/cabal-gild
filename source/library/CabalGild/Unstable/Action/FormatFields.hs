@@ -12,6 +12,7 @@ import qualified CabalGild.Unstable.Type.Condition as Condition
 import qualified CabalGild.Unstable.Type.Dependency as Dependency
 import qualified CabalGild.Unstable.Type.Extension as Extension
 import qualified CabalGild.Unstable.Type.Mixin as Mixin
+import qualified CabalGild.Unstable.Type.ModuleName as ModuleName
 import qualified CabalGild.Unstable.Type.SomeParsecParser as SPP
 import qualified CabalGild.Unstable.Type.TestedWith as TestedWith
 import qualified CabalGild.Unstable.Type.Variable as Variable
@@ -23,7 +24,6 @@ import qualified Data.Maybe as Maybe
 import qualified Distribution.CabalSpecVersion as CabalSpecVersion
 import qualified Distribution.FieldGrammar.Newtypes as Newtypes
 import qualified Distribution.Fields as Fields
-import qualified Distribution.ModuleName as ModuleName
 import qualified Distribution.Parsec as Parsec
 import qualified Distribution.Parsec.FieldLineStream as FieldLineStream
 import qualified Distribution.Types.ExeDependency as ExeDependency
