@@ -230,13 +230,13 @@ parsers =
 stringSet :: (Newtype.Newtype [String] a) => a -> a
 stringSet =
   Newtype.pack
-    . List.sortOn String.toCaseFold
+    . List.sortOn (\x -> (String.toCaseFold x, x))
     . ListUtils.nubOrd
     . Newtype.unpack
 
 prettySet :: (Newtype.Newtype [b] a, Ord b, Pretty.Pretty b) => a -> a
 prettySet =
   Newtype.pack
-    . List.sortOn (String.toCaseFold . Pretty.prettyShow)
+    . List.sortOn (\x -> (String.toCaseFold $ Pretty.prettyShow x, x))
     . ListUtils.nubOrd
     . Newtype.unpack
