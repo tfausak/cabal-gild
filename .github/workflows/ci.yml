@@ -45,8 +45,6 @@ jobs:
           name: cabal-gild-${{ github.sha }}-ghc-${{ matrix.ghc }}-${{ matrix.os }}
           path: artifact.tar
       - run: cabal run -- cabal-gild-test-suite --randomize --strict
-      - run: artifact/cabal-gild --input cabal-gild.cabal --output cabal-gild-output.cabal
-      - run: diff cabal-gild.cabal cabal-gild-output.cabal
       - run: artifact/cabal-gild cabal-gild.cabal --mode check
     strategy:
       matrix:
