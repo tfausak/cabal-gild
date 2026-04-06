@@ -2223,7 +2223,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       Hspec.it "deduplicates" $ do
         expectGilded "build-tool-depends: p:c, p:c" "build-tool-depends: p:c\n"
 
-      Hspec.it "sorts" $ do
+      Hspec.it "sorts packages" $ do
         expectGilded "build-tool-depends: B:c, a:c" "build-tool-depends:\n  a:c,\n  B:c\n"
 
       Hspec.it "sorts components" $ do
@@ -2231,7 +2231,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
 
     Hspec.describe "build-tools" $ do
       Hspec.it "deduplicates" $ do
-        expectGilded "build-tools: p" "build-tools: p >=0\n"
+        expectGilded "build-tools: p, p" "build-tools: p >=0\n"
 
       Hspec.it "sorts" $ do
         expectGilded "build-tools: B, a" "build-tools:\n  a >=0,\n  B >=0\n"
@@ -2415,8 +2415,14 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       Hspec.it "deduplicates" $ do
         expectGilded "mixins: a, a" "mixins: a\n"
 
-      Hspec.it "sorts" $ do
+      Hspec.it "sorts packages" $ do
         expectGilded "mixins: B, a" "mixins:\n  a,\n  B\n"
+
+      Hspec.it "sorts modules" $ do
+        expectGilded "mixins: a (AB, Aa)" "mixins: a (Aa, AB)\n"
+
+      Hspec.it "sorts hiding" $ do
+        expectGilded "mixins: a hiding (AB, Aa)" "mixins: a hiding (Aa, AB)\n"
 
     Hspec.describe "options" $ do
       Hspec.it "deduplicates" $ do
@@ -2456,12 +2462,20 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
         expectGilded "pkgconfig-depends: B, a" "pkgconfig-depends:\n  a,\n  B\n"
 
     Hspec.describe "reexported-modules" $ do
-      -- TODO: This is a complex type that needs more test coverage.
       Hspec.it "deduplicates" $ do
         expectGilded "reexported-modules: A, A" "reexported-modules: A\n"
 
-      Hspec.it "sorts" $ do
+      Hspec.it "sorts modules" $ do
         expectGilded "reexported-modules: AB, Aa" "reexported-modules:\n  Aa,\n  AB\n"
+
+      Hspec.it "sorts aliases" $ do
+        expectGilded "reexported-modules: A as AB, A as Aa" "reexported-modules:\n  A as Aa,\n  A as AB\n"
+
+      Hspec.it "sorts packages" $ do
+        expectGilded "reexported-modules: B:C, a:C" "reexported-modules:\n  a:C,\n  B:C\n"
+
+      Hspec.it "sorts unqualified before qualified" $ do
+        expectGilded "reexported-modules: a:A, A" "reexported-modules:\n  A,\n  a:A\n"
 
     Hspec.describe "setup-depends" $ do
       Hspec.it "deduplicates" $ do
@@ -2482,7 +2496,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
         expectGilded "tested-with: ghc ghc" "tested-with: ghc\n"
 
       Hspec.it "sorts" $ do
-        expectGilded "tested-with: AB Aa" "tested-with:\n  Aa\n  AB\n"
+        expectGilded "tested-with: B a" "tested-with:\n  a\n  B\n"
 
     Hspec.describe "virtual-modules" $ do
       Hspec.it "deduplicates" $ do
