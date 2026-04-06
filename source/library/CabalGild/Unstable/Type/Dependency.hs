@@ -14,6 +14,8 @@ import qualified Distribution.Types.PackageName as PackageName
 import qualified Distribution.Types.UnqualComponentName as UnqualComponentName
 import qualified Text.PrettyPrint as PrettyPrint
 
+-- | This type primarily exists because Cabal doesn't differentiate between
+-- `foo` and `foo:foo` (or `foo:{foo}`).
 data Dependency = MkDependency
   { packageName :: PackageName.PackageName,
     libraryNames :: Maybe (Either UnqualComponentName.UnqualComponentName (NonEmpty.NonEmpty UnqualComponentName.UnqualComponentName)),

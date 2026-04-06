@@ -3,7 +3,10 @@
 module CabalGild.Unstable.Action.FormatFields where
 
 import qualified CabalGild.Unstable.Extra.FieldLine as FieldLine
+import qualified CabalGild.Unstable.Extra.UnqualComponentName as UnqualComponentName
+import qualified Data.Containers.ListUtils as ListUtils
 import qualified CabalGild.Unstable.Extra.Name as Name
+import qualified CabalGild.Unstable.Extra.PackageName as PackageName
 import qualified CabalGild.Unstable.Extra.SectionArg as SectionArg
 import qualified CabalGild.Unstable.Extra.String as String
 import qualified CabalGild.Unstable.Type.Comment as Comment
@@ -13,14 +16,18 @@ import qualified CabalGild.Unstable.Type.Dependency as Dependency
 import qualified CabalGild.Unstable.Type.Extension as Extension
 import qualified CabalGild.Unstable.Type.Mixin as Mixin
 import qualified CabalGild.Unstable.Type.ModuleName as ModuleName
+import qualified Distribution.ModuleName as ModuleName2
 import qualified CabalGild.Unstable.Type.SomeParsecParser as SPP
 import qualified CabalGild.Unstable.Type.TestedWith as TestedWith
 import qualified CabalGild.Unstable.Type.Variable as Variable
 import qualified Data.ByteString as ByteString
+import qualified Data.Bifunctor as Bifunctor
 import qualified Data.Function as Function
 import qualified Data.Functor.Identity as Identity
+import qualified Data.List as List
 import qualified Data.Map as Map
 import qualified Data.Maybe as Maybe
+import qualified Data.Text as Text
 import qualified Distribution.CabalSpecVersion as CabalSpecVersion
 import qualified Distribution.FieldGrammar.Newtypes as Newtypes
 import qualified Distribution.Fields as Fields
@@ -33,6 +40,7 @@ import qualified Distribution.Types.ModuleReexport as ModuleReexport
 import qualified Distribution.Types.PkgconfigDependency as PkgconfigDependency
 import qualified Language.Haskell.Extension as Haskell
 import qualified Text.PrettyPrint as PrettyPrint
+import qualified Distribution.Compat.Newtype as Newtype
 
 -- | A wrapper around 'field' to allow this to be composed with other actions.
 run ::
@@ -164,61 +172,62 @@ parsers =
   let (=:) :: String -> SPP.SomeParsecParser -> (Fields.FieldName, SPP.SomeParsecParser)
       (=:) = (,) . String.toUtf8
    in Map.fromList
-        [ "asm-options" =: SPP.list @Newtypes.NoCommaFSep @Newtypes.Token',
-          "asm-sources" =: SPP.set @Newtypes.VCat @Newtypes.FilePathNT,
-          "autogen-includes" =: SPP.set @Newtypes.FSep @Newtypes.FilePathNT,
-          "autogen-modules" =: SPP.set @Newtypes.VCat @(Newtypes.MQuoted ModuleName.ModuleName),
-          "build-depends" =: SPP.set @Newtypes.CommaVCat @(Identity.Identity Dependency.Dependency),
-          "build-tool-depends" =: SPP.set @Newtypes.CommaFSep @(Identity.Identity ExeDependency.ExeDependency),
-          "build-tools" =: SPP.set @Newtypes.CommaFSep @(Identity.Identity LegacyExeDependency.LegacyExeDependency),
-          "c-sources" =: SPP.set @Newtypes.VCat @Newtypes.FilePathNT,
-          "cc-options" =: SPP.list @Newtypes.NoCommaFSep @Newtypes.Token',
-          "cmm-options" =: SPP.list @Newtypes.NoCommaFSep @Newtypes.Token',
-          "cmm-sources" =: SPP.set @Newtypes.VCat @Newtypes.FilePathNT,
-          "code-generators" =: SPP.list @Newtypes.CommaFSep @Newtypes.Token,
-          "cpp-options" =: SPP.list @Newtypes.NoCommaFSep @Newtypes.Token',
-          "cxx-options" =: SPP.list @Newtypes.NoCommaFSep @Newtypes.Token',
-          "cxx-sources" =: SPP.set @Newtypes.VCat @Newtypes.FilePathNT,
-          "data-files" =: SPP.set @Newtypes.VCat @Newtypes.FilePathNT,
-          "default-extensions" =: SPP.set @Newtypes.FSep @(Newtypes.MQuoted Extension.Extension),
-          "exposed-modules" =: SPP.set @Newtypes.VCat @(Newtypes.MQuoted ModuleName.ModuleName),
-          "extensions" =: SPP.set @Newtypes.FSep @(Newtypes.MQuoted Extension.Extension),
-          "extra-bundled-libraries" =: SPP.set @Newtypes.VCat @Newtypes.Token,
-          "extra-doc-files" =: SPP.set @Newtypes.VCat @Newtypes.FilePathNT,
-          "extra-dynamic-library-flavours" =: SPP.set @Newtypes.VCat @Newtypes.Token,
-          "extra-framework-dirs" =: SPP.set @Newtypes.FSep @Newtypes.FilePathNT,
-          "extra-ghci-libraries" =: SPP.set @Newtypes.VCat @Newtypes.Token,
-          "extra-lib-dirs-static" =: SPP.set @Newtypes.FSep @Newtypes.FilePathNT,
-          "extra-lib-dirs" =: SPP.set @Newtypes.FSep @Newtypes.FilePathNT,
-          "extra-libraries-static" =: SPP.set @Newtypes.VCat @Newtypes.Token,
-          "extra-libraries" =: SPP.set @Newtypes.VCat @Newtypes.Token,
-          "extra-library-flavours" =: SPP.set @Newtypes.VCat @Newtypes.Token,
-          "extra-source-files" =: SPP.set @Newtypes.VCat @Newtypes.FilePathNT,
-          "extra-tmp-files" =: SPP.set @Newtypes.VCat @Newtypes.FilePathNT,
-          "frameworks" =: SPP.set @Newtypes.FSep @Newtypes.Token,
-          "ghc-options" =: SPP.list @Newtypes.NoCommaFSep @Newtypes.Token',
-          "ghc-prof-options" =: SPP.list @Newtypes.NoCommaFSep @Newtypes.Token',
-          "ghc-shared-options" =: SPP.list @Newtypes.NoCommaFSep @Newtypes.Token',
-          "ghcjs-options" =: SPP.list @Newtypes.NoCommaFSep @Newtypes.Token',
-          "ghcjs-prof-options" =: SPP.list @Newtypes.NoCommaFSep @Newtypes.Token',
-          "ghcjs-shared-options" =: SPP.list @Newtypes.NoCommaFSep @Newtypes.Token',
-          "hs-source-dirs" =: SPP.list @Newtypes.FSep @Newtypes.FilePathNT,
-          "hsc2hs-options" =: SPP.list @Newtypes.NoCommaFSep @Newtypes.Token',
-          "include-dirs" =: SPP.set @Newtypes.FSep @Newtypes.FilePathNT,
-          "includes" =: SPP.set @Newtypes.FSep @Newtypes.FilePathNT,
-          "install-includes" =: SPP.set @Newtypes.FSep @Newtypes.FilePathNT,
-          "js-sources" =: SPP.set @Newtypes.VCat @Newtypes.FilePathNT,
-          "ld-options" =: SPP.list @Newtypes.NoCommaFSep @Newtypes.Token',
-          "license-files" =: SPP.set @Newtypes.FSep @Newtypes.FilePathNT,
-          "mixins" =: SPP.set @Newtypes.CommaVCat @(Identity.Identity Mixin.Mixin),
-          "options" =: SPP.set @Newtypes.FSep @(Identity.Identity ForeignLibOption.ForeignLibOption),
-          "other-extensions" =: SPP.set @Newtypes.FSep @(Newtypes.MQuoted Extension.Extension),
-          "other-languages" =: SPP.set @Newtypes.FSep @(Newtypes.MQuoted Haskell.Language),
-          "other-modules" =: SPP.set @Newtypes.VCat @(Newtypes.MQuoted ModuleName.ModuleName),
-          "pkgconfig-depends" =: SPP.set @Newtypes.CommaFSep @(Identity.Identity PkgconfigDependency.PkgconfigDependency),
-          "reexported-modules" =: SPP.set @Newtypes.CommaVCat @(Identity.Identity ModuleReexport.ModuleReexport),
-          "setup-depends" =: SPP.set @Newtypes.CommaVCat @(Identity.Identity Dependency.Dependency),
-          "signatures" =: SPP.set @Newtypes.VCat @(Newtypes.MQuoted ModuleName.ModuleName),
-          "tested-with" =: SPP.set @Newtypes.FSep @(Identity.Identity TestedWith.TestedWith),
-          "virtual-modules" =: SPP.set @Newtypes.VCat @(Newtypes.MQuoted ModuleName.ModuleName)
+        [ "asm-options" =: SPP.list @Newtypes.NoCommaFSep @Newtypes.Token' id,
+          "asm-sources" =: SPP.list @Newtypes.VCat @Newtypes.FilePathNT (Newtype.pack . List.sortOn (Text.toCaseFold . Text.pack) . ListUtils.nubOrd . Newtype.unpack),
+          "autogen-includes" =: SPP.list @Newtypes.FSep @Newtypes.FilePathNT (Newtype.pack . List.sortOn (Text.toCaseFold . Text.pack) . ListUtils.nubOrd . Newtype.unpack),
+          "autogen-modules" =: SPP.list @Newtypes.VCat @(Newtypes.MQuoted ModuleName2.ModuleName) (Newtype.pack . List.sortOn (fmap (Text.toCaseFold . Text.pack) . ModuleName2.components) . ListUtils.nubOrd . Newtype.unpack),
+          "build-depends" =: SPP.list @Newtypes.CommaVCat @(Identity.Identity Dependency.Dependency) (Newtype.pack . List.sortOn (\ d -> (PackageName.toCaseFold $ Dependency.packageName d, fmap (Bifunctor.bimap UnqualComponentName.toCaseFold (fmap UnqualComponentName.toCaseFold)) $ Dependency.libraryNames d, Dependency.versionRange d)) . ListUtils.nubOrd . Newtype.unpack),
+          -- TODO: continue
+          "build-tool-depends" =: SPP.list @Newtypes.CommaFSep @(Identity.Identity ExeDependency.ExeDependency) (Newtype.pack . List.sort . Newtype.unpack),
+          "build-tools" =: SPP.list @Newtypes.CommaFSep @(Identity.Identity LegacyExeDependency.LegacyExeDependency) (Newtype.pack . List.sort . Newtype.unpack),
+          "c-sources" =: SPP.list @Newtypes.VCat @Newtypes.FilePathNT (Newtype.pack . List.sort . Newtype.unpack),
+          "cc-options" =: SPP.list @Newtypes.NoCommaFSep @Newtypes.Token' id,
+          "cmm-options" =: SPP.list @Newtypes.NoCommaFSep @Newtypes.Token' id,
+          "cmm-sources" =: SPP.list @Newtypes.VCat @Newtypes.FilePathNT (Newtype.pack . List.sort . Newtype.unpack),
+          "code-generators" =: SPP.list @Newtypes.CommaFSep @Newtypes.Token id,
+          "cpp-options" =: SPP.list @Newtypes.NoCommaFSep @Newtypes.Token' id,
+          "cxx-options" =: SPP.list @Newtypes.NoCommaFSep @Newtypes.Token' id,
+          "cxx-sources" =: SPP.list @Newtypes.VCat @Newtypes.FilePathNT (Newtype.pack . List.sort . Newtype.unpack),
+          "data-files" =: SPP.list @Newtypes.VCat @Newtypes.FilePathNT (Newtype.pack . List.sort . Newtype.unpack),
+          "default-extensions" =: SPP.list @Newtypes.FSep @(Newtypes.MQuoted Extension.Extension) (Newtype.pack . List.sort . Newtype.unpack),
+          "exposed-modules" =: SPP.list @Newtypes.VCat @(Newtypes.MQuoted ModuleName.ModuleName) (Newtype.pack . List.sort . Newtype.unpack),
+          "extensions" =: SPP.list @Newtypes.FSep @(Newtypes.MQuoted Extension.Extension) (Newtype.pack . List.sort . Newtype.unpack),
+          "extra-bundled-libraries" =: SPP.list @Newtypes.VCat @Newtypes.Token (Newtype.pack . List.sort . Newtype.unpack),
+          "extra-doc-files" =: SPP.list @Newtypes.VCat @Newtypes.FilePathNT (Newtype.pack . List.sort . Newtype.unpack),
+          "extra-dynamic-library-flavours" =: SPP.list @Newtypes.VCat @Newtypes.Token (Newtype.pack . List.sort . Newtype.unpack),
+          "extra-framework-dirs" =: SPP.list @Newtypes.FSep @Newtypes.FilePathNT (Newtype.pack . List.sort . Newtype.unpack),
+          "extra-ghci-libraries" =: SPP.list @Newtypes.VCat @Newtypes.Token (Newtype.pack . List.sort . Newtype.unpack),
+          "extra-lib-dirs-static" =: SPP.list @Newtypes.FSep @Newtypes.FilePathNT (Newtype.pack . List.sort . Newtype.unpack),
+          "extra-lib-dirs" =: SPP.list @Newtypes.FSep @Newtypes.FilePathNT (Newtype.pack . List.sort . Newtype.unpack),
+          "extra-libraries-static" =: SPP.list @Newtypes.VCat @Newtypes.Token (Newtype.pack . List.sort . Newtype.unpack),
+          "extra-libraries" =: SPP.list @Newtypes.VCat @Newtypes.Token (Newtype.pack . List.sort . Newtype.unpack),
+          "extra-library-flavours" =: SPP.list @Newtypes.VCat @Newtypes.Token (Newtype.pack . List.sort . Newtype.unpack),
+          "extra-source-files" =: SPP.list @Newtypes.VCat @Newtypes.FilePathNT (Newtype.pack . List.sort . Newtype.unpack),
+          "extra-tmp-files" =: SPP.list @Newtypes.VCat @Newtypes.FilePathNT (Newtype.pack . List.sort . Newtype.unpack),
+          "frameworks" =: SPP.list @Newtypes.FSep @Newtypes.Token (Newtype.pack . List.sort . Newtype.unpack),
+          "ghc-options" =: SPP.list @Newtypes.NoCommaFSep @Newtypes.Token' id,
+          "ghc-prof-options" =: SPP.list @Newtypes.NoCommaFSep @Newtypes.Token' id,
+          "ghc-shared-options" =: SPP.list @Newtypes.NoCommaFSep @Newtypes.Token' id,
+          "ghcjs-options" =: SPP.list @Newtypes.NoCommaFSep @Newtypes.Token' id,
+          "ghcjs-prof-options" =: SPP.list @Newtypes.NoCommaFSep @Newtypes.Token' id,
+          "ghcjs-shared-options" =: SPP.list @Newtypes.NoCommaFSep @Newtypes.Token' id,
+          "hs-source-dirs" =: SPP.list @Newtypes.FSep @Newtypes.FilePathNT id,
+          "hsc2hs-options" =: SPP.list @Newtypes.NoCommaFSep @Newtypes.Token' id,
+          "include-dirs" =: SPP.list @Newtypes.FSep @Newtypes.FilePathNT (Newtype.pack . List.sort . Newtype.unpack),
+          "includes" =: SPP.list @Newtypes.FSep @Newtypes.FilePathNT (Newtype.pack . List.sort . Newtype.unpack),
+          "install-includes" =: SPP.list @Newtypes.FSep @Newtypes.FilePathNT (Newtype.pack . List.sort . Newtype.unpack),
+          "js-sources" =: SPP.list @Newtypes.VCat @Newtypes.FilePathNT (Newtype.pack . List.sort . Newtype.unpack),
+          "ld-options" =: SPP.list @Newtypes.NoCommaFSep @Newtypes.Token' id,
+          "license-files" =: SPP.list @Newtypes.FSep @Newtypes.FilePathNT (Newtype.pack . List.sort . Newtype.unpack),
+          "mixins" =: SPP.list @Newtypes.CommaVCat @(Identity.Identity Mixin.Mixin) (Newtype.pack . List.sort . Newtype.unpack),
+          "options" =: SPP.list @Newtypes.FSep @(Identity.Identity ForeignLibOption.ForeignLibOption) (Newtype.pack . List.sort . Newtype.unpack),
+          "other-extensions" =: SPP.list @Newtypes.FSep @(Newtypes.MQuoted Extension.Extension) (Newtype.pack . List.sort . Newtype.unpack),
+          "other-languages" =: SPP.list @Newtypes.FSep @(Newtypes.MQuoted Haskell.Language) (Newtype.pack . List.sort . Newtype.unpack),
+          "other-modules" =: SPP.list @Newtypes.VCat @(Newtypes.MQuoted ModuleName.ModuleName) (Newtype.pack . List.sort . Newtype.unpack),
+          "pkgconfig-depends" =: SPP.list @Newtypes.CommaFSep @(Identity.Identity PkgconfigDependency.PkgconfigDependency) (Newtype.pack . List.sort . Newtype.unpack),
+          "reexported-modules" =: SPP.list @Newtypes.CommaVCat @(Identity.Identity ModuleReexport.ModuleReexport) (Newtype.pack . List.sort . Newtype.unpack),
+          "setup-depends" =: SPP.list @Newtypes.CommaVCat @(Identity.Identity Dependency.Dependency) (Newtype.pack . List.sort . Newtype.unpack),
+          "signatures" =: SPP.list @Newtypes.VCat @(Newtypes.MQuoted ModuleName.ModuleName) (Newtype.pack . List.sort . Newtype.unpack),
+          "tested-with" =: SPP.list @Newtypes.FSep @(Identity.Identity TestedWith.TestedWith) (Newtype.pack . List.sort . Newtype.unpack),
+          "virtual-modules" =: SPP.list @Newtypes.VCat @(Newtypes.MQuoted ModuleName.ModuleName) (Newtype.pack . List.sort . Newtype.unpack)
         ]

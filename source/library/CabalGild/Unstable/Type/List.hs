@@ -65,3 +65,22 @@ instance
     )
       . fmap (Pretty.prettyVersioned @b v . Newtype.pack)
       . Newtype.unpack
+
+-- | Overlaps the more general instance in order to use trailing commas when
+-- possible.
+instance
+  {-# OVERLAPPING #-}
+  ( Newtype.Newtype a b,
+    Pretty.Pretty b
+  ) =>
+  Pretty.Pretty (List Newtypes.CommaVCat b a)
+  where
+  pretty = Pretty.prettyVersioned CabalSpecVersion.CabalSpecV1_0
+  prettyVersioned v =
+    ( \xs ->
+        if List.compareLength xs 1 == GT && v >= CabalSpecVersion.CabalSpecV2_2
+          then PrettyPrint.vcat $ fmap (<> PrettyPrint.comma) xs
+          else Newtypes.prettySep (Proxy.Proxy @Newtypes.CommaVCat) xs
+    )
+      . fmap (Pretty.prettyVersioned @b v . Newtype.pack)
+      . Newtype.unpack

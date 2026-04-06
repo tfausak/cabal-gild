@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -O0 #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 import qualified CabalGild.Unstable.Action.EvaluatePragmas.Version as Version
@@ -2168,6 +2169,57 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       expectGilded
         "build-depends: x (>= 1) && (< 2)"
         "build-depends: x (>=1) && (<2)\n"
+
+  Hspec.describe "fields" $ do
+    Hspec.describe "asm-options" $ do
+      Hspec.it "does not deduplicate" $ do
+        expectGilded "asm-options: a a" "asm-options:\n  a\n  a\n"
+
+      Hspec.it "does not sort" $ do
+        expectGilded "asm-options: b a" "asm-options:\n  b\n  a\n"
+
+    Hspec.describe "asm-sources" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "asm-sources: a a" "asm-sources: a\n"
+
+      Hspec.it "sorts" $ do
+        expectGilded "asm-sources: B a" "asm-sources:\n  a\n  B\n"
+
+    Hspec.describe "autogen-includes" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "autogen-includes: a a" "autogen-includes: a\n"
+
+      Hspec.it "sorts" $ do
+        expectGilded "autogen-includes: B a" "autogen-includes:\n  a\n  B\n"
+
+    Hspec.describe "autogen-modules" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "autogen-modules: A A" "autogen-modules: A\n"
+
+      Hspec.it "sorts" $ do
+        expectGilded "autogen-modules: AB Aa" "autogen-modules:\n  Aa\n  AB\n"
+
+    Hspec.describe "build-depends" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "build-depends: a, a" "build-depends: a\n"
+
+      Hspec.it "sorts packages" $ do
+        expectGilded "build-depends: B, a" "build-depends:\n  a,\n  B\n"
+
+      Hspec.it "sorts components" $ do
+        expectGilded "cabal-version: 3.0\nbuild-depends: a:C, a:b" "cabal-version: 3.0\nbuild-depends:\n  a:b,\n  a:C,\n"
+
+      Hspec.it "sorts multiple components" $ do
+        expectGilded "cabal-version: 3.0\nbuild-depends: a:{C, b}" "cabal-version: 3.0\nbuild-depends: a:{b, C}\n"
+
+      Hspec.it "sorts varieties" $ do
+        -- These are ordered roughly from least to most complex.
+        --
+        -- Even though `a:a` and `a:{a}` are semantically identical, they do
+        -- not get deduplicated.
+        expectGilded "cabal-version: 3.0\nbuild-depends: a:a, a:{a}, a" "cabal-version: 3.0\nbuild-depends:\n  a,\n  a:a,\n  a:{a},\n"
+
+    -- TODO: continue
 
   Hspec.around_ withTemporaryDirectory
     . Hspec.it "discovers modules on the file system"

@@ -138,7 +138,6 @@ library
     CabalGild.Unstable.Type.Optional
     CabalGild.Unstable.Type.Output
     CabalGild.Unstable.Type.Pragma
-    CabalGild.Unstable.Type.Set
     CabalGild.Unstable.Type.SomeParsecParser
     CabalGild.Unstable.Type.TestedWith
     CabalGild.Unstable.Type.Variable
