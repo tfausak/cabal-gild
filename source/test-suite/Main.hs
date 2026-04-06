@@ -1,4 +1,5 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# OPTIONS_GHC -O0 #-}
 
 import qualified CabalGild.Unstable.Action.EvaluatePragmas.Version as Version
 import qualified CabalGild.Unstable.Class.MonadHandle as MonadHandle
@@ -913,6 +914,11 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "library\n exposed-modules: N M"
       "library\n  exposed-modules:\n    M\n    N\n"
 
+  Hspec.it "sorts exposed-modules case insensitively" $ do
+    expectGilded
+      "library\n exposed-modules: MB Ma"
+      "library\n  exposed-modules:\n    Ma\n    MB\n"
+
   Hspec.it "sorts reexported-modules" $ do
     expectGilded
       "library\n reexported-modules: p:M4 as M5, M2 as M3, q:M6, M1"
@@ -922,6 +928,11 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
     expectGilded
       "library\n signatures: N M"
       "library\n  signatures:\n    M\n    N\n"
+
+  Hspec.it "sorts signatures case insensitively" $ do
+    expectGilded
+      "library\n signatures: MB Ma"
+      "library\n  signatures:\n    Ma\n    MB\n"
 
   Hspec.it "sorts build-tools" $ do
     expectGilded
@@ -990,15 +1001,30 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       "library\n other-modules: N M"
       "library\n  other-modules:\n    M\n    N\n"
 
+  Hspec.it "sorts other-modules case insensitively" $ do
+    expectGilded
+      "library\n other-modules: MB Ma"
+      "library\n  other-modules:\n    Ma\n    MB\n"
+
   Hspec.it "sorts virtual-modules" $ do
     expectGilded
       "library\n virtual-modules: N M"
       "library\n  virtual-modules:\n    M\n    N\n"
 
+  Hspec.it "sorts virtual-modules case insensitively" $ do
+    expectGilded
+      "library\n virtual-modules: MB Ma"
+      "library\n  virtual-modules:\n    Ma\n    MB\n"
+
   Hspec.it "sorts autogen-modules" $ do
     expectGilded
       "library\n autogen-modules: N M"
       "library\n  autogen-modules:\n    M\n    N\n"
+
+  Hspec.it "sorts autogen-modules case insensitively" $ do
+    expectGilded
+      "library\n autogen-modules: MB Ma"
+      "library\n  autogen-modules:\n    Ma\n    MB\n"
 
   Hspec.it "sorts other-languages" $ do
     expectGilded
@@ -2143,6 +2169,341 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
       expectGilded
         "build-depends: x (>= 1) && (< 2)"
         "build-depends: x (>=1) && (<2)\n"
+
+  Hspec.describe "fields" $ do
+    Hspec.describe "asm-options" $ do
+      Hspec.it "does not deduplicate" $ do
+        expectGilded "asm-options: a a" "asm-options:\n  a\n  a\n"
+
+      Hspec.it "does not sort" $ do
+        expectGilded "asm-options: b a" "asm-options:\n  b\n  a\n"
+
+    Hspec.describe "asm-sources" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "asm-sources: a a" "asm-sources: a\n"
+
+      Hspec.it "sorts" $ do
+        expectGilded "asm-sources: B a" "asm-sources:\n  a\n  B\n"
+
+    Hspec.describe "autogen-includes" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "autogen-includes: a a" "autogen-includes: a\n"
+
+      Hspec.it "sorts" $ do
+        expectGilded "autogen-includes: B a" "autogen-includes:\n  a\n  B\n"
+
+    Hspec.describe "autogen-modules" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "autogen-modules: A A" "autogen-modules: A\n"
+
+      Hspec.it "sorts" $ do
+        expectGilded "autogen-modules: AB Aa" "autogen-modules:\n  Aa\n  AB\n"
+
+    Hspec.describe "build-depends" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "build-depends: a, a" "build-depends: a\n"
+
+      Hspec.it "sorts packages" $ do
+        expectGilded "build-depends: B, a" "build-depends:\n  a,\n  B\n"
+
+      Hspec.it "sorts components" $ do
+        expectGilded "cabal-version: 3.0\nbuild-depends: a:C, a:b" "cabal-version: 3.0\nbuild-depends:\n  a:b,\n  a:C,\n"
+
+      Hspec.it "sorts multiple components" $ do
+        expectGilded "cabal-version: 3.0\nbuild-depends: a:{C, b}" "cabal-version: 3.0\nbuild-depends: a:{b, C}\n"
+
+      Hspec.it "sorts varieties" $ do
+        -- These are ordered roughly from least to most complex.
+        --
+        -- Even though `a:a` and `a:{a}` are semantically identical, they do
+        -- not get deduplicated.
+        expectGilded "cabal-version: 3.0\nbuild-depends: a:a, a:{a}, a" "cabal-version: 3.0\nbuild-depends:\n  a,\n  a:a,\n  a:{a},\n"
+
+    Hspec.describe "build-tool-depends" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "build-tool-depends: p:c, p:c" "build-tool-depends: p:c\n"
+
+      Hspec.it "sorts packages" $ do
+        expectGilded "build-tool-depends: B:c, a:c" "build-tool-depends:\n  a:c,\n  B:c\n"
+
+      Hspec.it "sorts components" $ do
+        expectGilded "build-tool-depends: a:C, a:b" "build-tool-depends:\n  a:b,\n  a:C\n"
+
+    Hspec.describe "build-tools" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "build-tools: p, p" "build-tools: p >=0\n"
+
+      Hspec.it "sorts" $ do
+        expectGilded "build-tools: B, a" "build-tools:\n  a >=0,\n  B >=0\n"
+
+    Hspec.describe "c-sources" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "c-sources: a a" "c-sources: a\n"
+
+      Hspec.it "sorts" $ do
+        expectGilded "c-sources: B a" "c-sources:\n  a\n  B\n"
+
+    Hspec.describe "cmm-sources" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "cmm-sources: a a" "cmm-sources: a\n"
+
+      Hspec.it "sorts" $ do
+        expectGilded "cmm-sources: B a" "cmm-sources:\n  a\n  B\n"
+
+    Hspec.describe "cxx-sources" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "cxx-sources: a a" "cxx-sources: a\n"
+
+      Hspec.it "sorts" $ do
+        expectGilded "cxx-sources: B a" "cxx-sources:\n  a\n  B\n"
+
+    Hspec.describe "data-files" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "data-files: a a" "data-files: a\n"
+
+      Hspec.it "sorts" $ do
+        expectGilded "data-files: B a" "data-files:\n  a\n  B\n"
+
+    Hspec.describe "default-extensions" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "default-extensions: A A" "default-extensions: A\n"
+
+      Hspec.it "sorts" $ do
+        expectGilded "default-extensions: AB Aa" "default-extensions:\n  Aa\n  AB\n"
+
+    Hspec.describe "exposed-modules" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "exposed-modules: A A" "exposed-modules: A\n"
+
+      Hspec.it "sorts" $ do
+        expectGilded "exposed-modules: AB Aa" "exposed-modules:\n  Aa\n  AB\n"
+
+    Hspec.describe "extensions" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "extensions: A A" "extensions: A\n"
+
+      Hspec.it "sorts" $ do
+        expectGilded "extensions: AB Aa" "extensions:\n  Aa\n  AB\n"
+
+    Hspec.describe "extra-bundled-libraries" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "extra-bundled-libraries: a a" "extra-bundled-libraries: a\n"
+
+      Hspec.it "sorts" $ do
+        expectGilded "extra-bundled-libraries: B a" "extra-bundled-libraries:\n  a\n  B\n"
+
+    Hspec.describe "extra-doc-files" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "extra-doc-files: a a" "extra-doc-files: a\n"
+
+      Hspec.it "sorts" $ do
+        expectGilded "extra-doc-files: B a" "extra-doc-files:\n  a\n  B\n"
+
+    Hspec.describe "extra-dynamic-library-flavours" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "extra-dynamic-library-flavours: a a" "extra-dynamic-library-flavours: a\n"
+
+      Hspec.it "sorts" $ do
+        expectGilded "extra-dynamic-library-flavours: B a" "extra-dynamic-library-flavours:\n  a\n  B\n"
+
+    Hspec.describe "extra-framework-dirs" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "extra-framework-dirs: a a" "extra-framework-dirs: a\n"
+
+      Hspec.it "sorts" $ do
+        expectGilded "extra-framework-dirs: B a" "extra-framework-dirs:\n  a\n  B\n"
+
+    Hspec.describe "extra-ghci-libraries" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "extra-ghci-libraries: a a" "extra-ghci-libraries: a\n"
+
+      Hspec.it "sorts" $ do
+        expectGilded "extra-ghci-libraries: B a" "extra-ghci-libraries:\n  a\n  B\n"
+
+    Hspec.describe "extra-lib-dirs" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "extra-lib-dirs: a a" "extra-lib-dirs: a\n"
+
+      Hspec.it "sorts" $ do
+        expectGilded "extra-lib-dirs: B a" "extra-lib-dirs:\n  a\n  B\n"
+
+    Hspec.describe "extra-lib-dirs-static" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "extra-lib-dirs-static: a a" "extra-lib-dirs-static: a\n"
+
+      Hspec.it "sorts" $ do
+        expectGilded "extra-lib-dirs-static: B a" "extra-lib-dirs-static:\n  a\n  B\n"
+
+    Hspec.describe "extra-libraries" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "extra-libraries: a a" "extra-libraries: a\n"
+
+      Hspec.it "sorts" $ do
+        expectGilded "extra-libraries: B a" "extra-libraries:\n  a\n  B\n"
+
+    Hspec.describe "extra-libraries-static" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "extra-libraries-static: a a" "extra-libraries-static: a\n"
+
+      Hspec.it "sorts" $ do
+        expectGilded "extra-libraries-static: B a" "extra-libraries-static:\n  a\n  B\n"
+
+    Hspec.describe "extra-library-flavours" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "extra-library-flavours: a a" "extra-library-flavours: a\n"
+
+      Hspec.it "sorts" $ do
+        expectGilded "extra-library-flavours: B a" "extra-library-flavours:\n  a\n  B\n"
+
+    Hspec.describe "extra-source-files" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "extra-source-files: a a" "extra-source-files: a\n"
+
+      Hspec.it "sorts" $ do
+        expectGilded "extra-source-files: B a" "extra-source-files:\n  a\n  B\n"
+
+    Hspec.describe "extra-tmp-files" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "extra-tmp-files: a a" "extra-tmp-files: a\n"
+
+      Hspec.it "sorts" $ do
+        expectGilded "extra-tmp-files: B a" "extra-tmp-files:\n  a\n  B\n"
+
+    Hspec.describe "frameworks" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "frameworks: a a" "frameworks: a\n"
+
+      Hspec.it "sorts" $ do
+        expectGilded "frameworks: B a" "frameworks:\n  a\n  B\n"
+
+    Hspec.describe "include-dirs" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "include-dirs: a a" "include-dirs: a\n"
+
+      Hspec.it "sorts" $ do
+        expectGilded "include-dirs: B a" "include-dirs:\n  a\n  B\n"
+
+    Hspec.describe "includes" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "includes: a a" "includes: a\n"
+
+      Hspec.it "sorts" $ do
+        expectGilded "includes: B a" "includes:\n  a\n  B\n"
+
+    Hspec.describe "install-includes" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "install-includes: a a" "install-includes: a\n"
+
+      Hspec.it "sorts" $ do
+        expectGilded "install-includes: B a" "install-includes:\n  a\n  B\n"
+
+    Hspec.describe "js-sources" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "js-sources: a a" "js-sources: a\n"
+
+      Hspec.it "sorts" $ do
+        expectGilded "js-sources: B a" "js-sources:\n  a\n  B\n"
+
+    Hspec.describe "license-files" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "license-files: a a" "license-files: a\n"
+
+      Hspec.it "sorts" $ do
+        expectGilded "license-files: B a" "license-files:\n  a\n  B\n"
+
+    Hspec.describe "mixins" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "mixins: a, a" "mixins: a\n"
+
+      Hspec.it "sorts packages" $ do
+        expectGilded "mixins: B, a" "mixins:\n  a,\n  B\n"
+
+      Hspec.it "sorts modules" $ do
+        expectGilded "mixins: a (AB, Aa)" "mixins: a (Aa, AB)\n"
+
+      Hspec.it "sorts hiding" $ do
+        expectGilded "mixins: a hiding (AB, Aa)" "mixins: a hiding (Aa, AB)\n"
+
+    Hspec.describe "options" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "options: standalone standalone" "options: standalone\n"
+
+      Hspec.it "sorts" $ do
+        -- `ForeignLibOption` only has one constructor, so we can't actually
+        -- test this.
+        expectGilded "options: standalone" "options: standalone\n"
+
+    Hspec.describe "other-extensions" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "other-extensions: A A" "other-extensions: A\n"
+
+      Hspec.it "sorts" $ do
+        expectGilded "other-extensions: AB Aa" "other-extensions:\n  Aa\n  AB\n"
+
+    Hspec.describe "other-languages" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "other-languages: A A" "other-languages: A\n"
+
+      Hspec.it "sorts" $ do
+        expectGilded "other-languages: AB Aa" "other-languages:\n  Aa\n  AB\n"
+
+    Hspec.describe "other-modules" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "other-modules: A A" "other-modules: A\n"
+
+      Hspec.it "sorts" $ do
+        expectGilded "other-modules: AB Aa" "other-modules:\n  Aa\n  AB\n"
+
+    Hspec.describe "pkgconfig-depends" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "pkgconfig-depends: a, a" "pkgconfig-depends: a\n"
+
+      Hspec.it "sorts" $ do
+        expectGilded "pkgconfig-depends: B, a" "pkgconfig-depends:\n  a,\n  B\n"
+
+    Hspec.describe "reexported-modules" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "reexported-modules: A, A" "reexported-modules: A\n"
+
+      Hspec.it "sorts modules" $ do
+        expectGilded "reexported-modules: AB, Aa" "reexported-modules:\n  Aa,\n  AB\n"
+
+      Hspec.it "sorts aliases" $ do
+        expectGilded "reexported-modules: A as AB, A as Aa" "reexported-modules:\n  A as Aa,\n  A as AB\n"
+
+      Hspec.it "sorts packages" $ do
+        expectGilded "reexported-modules: B:C, a:C" "reexported-modules:\n  a:C,\n  B:C\n"
+
+      Hspec.it "sorts unqualified before qualified" $ do
+        expectGilded "reexported-modules: a:A, A" "reexported-modules:\n  A,\n  a:A\n"
+
+    Hspec.describe "setup-depends" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "setup-depends: a, a" "setup-depends: a\n"
+
+      Hspec.it "sorts" $ do
+        expectGilded "setup-depends: B, a" "setup-depends:\n  a,\n  B\n"
+
+    Hspec.describe "signatures" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "signatures: A A" "signatures: A\n"
+
+      Hspec.it "sorts" $ do
+        expectGilded "signatures: AB Aa" "signatures:\n  Aa\n  AB\n"
+
+    Hspec.describe "tested-with" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "tested-with: ghc ghc" "tested-with: ghc\n"
+
+      Hspec.it "sorts" $ do
+        expectGilded "tested-with: B a" "tested-with:\n  a\n  B\n"
+
+    Hspec.describe "virtual-modules" $ do
+      Hspec.it "deduplicates" $ do
+        expectGilded "virtual-modules: A A" "virtual-modules: A\n"
+
+      Hspec.it "sorts" $ do
+        expectGilded "virtual-modules: AB Aa" "virtual-modules:\n  Aa\n  AB\n"
 
   Hspec.around_ withTemporaryDirectory
     . Hspec.it "discovers modules on the file system"

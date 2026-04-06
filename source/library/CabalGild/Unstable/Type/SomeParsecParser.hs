@@ -8,7 +8,6 @@
 module CabalGild.Unstable.Type.SomeParsecParser where
 
 import qualified CabalGild.Unstable.Type.List as List
-import qualified CabalGild.Unstable.Type.Set as Set
 import qualified Distribution.CabalSpecVersion as CabalSpecVersion
 import qualified Distribution.Parsec as Parsec
 import qualified Distribution.Pretty as Pretty
@@ -28,20 +27,10 @@ data SomeParsecParser
 list ::
   forall s b a.
   (Parsec.Parsec (List.List s b a), Pretty.Pretty (List.List s b a)) =>
+  (List.List s b a -> List.List s b a) ->
   SomeParsecParser
-list =
+list f =
   SomeParsecParser
     { parsec = Parsec.parsec @(List.List s b a),
-      pretty = Pretty.prettyVersioned
-    }
-
--- | Creates a new parser for the given 'Set.Set' of values.
-set ::
-  forall s b a.
-  (Parsec.Parsec (Set.Set s b a), Pretty.Pretty (Set.Set s b a)) =>
-  SomeParsecParser
-set =
-  SomeParsecParser
-    { parsec = Parsec.parsec @(Set.Set s b a),
-      pretty = Pretty.prettyVersioned
+      pretty = \v -> Pretty.prettyVersioned v . f
     }
