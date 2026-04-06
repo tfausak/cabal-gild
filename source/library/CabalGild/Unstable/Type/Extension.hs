@@ -1,3 +1,4 @@
+-- TODO: Can this be removed?
 module CabalGild.Unstable.Type.Extension where
 
 import qualified CabalGild.Unstable.Extra.String as String
