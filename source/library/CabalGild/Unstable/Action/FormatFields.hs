@@ -4,7 +4,6 @@
 module CabalGild.Unstable.Action.FormatFields where
 
 import qualified CabalGild.Unstable.Extra.FieldLine as FieldLine
-import qualified Data.Containers.ListUtils as ListUtils
 import qualified CabalGild.Unstable.Extra.Name as Name
 import qualified CabalGild.Unstable.Extra.SectionArg as SectionArg
 import qualified CabalGild.Unstable.Extra.String as String
@@ -13,22 +12,24 @@ import qualified CabalGild.Unstable.Type.Comments as Comments
 import qualified CabalGild.Unstable.Type.Condition as Condition
 import qualified CabalGild.Unstable.Type.Dependency as Dependency
 import qualified CabalGild.Unstable.Type.Mixin as Mixin
-import qualified Distribution.ModuleName as ModuleName
 import qualified CabalGild.Unstable.Type.SomeParsecParser as SPP
 import qualified CabalGild.Unstable.Type.TestedWith as TestedWith
 import qualified CabalGild.Unstable.Type.Variable as Variable
 import qualified Data.ByteString as ByteString
+import qualified Data.Containers.ListUtils as ListUtils
 import qualified Data.Function as Function
 import qualified Data.Functor.Identity as Identity
 import qualified Data.List as List
 import qualified Data.Map as Map
 import qualified Data.Maybe as Maybe
 import qualified Distribution.CabalSpecVersion as CabalSpecVersion
+import qualified Distribution.Compat.Newtype as Newtype
 import qualified Distribution.FieldGrammar.Newtypes as Newtypes
 import qualified Distribution.Fields as Fields
+import qualified Distribution.ModuleName as ModuleName
 import qualified Distribution.Parsec as Parsec
-import qualified Distribution.Pretty as Pretty
 import qualified Distribution.Parsec.FieldLineStream as FieldLineStream
+import qualified Distribution.Pretty as Pretty
 import qualified Distribution.Types.ExeDependency as ExeDependency
 import qualified Distribution.Types.ForeignLibOption as ForeignLibOption
 import qualified Distribution.Types.LegacyExeDependency as LegacyExeDependency
@@ -36,7 +37,6 @@ import qualified Distribution.Types.ModuleReexport as ModuleReexport
 import qualified Distribution.Types.PkgconfigDependency as PkgconfigDependency
 import qualified Language.Haskell.Extension as Haskell
 import qualified Text.PrettyPrint as PrettyPrint
-import qualified Distribution.Compat.Newtype as Newtype
 
 -- | A wrapper around 'field' to allow this to be composed with other actions.
 run ::
@@ -227,10 +227,16 @@ parsers =
           "virtual-modules" =: SPP.list @Newtypes.VCat @(Newtypes.MQuoted ModuleName.ModuleName) prettySet
         ]
 
-stringSet :: Newtype.Newtype [String] a => a -> a
-stringSet = Newtype.pack
- . List.sortOn String.toCaseFold . ListUtils.nubOrd . Newtype.unpack
+stringSet :: (Newtype.Newtype [String] a) => a -> a
+stringSet =
+  Newtype.pack
+    . List.sortOn String.toCaseFold
+    . ListUtils.nubOrd
+    . Newtype.unpack
 
 prettySet :: (Newtype.Newtype [b] a, Ord b, Pretty.Pretty b) => a -> a
-prettySet = Newtype.pack
- . List.sortOn (String.toCaseFold . Pretty.prettyShow) . ListUtils.nubOrd . Newtype.unpack
+prettySet =
+  Newtype.pack
+    . List.sortOn (String.toCaseFold . Pretty.prettyShow)
+    . ListUtils.nubOrd
+    . Newtype.unpack

@@ -32,5 +32,5 @@ list ::
 list f =
   SomeParsecParser
     { parsec = Parsec.parsec @(List.List s b a),
-      pretty = \ v -> Pretty.prettyVersioned v . f
+      pretty = \v -> Pretty.prettyVersioned v . f
     }

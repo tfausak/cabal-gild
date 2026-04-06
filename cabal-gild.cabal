@@ -106,13 +106,11 @@ library
     CabalGild.Unstable.Extra.FieldLine
     CabalGild.Unstable.Extra.FilePath
     CabalGild.Unstable.Extra.IncludeRenaming
-    CabalGild.Unstable.Extra.LibraryName
     CabalGild.Unstable.Extra.List
     CabalGild.Unstable.Extra.Mixin
     CabalGild.Unstable.Extra.ModuleName
     CabalGild.Unstable.Extra.ModuleRenaming
     CabalGild.Unstable.Extra.Name
-    CabalGild.Unstable.Extra.PackageName
     CabalGild.Unstable.Extra.SectionArg
     CabalGild.Unstable.Extra.String
     CabalGild.Unstable.Extra.UnqualComponentName
@@ -126,7 +124,6 @@ library
     CabalGild.Unstable.Type.Context
     CabalGild.Unstable.Type.Dependency
     CabalGild.Unstable.Type.DiscoverTarget
-    CabalGild.Unstable.Type.Extension
     CabalGild.Unstable.Type.Flag
     CabalGild.Unstable.Type.Input
     CabalGild.Unstable.Type.Leniency
@@ -134,7 +131,6 @@ library
     CabalGild.Unstable.Type.List
     CabalGild.Unstable.Type.Mixin
     CabalGild.Unstable.Type.Mode
-    CabalGild.Unstable.Type.ModuleName
     CabalGild.Unstable.Type.Optional
     CabalGild.Unstable.Type.Output
     CabalGild.Unstable.Type.Pragma

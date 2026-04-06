@@ -1,5 +1,5 @@
-{-# OPTIONS_GHC -O0 #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# OPTIONS_GHC -O0 #-}
 
 import qualified CabalGild.Unstable.Action.EvaluatePragmas.Version as Version
 import qualified CabalGild.Unstable.Class.MonadHandle as MonadHandle
@@ -2231,7 +2231,6 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
 
     Hspec.describe "build-tools" $ do
       Hspec.it "deduplicates" $ do
-        -- TODO: This should not insert `>=0`.
         expectGilded "build-tools: p" "build-tools: p >=0\n"
 
       Hspec.it "sorts" $ do
@@ -2480,7 +2479,7 @@ main = Hspec.hspec . Hspec.parallel . Hspec.describe "cabal-gild" $ do
 
     Hspec.describe "tested-with" $ do
       Hspec.it "deduplicates" $ do
-        expectGilded "tested-with: GHC == 1 GHC == 1" "tested-with: ghc ==1\n"
+        expectGilded "tested-with: ghc ghc" "tested-with: ghc\n"
 
       Hspec.it "sorts" $ do
         expectGilded "tested-with: AB Aa" "tested-with:\n  Aa\n  AB\n"
