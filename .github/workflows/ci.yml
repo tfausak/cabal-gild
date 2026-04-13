@@ -98,7 +98,7 @@ jobs:
         working-directory: cabal-gild-${{ github.sha }}-ghc-9.12-ubuntu/artifact
       - run: tar --auto-compress --create --file ../../${{ env.PREFIX }}-win32-x64.tar.gz --verbose cabal-gild.exe
         working-directory: cabal-gild-${{ github.sha }}-ghc-9.12-windows/artifact
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           files: ${{ env.PREFIX }}*.tar.gz
       - run: cabal upload --publish --username '${{ secrets.HACKAGE_USERNAME }}' --password '${{ secrets.HACKAGE_PASSWORD }}' ${{ env.PREFIX }}.tar.gz
