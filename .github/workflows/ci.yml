@@ -12,7 +12,7 @@ on:
 jobs:
   build:
     name: GHC ${{ matrix.ghc }} on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}-latest
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v7
       - run: mkdir artifact
@@ -51,14 +51,25 @@ jobs:
         include:
           - ghc: 9.12
             os: macos
+            runner: macos-15
+          - ghc: 9.12
+            os: macos-intel
+            runner: macos-15-intel
           - ghc: '9.10'
             os: ubuntu
+            runner: ubuntu-24.04
           - ghc: 9.12
             os: ubuntu
+            runner: ubuntu-24.04
           - ghc: 9.14
             os: ubuntu
+            runner: ubuntu-24.04
+          - ghc: 9.12
+            os: ubuntu-arm
+            runner: ubuntu-24.04-arm
           - ghc: 9.12
             os: windows
+            runner: windows-latest
   cabal:
     name: Cabal
     runs-on: ubuntu-latest
@@ -94,8 +105,12 @@ jobs:
       - run: cp cabal-gild-${{ github.sha }}-ghc-9.12-ubuntu/artifact/${{ env.PREFIX }}.tar.gz .
       - run: tar --auto-compress --create --file ../../${{ env.PREFIX }}-darwin-arm64.tar.gz --verbose cabal-gild
         working-directory: cabal-gild-${{ github.sha }}-ghc-9.12-macos/artifact
+      - run: tar --auto-compress --create --file ../../${{ env.PREFIX }}-darwin-x64.tar.gz --verbose cabal-gild
+        working-directory: cabal-gild-${{ github.sha }}-ghc-9.12-macos-intel/artifact
       - run: tar --auto-compress --create --file ../../${{ env.PREFIX }}-linux-x64.tar.gz --verbose cabal-gild
         working-directory: cabal-gild-${{ github.sha }}-ghc-9.12-ubuntu/artifact
+      - run: tar --auto-compress --create --file ../../${{ env.PREFIX }}-linux-arm64.tar.gz --verbose cabal-gild
+        working-directory: cabal-gild-${{ github.sha }}-ghc-9.12-ubuntu-arm/artifact
       - run: tar --auto-compress --create --file ../../${{ env.PREFIX }}-win32-x64.tar.gz --verbose cabal-gild.exe
         working-directory: cabal-gild-${{ github.sha }}-ghc-9.12-windows/artifact
       - uses: softprops/action-gh-release@v3
